@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>aptech.fpt</groupId>
-	<artifactId>TOEIC_backend</artifactId>
-	<version>1.0.0</version>
-	<name>TOEIC_backend</name>
-	<description>Back_end Spring Boot</description>
+	<artifactId>toeic_backend</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>toeic_backend</name>
+	<description>TOEIC backend Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>

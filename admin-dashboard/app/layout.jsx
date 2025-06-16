@@ -1,6 +1,6 @@
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AdminSidebar } from "@/components/admin-sidebar"
-import { AdminHeader } from "@/components/admin-header"
+import { SidebarProvider } from "../components/ui/sidebar"
+import { AdminSidebar } from "../components/admin-sidebar"
+import { AdminHeader } from "../components/admin-header"
 import "./globals.css"
 
 export default function RootLayout({ children }) {

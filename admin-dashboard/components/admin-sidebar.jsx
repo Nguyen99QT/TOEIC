@@ -12,8 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "/components/ui/sidebar"
+import { Avatar, AvatarFallback, AvatarImage } from "/components/ui/avatar"
 import {
   LayoutDashboard,
   GraduationCap,
@@ -27,6 +27,7 @@ import {
   Shield,
   DollarSign,
   Award,
+  MessageCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -66,6 +67,11 @@ const menuItems = [
     title: "Quản lý Reviews",
     url: "/reviews",
     icon: Star,
+  },
+  {
+    title: "Quản lý Feedback",
+    url: "/feedback",
+    icon: MessageCircle,
   },
   {
     title: "Doanh thu",

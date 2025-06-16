@@ -1,0 +1,70 @@
+Dưới đây là danh sách các thư mục đã được phân chia kèm theo nhiệm vụ, công dụng cơ bản trong một dự án sử dụng ReactJS cho Frontend và Spring Boot cho Backend (và một số lưu ý về Flutter):
+
+---
+
+### **ReactJS (Frontend)**
+
+- **assets**  
+  *Công dụng:* Chứa các tài nguyên tĩnh như hình ảnh, biểu tượng, font chữ, và file CSS. Đây là nơi lưu trữ các file mà giao diện người dùng cần để hiển thị thống nhất và đẹp mắt.
+
+- **auth**  
+  *Công dụng:* Quản lý các chức năng liên quan đến xác thực người dùng (login, đăng ký, xác nhận, phân quyền) và có thể tích hợp các cơ chế bảo mật như xác minh token.
+
+- **components**  
+  *Công dụng:* Chứa các thành phần giao diện (UI components) riêng lẻ, có khả năng tái sử dụng qua nhiều màn hình. Từ các button, form đến layout phức tạp, mỗi component chịu trách nhiệm hiển thị một phần cụ thể của giao diện.
+
+- **hook**  
+  *Công dụng:* Lưu trữ các custom hooks của React. Những hook này giúp tách logic xử lý đi, quản lý state, side effects và làm cho code trở nên gọn gàng, dễ bảo trì.
+
+- **redux**  
+  *Công dụng:* Chứa cấu hình Redux, actions, reducers và store. Thư mục này quản lý trạng thái (state) toàn cục của ứng dụng, giúp kết nối và đồng bộ dữ liệu giữa các component một cách hiệu quả.
+
+- **utils**  
+  *Công dụng:* Chứa các hàm tiện ích (utility functions) phục vụ cho nhiều phần của ứng dụng. Ví dụ như định dạng ngày tháng, xử lý định dạng số, validate form,… nhằm tránh việc lặp lại code.
+
+- **services**  
+  *Công dụng:* Chứa các module gọi API hoặc tích hợp với các dịch vụ bên ngoài. Đây là nơi định nghĩa các hàm hoặc lớp chịu trách nhiệm giao tiếp với Backend, xử lý logic lấy/đẩy dữ liệu qua HTTP.
+
+---
+
+### **Spring Boot (Backend)**
+
+Trong dự án Spring Boot, cấu trúc thông thường được sắp xếp như sau:
+
+- **src/main/resources**  
+  *Công dụng:* Nơi lưu trữ các tệp tin cấu hình (như application.properties hoặc application.yml), các file tĩnh (hình ảnh, file cấu hình web, template nếu dùng Thymeleaf,…) và các tài nguyên khác hỗ trợ hệ thống.
+
+- **configs**  
+  *Công dụng:* Chứa các lớp cấu hình hệ thống của Spring Boot như cấu hình datasource, CORS, cấu hình bean, session, và các cài đặt toàn cục cho ứng dụng.
+
+- **controllers**  
+  *Công dụng:* Nơi định nghĩa các lớp Controller. Các lớp này sẽ xử lý các yêu cầu HTTP từ client, chuyển hướng gọi đến dịch vụ xử lý nghiệp vụ và trả về dữ liệu (thường theo dạng JSON).
+
+- **dtos**
+*Công dụng:* Chứa các Data Transfer Objects để truyền dữ liệu giữa các tầng (controller, service) mà không tiết lộ cấu trúc thực của các entity. Điều này giúp tách biệt mô hình dữ liệu với giao diện đưa ra client.
+
+- **entities**  
+  *Công dụng:* Chứa các lớp Entity đại diện cho các bảng dữ liệu trong cơ sở dữ liệu. Thông qua các annotation của JPA/Hibernate, các đối tượng này được ánh xạ trực tiếp tới các bảng và trường trong CSDL.
+
+- **enums**  
+  *Công dụng:* Chứa các kiểu dữ liệu liệt kê (enumeration) dùng để định nghĩa những hằng số cố định như trạng thái, loại hình,… giúp code rõ ràng và dễ quản lý.
+
+- **exceptions**  
+  *Công dụng:* Lưu trữ các lớp Exception tùy chỉnh. Khi có lỗi xảy ra, các exception này sẽ được ném ra và có thể được bắt riêng để xử lý theo cách chuyên biệt, cung cấp thông báo lỗi rõ ràng cho client.
+
+- **mappers**  
+  *Công dụng:* Chứa các lớp chuyển đổi (mapper) dùng để chuyển đổi dữ liệu giữa các Entity và DTO. Điều này giúp tách biệt logic chuyển đổi và duy trì code sạch sẽ, dễ bảo trì.
+
+- **repositories**  
+  *Công dụng:* Chứa các interface của Spring Data JPA. Những interface này định nghĩa các phương thức truy xuất dữ liệu cho các Entity, giúp thao tác với cơ sở dữ liệu thông qua các truy vấn tự động hoặc custom queries.
+
+- **security**  
+  *Công dụng:* Chứa các cấu hình và lớp đảm nhiệm bảo mật, như cấu hình Authentication và Authorization, các bộ lọc (filters) và phương thức mã hóa (encryption) để bảo vệ ứng dụng khỏi các truy cập trái phép.
+
+- **utils**  
+  *Công dụng:* Tương tự như trong Frontend, đây là nơi chứa các hàm tiện ích phục vụ cho nhiều tác vụ chung (xử lý dữ liệu, thao tác chuỗi, định dạng,…), giúp giảm việc lặp lại code.
+
+- **services**  
+  *Công dụng:* Chứa các lớp service chứa logic nghiệp vụ chính. Các lớp này thường gọi đến repositories để truy xuất dữ liệu, kết hợp với các lớp mapper để chuyển đổi dữ liệu và thực hiện các nghiệp vụ theo yêu cầu của ứng dụng.
+
+---

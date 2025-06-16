@@ -1,0 +1,1 @@
+Ngoài ra sẽ có các thư mục như **screens** (hoặc pages) để chứa giao diện từng màn hình, **widgets** để chứa các thành phần giao diện tái sử dụng, **models** để định nghĩa cấu trúc dữ liệu, **services** để tương tác với API và các thư mục **utils** để chứa hàm tiện ích chung.  

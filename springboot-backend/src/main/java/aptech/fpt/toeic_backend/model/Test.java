@@ -1,0 +1,41 @@
+
+package aptech.fpt.toeic_backend.model;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.sql.Timestamp;
+import java.util.List;
+import lombok.Data;
+
+/**
+ *
+ * @author caong
+ */
+@Entity
+@Table(name = "test")
+@Data
+public class Test {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long testId;
+
+    private String title;
+    private String description;
+    private Timestamp createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
+
+    // Gợi ý thêm: 1 đề gắn nhiều câu hỏi từ ngân hàng qua bảng TestQuestion
+    @OneToMany(mappedBy = "test", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TestQuestion> testQuestions;
+}

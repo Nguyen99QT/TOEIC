@@ -956,6 +956,15 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
 - 🚀 Basic API communication between frontend/mobile and backend
 - 🚀 Authentication system foundation in place
 
+## 🔄 Recent Updates
+
+### Backend Refactoring (July 2025)
+
+- Consolidated duplicate security and configuration classes
+- Unified project structure in `com.leenglish.toeic` package
+- Improved mobile integration with enhanced CORS support
+- See [BACKEND_REFACTORING.md](BACKEND_REFACTORING.md) for details
+
 ## 🤝 Contributing
 
 1. Fork the repository

@@ -1,79 +1,63 @@
 package com.leenglish.toeic.config;
 
-import java.util.Arrays;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+@Primary // Ensures this is the primary CORS config when multiple are present
+public class CorsConfig {
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        System.out.println("🌐 Configuring CORS mappings...");
+        @Value("#{'${spring.web.cors.allowed-origins}'.split(',')}")
+        private List<String> allowedOrigins;
 
-        registry.addMapping("/**")
-                // FIXED: Only use allowedOriginPatterns when allowCredentials is true
-                .allowedOriginPatterns(
-                        "http://localhost:3000",
-                        "http://127.0.0.1:3000",
-                        "http://localhost:3001",
-                        "https://localhost:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+        @Value("#{'${spring.web.cors.allowed-methods}'.split(',')}")
+        private List<String> allowedMethods;
 
-        System.out.println("✅ CORS configuration applied successfully");
-    }
+        @Value("#{'${spring.web.cors.allowed-headers}'.split(',')}")
+        private List<String> allowedHeaders;
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        System.out.println("🌐 Creating CORS configuration source...");
+        @Value("#{'${spring.web.cors.exposed-headers}'.split(',')}")
+        private List<String> exposedHeaders;
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Value("${spring.web.cors.allow-credentials}")
+        private boolean allowCredentials;
 
-        // FIXED: Only use setAllowedOriginPatterns when credentials are allowed
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000",
-                "http://localhost:3001",
-                "https://localhost:3000"));
+        @Value("${spring.web.cors.max-age:3600}")
+        private long maxAge;
 
-        // Allow all HTTP methods
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"));
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                System.out.println(
+                                "🌐 Initializing primary CORS configuration in com.leenglish.api.security.CorsConfig");
 
-        // Allow all headers including Authorization
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+                CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-        // Expose commonly used headers
-        configuration.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"));
+                // IMPORTANT: When allowCredentials is true, we CANNOT use wildcards for origins
+                // Instead, we use allowedOriginPatterns if we need pattern matching
+                if (allowCredentials) {
+                        corsConfiguration.setAllowedOriginPatterns(allowedOrigins);
+                        System.out.println("✅ Setting specific allowed origin patterns: " + allowedOrigins);
+                } else {
+                        corsConfiguration.setAllowedOrigins(allowedOrigins);
+                        System.out.println("✅ Setting allowed origins: " + allowedOrigins);
+                }
 
-        // Allow credentials (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
+                corsConfiguration.setAllowedMethods(allowedMethods);
+                corsConfiguration.setAllowedHeaders(allowedHeaders);
+                corsConfiguration.setExposedHeaders(exposedHeaders);
+                corsConfiguration.setAllowCredentials(allowCredentials);
+                corsConfiguration.setMaxAge(maxAge);
 
-        // Cache preflight response for 1 hour
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-        // Apply CORS to all endpoints
-        source.registerCorsConfiguration("/**", configuration);
-
-        System.out.println("✅ CORS configuration source created successfully");
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", corsConfiguration);
+                System.out.println("✅ CORS configuration completed successfully");
+                return source;
+        }
 }

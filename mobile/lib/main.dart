@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'screens/home_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/logout_screen.dart';
+import 'screens/auth_check.dart';
+import 'screens/main_navigation_screen.dart';
 
 // GoRouter configuration
 final _router = GoRouter(
+  initialLocation: '/',
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+    GoRoute(path: '/', builder: (context, state) => const AuthCheck()),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(path: '/logout', builder: (context, state) => const LogoutScreen()),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const MainNavigationScreen(),
+    ),
     GoRoute(
       path: '/practice',
       builder:

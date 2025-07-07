@@ -32,12 +32,19 @@ class User {
       fullName: json['fullName'],
       role: UserRole.values.firstWhere(
         (e) => e.toString().split('.').last == json['role'],
+        orElse: () => UserRole.USER,
       ),
-      currentLevel: json['currentLevel'],
-      totalScore: json['totalScore'],
-      testsCompleted: json['testsCompleted'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      currentLevel: json['currentLevel'] ?? 1,
+      totalScore: json['totalScore'] ?? 0,
+      testsCompleted: json['testsCompleted'] ?? 0,
+      createdAt:
+          json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
     );
   }
 
@@ -59,165 +66,226 @@ class User {
 
 enum UserRole { USER, ADMIN }
 
-class Question {
+// Lesson model
+class Lesson {
   final int id;
-  final String content;
-  final QuestionType type;
-  final Section section;
-  final int difficultyLevel;
-  final String? audioUrl;
+  final String title;
+  final String description;
+  final LessonLevel level;
+  final LessonCategory category;
   final String? imageUrl;
-  final List<Answer> answers;
+  final String? contentUrl;
+  final bool isPremium;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Question({
+  Lesson({
     required this.id,
-    required this.content,
-    required this.type,
-    required this.section,
-    required this.difficultyLevel,
-    this.audioUrl,
+    required this.title,
+    required this.description,
+    required this.level,
+    required this.category,
     this.imageUrl,
-    required this.answers,
+    this.contentUrl,
+    required this.isPremium,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(
+  factory Lesson.fromJson(Map<String, dynamic> json) {
+    return Lesson(
       id: json['id'],
-      content: json['content'],
-      type: QuestionType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
+      title: json['title'],
+      description: json['description'],
+      level: LessonLevel.values.firstWhere(
+        (e) => e.toString().split('.').last == json['level'],
+        orElse: () => LessonLevel.BEGINNER,
       ),
-      section: Section.values.firstWhere(
-        (e) => e.toString().split('.').last == json['section'],
+      category: LessonCategory.values.firstWhere(
+        (e) => e.toString().split('.').last == json['category'],
+        orElse: () => LessonCategory.GENERAL,
       ),
-      difficultyLevel: json['difficultyLevel'],
-      audioUrl: json['audioUrl'],
       imageUrl: json['imageUrl'],
-      answers:
-          (json['answers'] as List)
-              .map((answerJson) => Answer.fromJson(answerJson))
-              .toList(),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      contentUrl: json['contentUrl'],
+      isPremium: json['isPremium'] ?? false,
+      createdAt:
+          json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'content': content,
-      'type': type.toString().split('.').last,
-      'section': section.toString().split('.').last,
-      'difficultyLevel': difficultyLevel,
-      'audioUrl': audioUrl,
+      'title': title,
+      'description': description,
+      'level': level.toString().split('.').last,
+      'category': category.toString().split('.').last,
       'imageUrl': imageUrl,
-      'answers': answers.map((answer) => answer.toJson()).toList(),
+      'contentUrl': contentUrl,
+      'isPremium': isPremium,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 }
 
-enum QuestionType {
-  LISTENING_PHOTO_DESCRIPTION,
-  LISTENING_QUESTION_RESPONSE,
-  LISTENING_CONVERSATION,
-  LISTENING_SHORT_TALKS,
-  READING_INCOMPLETE_SENTENCES,
-  READING_TEXT_COMPLETION,
-  READING_SINGLE_PASSAGE,
-  READING_DOUBLE_PASSAGE,
-  READING_TRIPLE_PASSAGE,
+enum LessonLevel { BEGINNER, INTERMEDIATE, ADVANCED }
+
+enum LessonCategory {
+  GENERAL,
+  CONVERSATION,
+  GRAMMAR,
+  VOCABULARY,
+  BUSINESS,
+  TRAVEL,
 }
 
-enum Section { LISTENING, READING }
-
-class Answer {
+// Flashcard model
+class FlashcardSet {
   final int id;
-  final String content;
-  final bool isCorrect;
-  final String optionLabel;
-  final int questionId;
+  final String title;
+  final String description;
+  final FlashcardLevel level;
+  final FlashcardCategory category;
+  final bool isPublic;
+  final int creatorId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final List<Flashcard>? flashcards;
+
+  FlashcardSet({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.level,
+    required this.category,
+    required this.isPublic,
+    required this.creatorId,
+    required this.createdAt,
+    required this.updatedAt,
+    this.flashcards,
+  });
+
+  factory FlashcardSet.fromJson(Map<String, dynamic> json) {
+    return FlashcardSet(
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      level: FlashcardLevel.values.firstWhere(
+        (e) => e.toString().split('.').last == json['level'],
+        orElse: () => FlashcardLevel.BEGINNER,
+      ),
+      category: FlashcardCategory.values.firstWhere(
+        (e) => e.toString().split('.').last == json['category'],
+        orElse: () => FlashcardCategory.GENERAL,
+      ),
+      isPublic: json['isPublic'] ?? true,
+      creatorId: json['creatorId'],
+      createdAt:
+          json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
+      flashcards:
+          json['flashcards'] != null
+              ? (json['flashcards'] as List)
+                  .map((cardJson) => Flashcard.fromJson(cardJson))
+                  .toList()
+              : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'level': level.toString().split('.').last,
+      'category': category.toString().split('.').last,
+      'isPublic': isPublic,
+      'creatorId': creatorId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'flashcards': flashcards?.map((card) => card.toJson()).toList(),
+    };
+  }
+}
+
+class Flashcard {
+  final int id;
+  final String front;
+  final String back;
+  final String? example;
+  final int setId;
+  final String? imageUrl;
+  final String? audioUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Answer({
+  Flashcard({
     required this.id,
-    required this.content,
-    required this.isCorrect,
-    required this.optionLabel,
-    required this.questionId,
+    required this.front,
+    required this.back,
+    this.example,
+    required this.setId,
+    this.imageUrl,
+    this.audioUrl,
     required this.createdAt,
     required this.updatedAt,
   });
 
-  factory Answer.fromJson(Map<String, dynamic> json) {
-    return Answer(
+  factory Flashcard.fromJson(Map<String, dynamic> json) {
+    return Flashcard(
       id: json['id'],
-      content: json['content'],
-      isCorrect: json['isCorrect'],
-      optionLabel: json['optionLabel'],
-      questionId: json['questionId'],
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      front: json['front'],
+      back: json['back'],
+      example: json['example'],
+      setId: json['setId'],
+      imageUrl: json['imageUrl'],
+      audioUrl: json['audioUrl'],
+      createdAt:
+          json['createdAt'] != null
+              ? DateTime.parse(json['createdAt'])
+              : DateTime.now(),
+      updatedAt:
+          json['updatedAt'] != null
+              ? DateTime.parse(json['updatedAt'])
+              : DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'content': content,
-      'isCorrect': isCorrect,
-      'optionLabel': optionLabel,
-      'questionId': questionId,
+      'front': front,
+      'back': back,
+      'example': example,
+      'setId': setId,
+      'imageUrl': imageUrl,
+      'audioUrl': audioUrl,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 }
 
-class TestResult {
-  final int userId;
-  final int score;
-  final int questionsAnswered;
-  final int correctAnswers;
-  final Section section;
-  final DateTime completedAt;
+enum FlashcardLevel { BEGINNER, INTERMEDIATE, ADVANCED }
 
-  TestResult({
-    required this.userId,
-    required this.score,
-    required this.questionsAnswered,
-    required this.correctAnswers,
-    required this.section,
-    required this.completedAt,
-  });
-
-  factory TestResult.fromJson(Map<String, dynamic> json) {
-    return TestResult(
-      userId: json['userId'],
-      score: json['score'],
-      questionsAnswered: json['questionsAnswered'],
-      correctAnswers: json['correctAnswers'],
-      section: Section.values.firstWhere(
-        (e) => e.toString().split('.').last == json['section'],
-      ),
-      completedAt: DateTime.parse(json['completedAt']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'score': score,
-      'questionsAnswered': questionsAnswered,
-      'correctAnswers': correctAnswers,
-      'section': section.toString().split('.').last,
-      'completedAt': completedAt.toIso8601String(),
-    };
-  }
+enum FlashcardCategory {
+  GENERAL,
+  VOCABULARY,
+  GRAMMAR,
+  BUSINESS,
+  TRAVEL,
+  IDIOMS,
+  PHRASAL_VERBS,
 }

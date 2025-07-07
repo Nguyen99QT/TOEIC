@@ -1,29 +1,86 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/toeic_models.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8080/api';
+  // Base URL configuration for different environments
+  static const String _localhost =
+      'http://10.0.2.2:8080/api'; // Android emulator
+  static const String _iOSLocalhost =
+      'http://localhost:8080/api'; // iOS simulator
+  static const String _productionUrl =
+      'https://your-production-domain.com/api'; // Production
 
-  // Headers
-  Map<String, String> get headers => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+  // Use the correct base URL based on platform
+  static String get baseUrl {
+    if (kReleaseMode) {
+      return _productionUrl;
+    } else {
+      if (Platform.isAndroid) {
+        return _localhost;
+      } else if (Platform.isIOS) {
+        return _iOSLocalhost;
+      } else {
+        return _localhost;
+      }
+    }
+  }
 
-  // Generic request method
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
+
+  // Debug logs
+  bool _debugMode = true;
+
+  void _logDebug(String message) {
+    if (_debugMode) {
+      debugPrint('📡 API: $message');
+    }
+  }
+
+  // Headers with authentication
+  Future<Map<String, String>> getHeaders({bool requireAuth = false}) async {
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    if (requireAuth) {
+      final token = await secureStorage.read(key: 'token');
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+        _logDebug('Adding auth token to request');
+      } else {
+        _logDebug('No auth token available');
+      }
+    }
+
+    return headers;
+  }
+
+  // Generic request method with error handling and logging
   Future<dynamic> _makeRequest(
     String endpoint, {
     String method = 'GET',
     Map<String, dynamic>? body,
     Map<String, String>? queryParams,
+    bool requireAuth = false,
+    bool retryOnUnauthorized = true,
   }) async {
     try {
       final uri = Uri.parse('$baseUrl$endpoint');
       final uriWithParams =
           queryParams != null ? uri.replace(queryParameters: queryParams) : uri;
+
+      final headers = await getHeaders(requireAuth: requireAuth);
+
+      _logDebug('${method.toUpperCase()} $uriWithParams');
+      if (body != null) {
+        _logDebug('Request body: ${jsonEncode(body)}');
+      }
 
       late http.Response response;
 
@@ -52,30 +109,237 @@ class ApiService {
           throw Exception('Unsupported HTTP method: $method');
       }
 
+      _logDebug('Response status: ${response.statusCode}');
+
+      if (response.body.isNotEmpty) {
+        _logDebug(
+          'Response body: ${response.body.substring(0, response.body.length > 500 ? 500 : response.body.length)}${response.body.length > 500 ? "..." : ""}',
+        );
+      }
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) return null;
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401 &&
+          requireAuth &&
+          retryOnUnauthorized) {
+        // Token may have expired, try to refresh
+        _logDebug('Unauthorized error - attempting token refresh');
+        final refreshed = await refreshToken();
+        if (refreshed) {
+          _logDebug('Token refresh successful - retrying request');
+          // Retry with new token
+          return _makeRequest(
+            endpoint,
+            method: method,
+            body: body,
+            queryParams: queryParams,
+            requireAuth: requireAuth,
+            retryOnUnauthorized: false, // Prevent infinite loop
+          );
+        } else {
+          _logDebug('Token refresh failed');
+          throw UnauthorizedException(
+            'Authentication failed: Token refresh unsuccessful',
+          );
+        }
       } else {
-        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+        String errorMessage = 'HTTP Error ${response.statusCode}';
+        try {
+          final errorData = jsonDecode(response.body);
+          if (errorData['message'] != null) {
+            errorMessage = errorData['message'];
+          } else if (errorData['error'] != null) {
+            errorMessage = errorData['error'];
+          }
+        } catch (e) {
+          // Ignore JSON parse errors in error handling
+        }
+
+        _logDebug('API Error: $errorMessage');
+
+        switch (response.statusCode) {
+          case 400:
+            throw BadRequestException(errorMessage);
+          case 401:
+            throw UnauthorizedException(errorMessage);
+          case 403:
+            throw ForbiddenException(errorMessage);
+          case 404:
+            throw NotFoundException(errorMessage);
+          case 500:
+            throw ServerException(errorMessage);
+          default:
+            throw ApiException('$errorMessage (${response.statusCode})');
+        }
       }
+    } on SocketException {
+      _logDebug('Network error: No internet connection');
+      throw NetworkException('No internet connection');
     } catch (e) {
-      throw Exception('Network error: $e');
+      if (e is ApiException) {
+        rethrow;
+      }
+      _logDebug('Unexpected error: $e');
+      throw ApiException('Network error: $e');
+    }
+  }
+
+  // Authentication API methods
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final data = await _makeRequest(
+      '/auth/login',
+      method: 'POST',
+      body: {'email': email, 'password': password},
+    );
+
+    // Store tokens securely
+    if (data['token'] != null) {
+      await secureStorage.write(key: 'token', value: data['token']);
+      _logDebug('JWT token stored securely');
+    }
+
+    if (data['refreshToken'] != null) {
+      await secureStorage.write(
+        key: 'refreshToken',
+        value: data['refreshToken'],
+      );
+      _logDebug('Refresh token stored securely');
+    }
+
+    return {'user': User.fromJson(data['user']), 'token': data['token']};
+  }
+
+  Future<Map<String, dynamic>> register(
+    String name,
+    String email,
+    String password,
+  ) async {
+    final data = await _makeRequest(
+      '/auth/register',
+      method: 'POST',
+      body: {'name': name, 'email': email, 'password': password},
+    );
+
+    // Store tokens securely if registration also returns tokens
+    if (data['token'] != null) {
+      await secureStorage.write(key: 'token', value: data['token']);
+      _logDebug('JWT token stored securely');
+    }
+
+    if (data['refreshToken'] != null) {
+      await secureStorage.write(
+        key: 'refreshToken',
+        value: data['refreshToken'],
+      );
+      _logDebug('Refresh token stored securely');
+    }
+
+    return {'user': User.fromJson(data['user']), 'token': data['token']};
+  }
+
+  Future<bool> logout() async {
+    try {
+      final token = await secureStorage.read(key: 'token');
+      if (token == null) {
+        _logDebug('Already logged out (no token)');
+        return true;
+      }
+
+      await _makeRequest('/auth/logout', method: 'POST', requireAuth: true);
+      _logDebug('Logout successful - server side');
+
+      // Clear stored tokens
+      await secureStorage.delete(key: 'token');
+      await secureStorage.delete(key: 'refreshToken');
+      _logDebug('Tokens cleared from secure storage');
+
+      return true;
+    } catch (e) {
+      _logDebug('Logout error: $e - clearing tokens anyway');
+      // Clear tokens anyway on error
+      await secureStorage.delete(key: 'token');
+      await secureStorage.delete(key: 'refreshToken');
+      return false;
+    }
+  }
+
+  Future<bool> refreshToken() async {
+    try {
+      final refreshToken = await secureStorage.read(key: 'refreshToken');
+      if (refreshToken == null) {
+        _logDebug('No refresh token available');
+        return false;
+      }
+
+      _logDebug('Attempting to refresh token');
+      final data = await _makeRequest(
+        '/auth/refresh',
+        method: 'POST',
+        body: {'refreshToken': refreshToken},
+      );
+
+      if (data != null && data['token'] != null) {
+        await secureStorage.write(key: 'token', value: data['token']);
+        _logDebug('New JWT token stored');
+
+        if (data['refreshToken'] != null) {
+          await secureStorage.write(
+            key: 'refreshToken',
+            value: data['refreshToken'],
+          );
+          _logDebug('New refresh token stored');
+        }
+
+        return true;
+      }
+
+      _logDebug('Token refresh failed - no token in response');
+      return false;
+    } catch (e) {
+      _logDebug('Token refresh error: $e');
+      return false;
+    }
+  }
+
+  // Check if user is authenticated
+  Future<bool> isAuthenticated() async {
+    try {
+      final token = await secureStorage.read(key: 'token');
+      if (token == null) {
+        return false;
+      }
+
+      // Validate token with server
+      final result = await _makeRequest(
+        '/auth/validate',
+        requireAuth: true,
+        retryOnUnauthorized: false, // Don't try to refresh on validate
+      );
+
+      return result != null && result['valid'] == true;
+    } catch (e) {
+      _logDebug('Authentication check error: $e');
+      return false;
     }
   }
 
   // User API methods
   Future<List<User>> getAllUsers() async {
-    final data = await _makeRequest('/users');
+    final data = await _makeRequest('/users', requireAuth: true);
     return (data as List).map((json) => User.fromJson(json)).toList();
   }
 
   Future<User> getUserById(int id) async {
-    final data = await _makeRequest('/users/$id');
+    final data = await _makeRequest('/users/$id', requireAuth: true);
     return User.fromJson(data);
   }
 
   Future<User> getUserByUsername(String username) async {
-    final data = await _makeRequest('/users/username/$username');
+    final data = await _makeRequest(
+      '/users/username/$username',
+      requireAuth: true,
+    );
     return User.fromJson(data);
   }
 
@@ -89,130 +353,112 @@ class ApiService {
       '/users/$id',
       method: 'PUT',
       body: userData,
+      requireAuth: true,
     );
     return User.fromJson(data);
   }
 
-  Future<void> deleteUser(int id) async {
-    await _makeRequest('/users/$id', method: 'DELETE');
-  }
-
-  Future<User> updateUserScore(int id, int score) async {
-    final data = await _makeRequest(
-      '/users/$id/score',
-      method: 'POST',
-      body: {'score': score},
-    );
+  // Get the current user profile
+  Future<User> getCurrentUser() async {
+    final data = await _makeRequest('/users/me', requireAuth: true);
     return User.fromJson(data);
   }
 
-  Future<List<User>> getLeaderboard() async {
-    final data = await _makeRequest('/users/leaderboard');
-    return (data as List).map((json) => User.fromJson(json)).toList();
+  // Lesson API methods
+  Future<List<Lesson>> getAllLessons({bool requireAuth = true}) async {
+    final data = await _makeRequest('/lessons', requireAuth: requireAuth);
+    return (data as List).map((json) => Lesson.fromJson(json)).toList();
   }
 
-  // Question API methods
-  Future<List<Question>> getAllQuestions({
-    QuestionType? type,
-    Section? section,
-    int? difficulty,
-    int? limit,
+  Future<List<Lesson>> getFreeLessons() async {
+    final data = await _makeRequest('/lessons/free');
+    return (data as List).map((json) => Lesson.fromJson(json)).toList();
+  }
+
+  Future<Lesson> getLessonById(int id, {bool requireAuth = true}) async {
+    final data = await _makeRequest('/lessons/$id', requireAuth: requireAuth);
+    return Lesson.fromJson(data);
+  }
+
+  // Flashcard API methods
+  Future<List<FlashcardSet>> getAllFlashcardSets({
+    bool requireAuth = true,
   }) async {
-    final queryParams = <String, String>{};
-
-    if (type != null) queryParams['type'] = type.toString().split('.').last;
-    if (section != null) {
-      queryParams['section'] = section.toString().split('.').last;
-    }
-    if (difficulty != null) queryParams['difficulty'] = difficulty.toString();
-    if (limit != null) queryParams['limit'] = limit.toString();
-
-    final data = await _makeRequest('/questions', queryParams: queryParams);
-    return (data as List).map((json) => Question.fromJson(json)).toList();
-  }
-
-  Future<Question> getQuestionById(int id) async {
-    final data = await _makeRequest('/questions/$id');
-    return Question.fromJson(data);
-  }
-
-  Future<Question> createQuestion(Map<String, dynamic> questionData) async {
     final data = await _makeRequest(
-      '/questions',
-      method: 'POST',
-      body: questionData,
+      '/flashcard-sets',
+      requireAuth: requireAuth,
     );
-    return Question.fromJson(data);
+    return (data as List).map((json) => FlashcardSet.fromJson(json)).toList();
   }
 
-  Future<Question> updateQuestion(
-    int id,
-    Map<String, dynamic> questionData,
-  ) async {
-    final data = await _makeRequest(
-      '/questions/$id',
-      method: 'PUT',
-      body: questionData,
-    );
-    return Question.fromJson(data);
+  Future<List<FlashcardSet>> getPublicFlashcardSets() async {
+    final data = await _makeRequest('/flashcard-sets/public');
+    return (data as List).map((json) => FlashcardSet.fromJson(json)).toList();
   }
 
-  Future<void> deleteQuestion(int id) async {
-    await _makeRequest('/questions/$id', method: 'DELETE');
-  }
-
-  Future<List<Question>> getRandomQuestions({int limit = 10}) async {
-    final data = await _makeRequest(
-      '/questions/random',
-      queryParams: {'limit': limit.toString()},
-    );
-    return (data as List).map((json) => Question.fromJson(json)).toList();
-  }
-
-  Future<List<Question>> getRandomQuestionsBySection(
-    Section section, {
-    int limit = 10,
+  Future<FlashcardSet> getFlashcardSetById(
+    int id, {
+    bool requireAuth = true,
   }) async {
-    final sectionName = section.toString().split('.').last;
     final data = await _makeRequest(
-      '/questions/section/$sectionName/random',
-      queryParams: {'limit': limit.toString()},
+      '/flashcard-sets/$id',
+      requireAuth: requireAuth,
     );
-    return (data as List).map((json) => Question.fromJson(json)).toList();
+    return FlashcardSet.fromJson(data);
   }
 
-  Future<int> getQuestionCountBySection(Section section) async {
-    final sectionName = section.toString().split('.').last;
-    final data = await _makeRequest('/questions/count/section/$sectionName');
-    return data as int;
-  }
-
-  Future<int> getQuestionCountByType(QuestionType type) async {
-    final typeName = type.toString().split('.').last;
-    final data = await _makeRequest('/questions/count/type/$typeName');
-    return data as int;
-  }
-
-  // Auth API methods
-  Future<Map<String, dynamic>> login(String username, String password) async {
+  Future<List<FlashcardSet>> searchFlashcardSets(String query) async {
     final data = await _makeRequest(
-      '/auth/login',
-      method: 'POST',
-      body: {'username': username, 'password': password},
+      '/flashcard-sets/search',
+      queryParams: {'query': query},
     );
-    return {'user': User.fromJson(data['user']), 'token': data['token']};
+    return (data as List).map((json) => FlashcardSet.fromJson(json)).toList();
   }
 
-  Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
-    final data = await _makeRequest(
-      '/auth/register',
-      method: 'POST',
-      body: userData,
-    );
-    return {'user': User.fromJson(data['user']), 'token': data['token']};
+  Future<List<Flashcard>> getFlashcardsForSet(int setId) async {
+    final data = await _makeRequest('/flashcards/set/$setId');
+    return (data as List).map((json) => Flashcard.fromJson(json)).toList();
   }
 
-  Future<void> logout() async {
-    await _makeRequest('/auth/logout', method: 'POST');
+  // Constructor with debug mode parameter
+  ApiService({bool debugMode = true}) {
+    _debugMode = debugMode;
+    _logDebug(
+      'Initializing API Service for ${kReleaseMode ? 'PRODUCTION' : 'DEVELOPMENT'}',
+    );
+    _logDebug('Base URL: $baseUrl');
   }
+}
+
+// Custom exceptions for better error handling
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class NetworkException extends ApiException {
+  NetworkException(String message) : super(message);
+}
+
+class UnauthorizedException extends ApiException {
+  UnauthorizedException(String message) : super(message);
+}
+
+class BadRequestException extends ApiException {
+  BadRequestException(String message) : super(message);
+}
+
+class NotFoundException extends ApiException {
+  NotFoundException(String message) : super(message);
+}
+
+class ForbiddenException extends ApiException {
+  ForbiddenException(String message) : super(message);
+}
+
+class ServerException extends ApiException {
+  ServerException(String message) : super(message);
 }

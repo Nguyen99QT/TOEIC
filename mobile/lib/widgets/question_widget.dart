@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../models/toeic_models.dart';
+import '../models/toeic_study_models.dart';
 
 class QuestionWidget extends StatefulWidget {
   final Question question;
@@ -129,11 +128,9 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             const SizedBox(height: 20),
 
             // Answer options
-            ...widget.question.answers
-                .asMap()
-                .entries
-                .map((entry) => _buildAnswerOption(entry.value))
-                ,
+            ...widget.question.answers.asMap().entries.map(
+              (entry) => _buildAnswerOption(entry.value),
+            ),
 
             // Result display
             if (widget.showResult) _buildResultDisplay(),

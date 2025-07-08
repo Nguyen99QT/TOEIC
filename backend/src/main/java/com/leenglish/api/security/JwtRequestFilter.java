@@ -1,7 +1,7 @@
 package com.leenglish.api.security;
 
-import com.leenglish.api.services.TokenBlacklistService;
-import com.leenglish.api.utils.JwtUtils;
+import com.leenglish.toeic.service.TokenBlacklistService;
+import com.leenglish.toeic.utils.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

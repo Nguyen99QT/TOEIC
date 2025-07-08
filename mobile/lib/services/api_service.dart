@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/toeic_models.dart';
+import '../models/toeic_study_models.dart' as study;
 
 class ApiService {
   // Base URL configuration for different environments
@@ -420,6 +421,109 @@ class ApiService {
     return (data as List).map((json) => Flashcard.fromJson(json)).toList();
   }
 
+  // TOEIC Study API methods
+  Future<List<study.Lesson>> getLessons({
+    String? level,
+    bool? isPremium,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (level != null) {
+        queryParams['level'] = level;
+      }
+      if (isPremium != null) {
+        queryParams['isPremium'] = isPremium.toString();
+      }
+
+      final data = await _makeRequest(
+        '/lessons',
+        queryParams: queryParams,
+        requireAuth: true,
+      );
+
+      if (data == null) return [];
+
+      return (data as List).map((item) => study.Lesson.fromJson(item)).toList();
+    } catch (e) {
+      _logDebug('Error fetching lessons: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<study.Exercise>> getExercisesByLessonId(int lessonId) async {
+    try {
+      final data = await _makeRequest(
+        '/lessons/$lessonId/exercises',
+        requireAuth: true,
+      );
+
+      if (data == null) return [];
+
+      return (data as List)
+          .map((item) => study.Exercise.fromJson(item))
+          .toList();
+    } catch (e) {
+      _logDebug('Error fetching exercises for lesson $lessonId: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<study.Question>> getQuestionsByExerciseId(int exerciseId) async {
+    try {
+      final data = await _makeRequest(
+        '/exercises/$exerciseId/questions',
+        requireAuth: true,
+      );
+
+      if (data == null) return [];
+
+      return (data as List)
+          .map((item) => study.Question.fromJson(item))
+          .toList();
+    } catch (e) {
+      _logDebug('Error fetching questions for exercise $exerciseId: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> submitExerciseResult({
+    required int exerciseId,
+    required int score,
+    required int totalQuestions,
+    required Map<int, study.Answer> answers,
+  }) async {
+    try {
+      final Map<String, dynamic> resultData = {
+        'exerciseId': exerciseId,
+        'score': score,
+        'totalQuestions': totalQuestions,
+        'answers':
+            answers.entries
+                .map(
+                  (entry) => {
+                    'questionId': entry.key,
+                    'answerId': entry.value.id,
+                    'isCorrect': entry.value.isCorrect,
+                  },
+                )
+                .toList(),
+        'completedAt': DateTime.now().toIso8601String(),
+      };
+
+      final data = await _makeRequest(
+        '/exercise-results',
+        method: 'POST',
+        body: resultData,
+        requireAuth: true,
+      );
+
+      return data != null;
+    } catch (e) {
+      _logDebug('Error submitting exercise result: $e');
+      rethrow;
+    }
+  }
+
   // Constructor with debug mode parameter
   ApiService({bool debugMode = true}) {
     _debugMode = debugMode;
@@ -440,25 +544,25 @@ class ApiException implements Exception {
 }
 
 class NetworkException extends ApiException {
-  NetworkException(String message) : super(message);
+  NetworkException(super.message);
 }
 
 class UnauthorizedException extends ApiException {
-  UnauthorizedException(String message) : super(message);
+  UnauthorizedException(super.message);
 }
 
 class BadRequestException extends ApiException {
-  BadRequestException(String message) : super(message);
+  BadRequestException(super.message);
 }
 
 class NotFoundException extends ApiException {
-  NotFoundException(String message) : super(message);
+  NotFoundException(super.message);
 }
 
 class ForbiddenException extends ApiException {
-  ForbiddenException(String message) : super(message);
+  ForbiddenException(super.message);
 }
 
 class ServerException extends ApiException {
-  ServerException(String message) : super(message);
+  ServerException(super.message);
 }

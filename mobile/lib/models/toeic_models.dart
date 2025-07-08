@@ -289,3 +289,108 @@ enum FlashcardCategory {
   IDIOMS,
   PHRASAL_VERBS,
 }
+
+// TOEIC Question and Answer Models
+enum QuestionSection {
+  LISTENING_PART1,
+  LISTENING_PART2,
+  LISTENING_PART3,
+  LISTENING_PART4,
+  READING_PART5,
+  READING_PART6,
+  READING_PART7,
+}
+
+class Question {
+  final int id;
+  final QuestionSection section;
+  final int difficultyLevel;
+  final String content;
+  final String? imageUrl;
+  final String? audioUrl;
+  final List<Answer> answers;
+
+  Question({
+    required this.id,
+    required this.section,
+    required this.difficultyLevel,
+    required this.content,
+    this.imageUrl,
+    this.audioUrl,
+    required this.answers,
+  });
+
+  factory Question.fromJson(Map<String, dynamic> json) {
+    return Question(
+      id: json['id'],
+      section: _parseQuestionSection(json['section']),
+      difficultyLevel: json['difficultyLevel'] ?? 1,
+      content: json['content'] ?? '',
+      imageUrl: json['imageUrl'],
+      audioUrl: json['audioUrl'],
+      answers:
+          json['answers'] != null
+              ? List<Answer>.from(
+                json['answers'].map((a) => Answer.fromJson(a)),
+              )
+              : [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'section': section.toString().split('.').last,
+      'difficultyLevel': difficultyLevel,
+      'content': content,
+      'imageUrl': imageUrl,
+      'audioUrl': audioUrl,
+      'answers': answers.map((a) => a.toJson()).toList(),
+    };
+  }
+
+  static QuestionSection _parseQuestionSection(String? sectionStr) {
+    if (sectionStr == null) return QuestionSection.READING_PART5;
+
+    try {
+      return QuestionSection.values.firstWhere(
+        (e) => e.toString().split('.').last == sectionStr,
+        orElse: () => QuestionSection.READING_PART5,
+      );
+    } catch (_) {
+      return QuestionSection.READING_PART5;
+    }
+  }
+}
+
+class Answer {
+  final int id;
+  final String content;
+  final bool isCorrect;
+  final String optionLabel; // A, B, C, D, etc.
+
+  Answer({
+    required this.id,
+    required this.content,
+    required this.isCorrect,
+    required this.optionLabel,
+  });
+
+  factory Answer.fromJson(Map<String, dynamic> json) {
+    return Answer(
+      id: json['id'],
+      content: json['content'] ?? '',
+      isCorrect: json['isCorrect'] ?? false,
+      optionLabel: json['optionLabel'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'content': content,
+      'isCorrect': isCorrect,
+      'optionLabel': optionLabel,
+    };
+  }
+}

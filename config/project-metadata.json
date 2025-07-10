@@ -1,0 +1,316 @@
+{
+    "project": {
+        "name": "LeEnglish TOEIC Platform",
+        "description": "Multi-platform TOEIC learning platform with Spring Boot backend, Next.js frontend, and Flutter mobile app",
+        "version": "1.0.0",
+        "type": "full-stack",
+        "repository": "https://github.com/HUYDUU19/leenglish-toeic-platform",
+        "license": "MIT",
+        "author": "HUYDUU19",
+        "technologies": [
+            "Spring Boot",
+            "Next.js",
+            "Flutter",
+            "MySQL",
+            "TypeScript",
+            "Java",
+            "Dart"
+        ]
+    },
+    "structure": {
+        "backend": {
+            "path": "./backend",
+            "type": "spring-boot",
+            "language": "java",
+            "port": 8080,
+            "database": "MySQL",
+            "main_class": "com.leenglish.toeic.ToeicApplication",
+            "config_file": "src/main/resources/application.properties",
+            "build_file": "pom.xml",
+            "key_directories": [
+                "src/main/java/com/leenglish/toeic/controller",
+                "src/main/java/com/leenglish/toeic/service",
+                "src/main/java/com/leenglish/toeic/repository",
+                "src/main/java/com/leenglish/toeic/domain",
+                "src/main/java/com/leenglish/toeic/config",
+                "src/main/resources"
+            ]
+        },
+        "frontend": {
+            "path": "./frontend",
+            "type": "next.js",
+            "language": "typescript",
+            "port": 3000,
+            "main_file": "src/app/page.tsx",
+            "layout_file": "src/app/layout.tsx",
+            "config_file": "next.config.js",
+            "package_file": "package.json",
+            "key_directories": [
+                "src/app",
+                "src/components",
+                "src/lib",
+                "src/types"
+            ]
+        },
+        "mobile": {
+            "path": "./mobile",
+            "type": "flutter",
+            "language": "dart",
+            "main_file": "lib/main.dart",
+            "config_file": "pubspec.yaml",
+            "key_directories": [
+                "lib/models",
+                "lib/providers",
+                "lib/screens",
+                "lib/services",
+                "lib/widgets"
+            ]
+        }
+    },
+    "api": {
+        "base_url": "http://localhost:8080",
+        "version": "v1",
+        "authentication": "JWT",
+        "endpoints": {
+            "health": {
+                "path": "/api/health",
+                "method": "GET",
+                "auth_required": false,
+                "description": "Health check endpoint"
+            },
+            "auth": {
+                "login": {
+                    "path": "/api/auth/login",
+                    "method": "POST",
+                    "auth_required": false,
+                    "description": "User authentication"
+                },
+                "register": {
+                    "path": "/api/auth/register",
+                    "method": "POST",
+                    "auth_required": false,
+                    "description": "User registration"
+                },
+                "logout": {
+                    "path": "/api/auth/logout",
+                    "method": "POST",
+                    "auth_required": true,
+                    "description": "User logout"
+                },
+                "refresh": {
+                    "path": "/api/auth/refresh",
+                    "method": "POST",
+                    "auth_required": false,
+                    "description": "Refresh JWT token"
+                }
+            },
+            "users": {
+                "list": {
+                    "path": "/api/users",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get all users"
+                },
+                "get": {
+                    "path": "/api/users/{id}",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get user by ID"
+                },
+                "update": {
+                    "path": "/api/users/{id}",
+                    "method": "PUT",
+                    "auth_required": true,
+                    "description": "Update user profile"
+                },
+                "score": {
+                    "path": "/api/users/{id}/score",
+                    "method": "POST",
+                    "auth_required": true,
+                    "description": "Update user score"
+                },
+                "leaderboard": {
+                    "path": "/api/users/leaderboard",
+                    "method": "GET",
+                    "auth_required": false,
+                    "description": "Get top users"
+                }
+            },
+            "questions": {
+                "list": {
+                    "path": "/api/questions",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get questions with filters"
+                },
+                "get": {
+                    "path": "/api/questions/{id}",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get specific question"
+                },
+                "create": {
+                    "path": "/api/questions",
+                    "method": "POST",
+                    "auth_required": true,
+                    "description": "Create new question"
+                },
+                "update": {
+                    "path": "/api/questions/{id}",
+                    "method": "PUT",
+                    "auth_required": true,
+                    "description": "Update question"
+                },
+                "delete": {
+                    "path": "/api/questions/{id}",
+                    "method": "DELETE",
+                    "auth_required": true,
+                    "description": "Delete question"
+                },
+                "random": {
+                    "path": "/api/questions/random",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get random questions"
+                },
+                "by_section": {
+                    "path": "/api/questions/section/{section}/random",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get random questions by section"
+                }
+            },
+            "test_sessions": {
+                "create": {
+                    "path": "/api/test-sessions",
+                    "method": "POST",
+                    "auth_required": true,
+                    "description": "Start new test session"
+                },
+                "get": {
+                    "path": "/api/test-sessions/{id}",
+                    "method": "GET",
+                    "auth_required": true,
+                    "description": "Get test session"
+                },
+                "update": {
+                    "path": "/api/test-sessions/{id}",
+                    "method": "PUT",
+                    "auth_required": true,
+                    "description": "Update test session"
+                },
+                "submit": {
+                    "path": "/api/test-sessions/{id}/submit",
+                    "method": "POST",
+                    "auth_required": true,
+                    "description": "Submit test answers"
+                }
+            }
+        }
+    },
+    "database": {
+        "type": "MySQL",
+        "name": "english5",
+        "host": "localhost",
+        "port": 3306,
+        "username": "root",
+        "connection_url": "jdbc:mysql://localhost:3306/english5?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC",
+        "main_entities": [
+            "User",
+            "Question",
+            "TestSession",
+            "UserScore",
+            "FlashcardSet"
+        ]
+    },
+    "development": {
+        "requirements": {
+            "backend": [
+                "Java 17+",
+                "Maven 3.6+",
+                "MySQL 8.0+"
+            ],
+            "frontend": [
+                "Node.js 18+",
+                "npm or yarn"
+            ],
+            "mobile": [
+                "Flutter SDK 3.x",
+                "Android Studio or VS Code",
+                "Android SDK or iOS SDK"
+            ]
+        },
+        "commands": {
+            "backend": {
+                "install": "mvn clean install",
+                "start": "mvn spring-boot:run",
+                "test": "mvn test",
+                "build": "mvn clean package"
+            },
+            "frontend": {
+                "install": "npm install",
+                "start": "npm run dev",
+                "build": "npm run build",
+                "test": "npm test"
+            },
+            "mobile": {
+                "install": "flutter pub get",
+                "start": "flutter run",
+                "build_android": "flutter build apk",
+                "build_ios": "flutter build ios",
+                "test": "flutter test"
+            }
+        },
+        "urls": {
+            "backend": "http://localhost:8080",
+            "frontend": "http://localhost:3000",
+            "api_health": "http://localhost:8080/api/health",
+            "swagger_ui": "http://localhost:8080/swagger-ui.html"
+        }
+    },
+    "testing": {
+        "api_testing": {
+            "postman_collection": "./LeEnglish-TOEIC-API.postman_collection.json",
+            "rest_client_file": "./api-tests.http",
+            "test_data": {
+                "test_user": {
+                    "username": "testuser1",
+                    "email": "test@example.com",
+                    "password": "password123"
+                }
+            }
+        },
+        "test_sequence": [
+            "Health Check",
+            "User Registration",
+            "User Login",
+            "Get JWT Token",
+            "Test Protected Endpoints"
+        ]
+    },
+    "deployment": {
+        "environments": {
+            "development": {
+                "backend_url": "http://localhost:8080",
+                "frontend_url": "http://localhost:3000",
+                "database": "localhost:3306/english5"
+            },
+            "production": {
+                "backend_url": "TBD",
+                "frontend_url": "TBD",
+                "database": "TBD"
+            }
+        },
+        "build_outputs": {
+            "backend": "target/toeiclearn-api-1.0.0.jar",
+            "frontend": ".next/",
+            "mobile_android": "build/app/outputs/flutter-apk/app-release.apk"
+        }
+    },
+    "documentation": {
+        "readme": "./README.md",
+        "api_docs": "./docs/API_DOCUMENTATION.md",
+        "mcp_config": "./docs/MCP_CONFIGURATION.md",
+        "architecture": "./docs/ARCHITECTURE.md"
+    }
+}

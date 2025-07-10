@@ -1,0 +1,40 @@
+# Temporary files
+temp/
+*.tmp
+*.temp
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated reports (can be regenerated)
+docs/reports/*.json
+
+# Audio/Image outputs that can be regenerated  
+src/main/resources/static/audio/temp_*
+src/main/resources/static/images/temp_*
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Build outputs
+target/
+build/
+dist/
+
+# Node modules (if any)
+node_modules/
+
+# Package files
+*.jar
+*.war
+*.ear

@@ -1,0 +1,39 @@
+{
+  "name": "leenglish-toeic-platform",
+  "version": "1.0.0",
+  "description": "Multi-platform TOEIC learning platform with Spring Boot backend, Next.js frontend, and Flutter mobile app",
+  "scripts": {
+    "dev:backend": "cd backend && mvn spring-boot:run",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:mobile": "cd mobile && flutter run",
+    "install:all": "cd frontend && npm install && cd ../mobile && flutter pub get",
+    "build:backend": "cd backend && mvn clean package",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build:backend && npm run build:frontend",
+    "test:backend": "cd backend && mvn test",
+    "test:frontend": "cd frontend && npm test",
+    "test:mobile": "cd mobile && flutter test",
+    "test:all": "npm run test:backend && npm run test:frontend && npm run test:mobile",
+    "clean:backend": "cd backend && mvn clean",
+    "clean:frontend": "cd frontend && rm -rf .next node_modules && npm install",
+    "clean:mobile": "cd mobile && flutter clean && flutter pub get",
+    "clean:all": "npm run clean:backend && npm run clean:frontend && npm run clean:mobile"
+  },
+  "keywords": [
+    "toeic",
+    "learning",
+    "spring-boot",
+    "nextjs",
+    "flutter",
+    "multiplatform"
+  ],
+  "author": "LeEnglish Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/leenglish-toeic-platform.git"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.8"
+  }
+}

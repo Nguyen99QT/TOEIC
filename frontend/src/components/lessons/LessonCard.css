@@ -1,0 +1,158 @@
+/* ================================================================
+ * LESSON CARD STYLES
+ * ================================================================ */
+
+.lesson-card {
+  transition: all 0.3s ease;
+}
+
+.lesson-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.lesson-card .audio-button {
+  transition: all 0.2s ease;
+}
+
+.lesson-card .audio-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.lesson-card .audio-button:active {
+  transform: scale(0.95);
+}
+
+.lesson-card .image-placeholder {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #3b82f6 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.lesson-progress-bar[data-progress] {
+  width: var(--progress, 0%);
+}
+
+.lesson-progress-bar[data-progress="0"] {
+  --progress: 0%;
+}
+.lesson-progress-bar[data-progress="10"] {
+  --progress: 10%;
+}
+.lesson-progress-bar[data-progress="20"] {
+  --progress: 20%;
+}
+.lesson-progress-bar[data-progress="30"] {
+  --progress: 30%;
+}
+.lesson-progress-bar[data-progress="40"] {
+  --progress: 40%;
+}
+.lesson-progress-bar[data-progress="50"] {
+  --progress: 50%;
+}
+.lesson-progress-bar[data-progress="60"] {
+  --progress: 60%;
+}
+.lesson-progress-bar[data-progress="70"] {
+  --progress: 70%;
+}
+.lesson-progress-bar[data-progress="80"] {
+  --progress: 80%;
+}
+.lesson-progress-bar[data-progress="90"] {
+  --progress: 90%;
+}
+.lesson-progress-bar[data-progress="100"] {
+  --progress: 100%;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Premium badge animation */
+.lesson-card .premium-badge {
+  background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+  background-size: 200% 200%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Media indicators */
+.lesson-card .media-indicator {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .lesson-card {
+    margin-bottom: 1rem;
+  }
+
+  .lesson-card .audio-button {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  .lesson-card .audio-button svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lesson-card h3 {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .lesson-card p {
+    font-size: 0.875rem;
+  }
+
+  .lesson-card .lesson-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}

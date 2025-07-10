@@ -1,0 +1,19 @@
+{
+    "name": "github-issues-creator",
+    "version": "1.0.0",
+    "description": "Script to create GitHub issues for LeEnglish TOEIC Platform",
+    "main": "create-issues.js",
+    "scripts": {
+        "create-issues": "node create-issues.js"
+    },
+    "dependencies": {
+        "@octokit/rest": "^20.0.2"
+    },
+    "keywords": [
+        "github",
+        "issues",
+        "automation"
+    ],
+    "author": "HUYDUU19",
+    "license": "MIT"
+}

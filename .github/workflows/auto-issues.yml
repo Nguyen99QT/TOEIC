@@ -1,0 +1,167 @@
+name: Auto Create Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_type:
+        description: 'Type of issues to create'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - bugs
+        - features
+        - tech-debt
+        - documentation
+
+  schedule:
+    # Run every Monday at 9 AM UTC to create weekly planning issues
+    - cron: '0 9 * * 1'
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        
+    - name: Create GitHub Issues
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        REPO_NAME: ${{ github.event.repository.name }}
+        ISSUE_TYPE: ${{ github.event.inputs.issue_type || 'all' }}
+      run: |
+        cd scripts
+        python create_github_issues.py
+        
+    - name: Setup Repository Labels
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_OWNER: ${{ github.repository_owner }}
+        REPO_NAME: ${{ github.event.repository.name }}
+      run: |
+        cd scripts
+        python setup_github_repo.py
+        
+    - name: Create Project Board
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🚀 Creating project board..."
+        # This would create a GitHub Project board
+        # Implementation depends on GitHub Projects API v2
+
+  issue-management:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+    
+    steps:
+    - name: Auto-label new issues
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const labels = [];
+          
+          // Auto-label based on title keywords
+          if (issue.title.includes('[BUG]')) {
+            labels.push('bug');
+          }
+          if (issue.title.includes('[FEATURE]')) {
+            labels.push('enhancement');
+          }
+          if (issue.title.includes('[MEDIA]')) {
+            labels.push('media');
+          }
+          if (issue.title.includes('[PERFORMANCE]')) {
+            labels.push('performance');
+          }
+          
+          // Auto-label based on body content
+          if (issue.body.includes('Critical')) {
+            labels.push('critical');
+          }
+          if (issue.body.includes('Frontend')) {
+            labels.push('frontend');
+          }
+          if (issue.body.includes('Backend')) {
+            labels.push('backend');
+          }
+          
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: labels
+            });
+          }
+
+  weekly-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Generate Weekly Issue Report
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+          
+          const { data: issues } = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'all',
+            since: oneWeekAgo.toISOString()
+          });
+          
+          const opened = issues.filter(issue => 
+            new Date(issue.created_at) >= oneWeekAgo && 
+            !issue.pull_request
+          );
+          
+          const closed = issues.filter(issue => 
+            issue.state === 'closed' && 
+            new Date(issue.closed_at) >= oneWeekAgo &&
+            !issue.pull_request
+          );
+          
+          const report = `
+          # 📊 Weekly Issue Report
+          
+          **Period**: ${oneWeekAgo.toDateString()} - ${new Date().toDateString()}
+          
+          ## 📈 Statistics
+          - 🆕 Issues opened: ${opened.length}
+          - ✅ Issues closed: ${closed.length}
+          - 🔄 Net change: ${opened.length - closed.length}
+          
+          ## 🆕 New Issues
+          ${opened.map(issue => `- #${issue.number} ${issue.title}`).join('\n')}
+          
+          ## ✅ Closed Issues  
+          ${closed.map(issue => `- #${issue.number} ${issue.title}`).join('\n')}
+          `;
+          
+          // Create a new issue with the weekly report
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: `📊 Weekly Issue Report - ${new Date().toDateString()}`,
+            body: report,
+            labels: ['report', 'weekly', 'auto-generated']
+          });

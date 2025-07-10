@@ -1,0 +1,66 @@
+{
+  "folders": [
+    {
+      "name": "Backend (Spring Boot)",
+      "path": "./backend"
+    },
+    {
+      "name": "Frontend (Reactjs.js)",
+      "path": "./frontend"
+    },
+    {
+      "name": "Mobile (Flutter)",
+      "path": "./mobile"
+    },
+    {
+      "name": "Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.configuration.workspaces": [
+      "backend"
+    ],
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "flutter.sdkPath": "",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "files.associations": {
+      "*.dart": "dart"
+    },
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.runtimes": [],
+    "vscode-pets.position": "panel",
+    "vscode-pets.theme": "beach",
+    "vscode-pets.petType": "dog",
+    "vscode-pets.petSize": "medium",
+    "vscode-pets.disableEffects": true,
+    "vscode-pets.throwBallWithMouse": true,
+    "vscode-pets.petColor": "socks beige",
+    "powershell.cwd": "Backend (Spring Boot)",
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable",
+    "python.analysis.typeCheckingMode": "strict"
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-typescript-next",
+      "dart-code.flutter",
+      "dart-code.dart-code",
+      "redhat.java",
+      "pivotal.vscode-spring-boot"
+    ]
+  },
+  "mcp": {
+    "servers": {
+      "my-mcp-server-5a24ca7e": {
+        "url": "localhost:3000"
+      }
+    }
+  }
+}

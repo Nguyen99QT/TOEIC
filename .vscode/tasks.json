@@ -1,0 +1,217 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Backend Dependencies",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"clean",
+				"install"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Backend Server",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"spring-boot:run"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": "\\b\\B",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^.*Restarting due to",
+						"endsPattern": "^.*Started .* in .* seconds.*"
+					}
+				}
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			}
+		},
+		{
+			"label": "Install Frontend Dependencies",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"install"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Frontend Server",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [
+				{
+					"pattern": [
+						{
+							"regexp": "\\b\\B",
+							"file": 1,
+							"location": 2,
+							"message": 3
+						}
+					],
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^.*- Local:.*",
+						"endsPattern": "^.*Ready in .*"
+					}
+				}
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			}
+		},
+		{
+			"label": "Build Frontend",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Install Mobile Dependencies",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"pub",
+				"get"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/mobile"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Mobile App (Debug)",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"run"
+			],
+			"group": "build",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}/mobile"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Mobile App (Android)",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"apk"
+			],
+			"group": "build",
+			"options": {
+				"cwd": "${workspaceFolder}/mobile"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Install All Dependencies",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Install Backend Dependencies",
+				"Install Frontend Dependencies",
+				"Install Mobile Dependencies"
+			],
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Start All Services",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"Start Backend Server",
+				"Start Frontend Server"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Backend Test",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"test"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Frontend Test",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"test"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Mobile Test",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"test"
+			],
+			"group": "test",
+			"options": {
+				"cwd": "${workspaceFolder}/mobile"
+			},
+			"problemMatcher": []
+		}
+	]
+}

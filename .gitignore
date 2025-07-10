@@ -1,4 +1,126 @@
+# Logs
+logs
 *.log
-.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# Dependency directories
+node_modules/
+*/node_modules/
+
+# Backend (Spring Boot)
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+backend/**/*.jar
+backend/**/*.war
+backend/**/*.ear
+backend/**/*.zip
+backend/**/*.tar.gz
+backend/**/*.rar
+backend/.settings/
+backend/.project
+backend/.classpath
+backend/bin/
+backend/.factorypath
+
+# Frontend (Next.js)
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Mobile (Flutter)
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/Runner.xcworkspace/xcshareddata/
+mobile/macos/Flutter/ephemeral/
+mobile/windows/flutter/ephemeral/
+mobile/linux/flutter/ephemeral/
+mobile/android/app/debug
+mobile/android/app/profile
+mobile/android/app/release
+
+# IDEs and editors
+.vscode/settings.json
+.idea/
 *.swp
-*.tmp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Spring Boot
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# H2 Database
+*.db
+*.mv.db
+*.trace.db
+
+# Flutter/Dart
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/Runner.xcworkspace/
+mobile/android/.gradle/
+mobile/android/app/build/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Temporary folders
+tmp/
+temp/

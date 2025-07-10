@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 General Discussion
+    url: https://github.com/HUYDUU19/leenglish-toeic-platform/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔒 Security Issues
+    url: mailto:huyduu19@example.com
+    about: Please email security issues privately
+  - name: 📖 Documentation
+    url: https://github.com/HUYDUU19/leenglish-toeic-platform/wiki
+    about: Check the project wiki for additional documentation

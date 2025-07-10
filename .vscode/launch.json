@@ -1,0 +1,72 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Flutter (Debug)",
+            "type": "dart",
+            "request": "launch",
+            "program": "mobile/lib/main.dart",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--flavor",
+                "development"
+            ]
+        },
+        {
+            "name": "Launch Flutter (Profile)",
+            "type": "dart",
+            "request": "launch",
+            "program": "mobile/lib/main.dart",
+            "cwd": "${workspaceFolder}",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "Launch Flutter (Release)",
+            "type": "dart",
+            "request": "launch",
+            "program": "mobile/lib/main.dart",
+            "cwd": "${workspaceFolder}",
+            "flutterMode": "release"
+        },
+        {
+            "name": "Debug Spring Boot Backend",
+            "type": "java",
+            "request": "launch",
+            "mainClass": "com.leenglish.toeic.ToeicBackendApplication",
+            "projectName": "toeic-backend",
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "SPRING_PROFILES_ACTIVE": "development"
+            },
+            "args": [],
+            "vmArgs": "-Dspring.profiles.active=development"
+        },
+        {
+            "name": "Debug Next.js Frontend",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/frontend/node_modules/next/dist/bin/next",
+            "args": [
+                "dev"
+            ],
+            "cwd": "${workspaceFolder}/frontend",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch Full Stack (Backend + Frontend)",
+            "configurations": [
+                "Debug Spring Boot Backend",
+                "Debug Next.js Frontend"
+            ],
+            "stopAll": true
+        }
+    ]
+}

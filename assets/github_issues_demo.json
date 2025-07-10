@@ -1,0 +1,136 @@
+{
+  "generated_at": "2025-07-03T10:27:32.009592",
+  "repository": "HUYDUU19/leenglish-toeic-platform",
+  "labels": [
+    {
+      "name": "bug",
+      "color": "d73a4a",
+      "description": "Something isn't working"
+    },
+    {
+      "name": "critical",
+      "color": "b60205",
+      "description": "Critical priority issue"
+    },
+    {
+      "name": "enhancement",
+      "color": "a2eeef",
+      "description": "New feature or request"
+    },
+    {
+      "name": "media",
+      "color": "7057ff",
+      "description": "Related to media files (images/audio)"
+    },
+    {
+      "name": "performance",
+      "color": "1d76db",
+      "description": "Performance improvement"
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca",
+      "description": "Improvements or additions to documentation"
+    },
+    {
+      "name": "testing",
+      "color": "d4edda",
+      "description": "Related to testing"
+    },
+    {
+      "name": "security",
+      "color": "f9c74f",
+      "description": "Security related"
+    },
+    {
+      "name": "production",
+      "color": "dc3545",
+      "description": "Production environment issue"
+    },
+    {
+      "name": "frontend",
+      "color": "20c997",
+      "description": "Frontend related"
+    },
+    {
+      "name": "backend",
+      "color": "6f42c1",
+      "description": "Backend related"
+    },
+    {
+      "name": "optimization",
+      "color": "0052cc",
+      "description": "Code optimization"
+    },
+    {
+      "name": "api",
+      "color": "5319e7",
+      "description": "API related"
+    },
+    {
+      "name": "quality",
+      "color": "bfdadc",
+      "description": "Code quality improvement"
+    },
+    {
+      "name": "audit",
+      "color": "fef2c0",
+      "description": "Security audit"
+    }
+  ],
+  "issues": [
+    {
+      "title": "🐛 [CRITICAL] Media files not loading in production",
+      "body": "## 🐛 Critical Bug\nMedia files (images/audio) are not loading in production environment.\n\n### 🔍 Investigation needed:\n- [ ] Check backend static file serving configuration\n- [ ] Verify file paths and URL mapping\n- [ ] Test CORS and access permissions\n- [ ] Validate media file existence\n\n### 📍 Files to check:\n- `WebConfig.java` - static resource mapping\n- `application.properties` - server configuration  \n- `/static/audio/` and `/static/images/` directories\n- Frontend MediaService URL construction\n\n### 🎯 Priority: HIGH\n**This blocks user experience completely**\n",
+      "labels": [
+        "bug",
+        "critical",
+        "production",
+        "media"
+      ]
+    },
+    {
+      "title": "🚀 [FEATURE] Media optimization and caching",
+      "body": "## 🚀 Enhancement Request\nImplement media optimization and caching strategy.\n\n### 📋 Tasks:\n- [ ] Add image compression and resizing\n- [ ] Implement lazy loading for images\n- [ ] Add audio file optimization (bitrate, format)\n- [ ] Set up browser caching headers\n- [ ] Consider CDN integration\n- [ ] Add progressive image loading\n\n### 🎯 Benefits:\n- Faster page load times\n- Reduced bandwidth usage\n- Better mobile experience\n- Improved SEO scores\n\n### 📍 Files to modify:\n- Backend: WebConfig.java, MediaController\n- Frontend: MediaService, AuthenticatedMedia component\n",
+      "labels": [
+        "enhancement",
+        "performance",
+        "media",
+        "optimization"
+      ]
+    },
+    {
+      "title": "📚 [DOCS] Complete API documentation",
+      "body": "## 📚 Documentation Task\nCreate comprehensive API documentation for LeEnglish TOEIC backend.\n\n### 📋 Required Documentation:\n- [ ] REST API endpoints (lessons, exercises, flashcards)\n- [ ] Authentication flow and JWT usage\n- [ ] Media serving endpoints\n- [ ] Request/Response examples\n- [ ] Error codes and handling\n- [ ] Rate limiting information\n\n### 🛠️ Tools to use:\n- Swagger/OpenAPI specification\n- Postman collection updates\n- README.md updates\n\n### 📍 Deliverables:\n- Updated Swagger annotations in controllers\n- API documentation website\n- Updated Postman collection\n",
+      "labels": [
+        "documentation",
+        "api",
+        "backend"
+      ]
+    },
+    {
+      "title": "🧪 [TEST] Implement comprehensive test suite",
+      "body": "## 🧪 Testing Initiative\nImplement comprehensive testing for frontend and backend.\n\n### 🎯 Frontend Tests:\n- [ ] Unit tests for components\n- [ ] Integration tests for media loading\n- [ ] E2E tests for user flows\n- [ ] Media service tests\n- [ ] Authentication tests\n\n### 🎯 Backend Tests:\n- [ ] Unit tests for services and controllers\n- [ ] Integration tests for API endpoints\n- [ ] Media serving tests\n- [ ] Authentication and authorization tests\n- [ ] Database integration tests\n\n### 📊 Coverage Goals:\n- Frontend: 80%+ code coverage\n- Backend: 85%+ code coverage\n\n### 🛠️ Tools:\n- Frontend: Jest, React Testing Library, Cypress\n- Backend: JUnit, MockMvc, TestContainers\n",
+      "labels": [
+        "testing",
+        "quality",
+        "frontend",
+        "backend"
+      ]
+    },
+    {
+      "title": "🔒 [SECURITY] Security audit and improvements",
+      "body": "## 🔒 Security Review\nConduct security audit and implement security improvements.\n\n### 🔍 Areas to Review:\n- [ ] JWT token security (expiration, refresh)\n- [ ] API rate limiting and DDoS protection\n- [ ] Input validation and sanitization\n- [ ] File upload security (media files)\n- [ ] CORS configuration\n- [ ] HTTPS enforcement\n- [ ] Environment variable security\n\n### 📋 Security Tasks:\n- [ ] Implement request rate limiting\n- [ ] Add input validation middleware\n- [ ] Secure media file uploads\n- [ ] Add security headers\n- [ ] Implement CSRF protection\n- [ ] Review authentication flow\n\n### 🛡️ Tools:\n- OWASP security guidelines\n- Security scanning tools\n- Dependency vulnerability checks\n",
+      "labels": [
+        "security",
+        "audit",
+        "critical"
+      ]
+    }
+  ],
+  "summary": {
+    "total_labels": 15,
+    "total_issues": 5,
+    "estimated_time": "2-3 minutes to create all"
+  }
+}

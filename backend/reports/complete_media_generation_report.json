@@ -1,0 +1,26 @@
+{
+  "generation_time": "2025-07-02 22:14:24",
+  "total_files": 320,
+  "breakdown": {
+    "lessons": {
+      "audio": 40,
+      "images": 40,
+      "total": 80
+    },
+    "exercises": {
+      "audio": 80,
+      "images": 80,
+      "total": 160
+    },
+    "flashcards": {
+      "audio": 40,
+      "images": 40,
+      "total": 80
+    }
+  },
+  "totals": {
+    "audio_files": 160,
+    "image_files": 160,
+    "all_files": 320
+  }
+}

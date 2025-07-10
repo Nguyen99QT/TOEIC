@@ -1,0 +1,24 @@
+Tên nền tảng: LeEnglish TOEIC
+Mô tả: Nền tảng học tiếng Anh, luyện thi TOEIC, flashcard, bài tập, kiểm tra đáp án, quản lý tiến trình học, phân quyền thành viên (BASIC, PREMIUM, VIP), hỗ trợ cộng tác viên và admin.
+
+Logo: (Bạn có thể thay bằng đường dẫn thực tế hoặc base64 nếu cần)
+assets/images/logo.png
+
+Ảnh minh họa giao diện:
+assets/images/screenshot1.png
+assets/images/screenshot2.png
+
+Thông tin liên hệ:
+- Website: https://leenglish.vn
+- Email: support@leenglish.vn
+- Facebook: fb.com/leenglish.vn
+
+Chức năng chính:
+- Đăng nhập, đăng ký, quản lý thông tin cá nhân
+- Làm bài tập, luyện thi TOEIC, học flashcard
+- Theo dõi tiến trình học, xem kết quả
+- Quản lý bài học, bài kiểm tra, flashcard (admin/collaborator)
+- Phản hồi, bình luận, blog
+- Quản lý thành viên, phân quyền
+
+# (Bạn có thể bổ sung thêm các trường khác hoặc thay đổi đường dẫn ảnh cho phù hợp với dự án thực tế)

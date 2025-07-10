@@ -1,0 +1,28 @@
+.question-page-container {
+  padding-top: 3rem; /* Space for compact navbar */
+}
+
+.compact-navbar {
+  height: 3rem !important;
+  min-height: 3rem !important;
+}
+
+.question-content {
+  margin-top: 1rem;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .question-page-container {
+    padding-top: 2.5rem;
+  }
+  
+  .question-content {
+    padding: 1rem;
+  }
+}
+
+/* Smooth transitions */
+.navbar-transition {
+  transition: height 0.3s ease-in-out;
+}

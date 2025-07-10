@@ -1,0 +1,157 @@
+### LeEnglish TOEIC API Tests
+### Base URL
+@baseUrl = http://localhost:8080
+@token = 
+
+### 1. Health Check - Test if server is running
+GET {{baseUrl}}/api/health
+Content-Type: application/json
+
+###
+
+### 2. Register New User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "email": "testuser1@example.com",
+  "password": "password123"
+}
+
+###
+
+### 3. Login User (Save the token from response)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "password123"
+}
+
+###
+
+### 4. Get User Profile (Replace token above with actual token from login)
+GET {{baseUrl}}/api/users/1
+Authorization: Bearer {{token}}
+
+###
+
+### 5. Get All Users (Admin only)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{token}}
+
+###
+
+### 6. Get Questions with filters
+GET {{baseUrl}}/api/questions?section=reading&difficulty=easy&limit=5
+Authorization: Bearer {{token}}
+
+###
+
+### 7. Get Random Questions
+GET {{baseUrl}}/api/questions/random?count=10
+Authorization: Bearer {{token}}
+
+###
+
+### 8. Get Specific Question
+GET {{baseUrl}}/api/questions/1
+Authorization: Bearer {{token}}
+
+###
+
+### 9. Create New Question
+POST {{baseUrl}}/api/questions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "questionText": "What is the capital of Vietnam?",
+  "options": ["Hanoi", "Ho Chi Minh City", "Da Nang", "Hue"],
+  "correctAnswer": 0,
+  "section": "reading",
+  "difficulty": "easy",
+  "explanation": "Hanoi is the capital city of Vietnam."
+}
+
+###
+
+### 10. Update User Profile
+PUT {{baseUrl}}/api/users/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "updateduser",
+  "email": "updated@example.com"
+}
+
+###
+
+### 11. Update User Score
+POST {{baseUrl}}/api/users/1/score
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "score": 850,
+  "testType": "full-test"
+}
+
+###
+
+### 12. Get Leaderboard
+GET {{baseUrl}}/api/users/leaderboard
+Authorization: Bearer {{token}}
+
+###
+
+### 13. Start Test Session
+POST {{baseUrl}}/api/test-sessions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "testType": "reading",
+  "duration": 75
+}
+
+###
+
+### 14. Submit Test Session
+POST {{baseUrl}}/api/test-sessions/1/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "answers": [
+    {
+      "questionId": 1,
+      "selectedAnswer": 0
+    },
+    {
+      "questionId": 2,
+      "selectedAnswer": 2
+    }
+  ]
+}
+
+###
+
+### 15. Refresh JWT Token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token-here"
+}
+
+###
+
+### 16. Logout User
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+###

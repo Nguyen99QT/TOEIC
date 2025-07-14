@@ -7,11 +7,10 @@
  */
 
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useToast } from '../../components/ui/SimpleToast';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
-import { login } from '../../services/auth';
 
 const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -19,9 +18,16 @@ const LoginPage: React.FC = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { loginWithUserData } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const { success, error } = useToast();
+
+  // ❌ REMOVED: Redirect logic - handled by App.tsx route guard
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     console.log('🚀 User is authenticated, redirecting to:', from);
+  //     navigate(from, { replace: true });
+  //   }
+  // }, [isAuthenticated, navigate, from]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -34,22 +40,20 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Gọi API login, lấy user và token từ backend
-      const result = await login(formData);
+      console.log('🔍 LoginPage: Attempting login for:', formData.username);
 
-      // Check if result has user and accessToken properties
-      if (result && result.user && result.accessToken) {
-        // Lưu user và token vào context
-        loginWithUserData(result.user, result.accessToken);
-        // Lưu token vào localStorage
-        toast.success('Login successful!');
-        const redirectTo = location.state?.from || '/';
-        navigate(redirectTo, { replace: true });
-      } else {
-        throw new Error('Invalid login response');
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      // Use AuthContext's login method
+      await login(formData.username, formData.password);
+
+      success('Login successful!');
+      console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
+
+      // ✅ REMOVED: Manual navigation - Let App.tsx handle redirect automatically
+      // The useEffect in App.tsx will detect isAuthenticated change and redirect
+
+    } catch (loginError: any) {
+      console.error('❌ LoginPage: Login failed:', loginError);
+      error(loginError.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

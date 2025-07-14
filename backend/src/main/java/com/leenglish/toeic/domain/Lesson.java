@@ -61,6 +61,9 @@ public class Lesson {
     @Column(name = "duration")
     private Integer duration;
 
+    @Column(name = "is_public", nullable = false)
+    private Boolean isPublic = true;
+
     // Constructors
     public Lesson() {
         this.createdAt = LocalDateTime.now();
@@ -211,6 +214,15 @@ public class Lesson {
 
     public void setDuration(Integer duration) {
         this.duration = duration;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Business Logic Methods

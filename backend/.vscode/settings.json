@@ -1,11 +1,4 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic",
     "java.compile.nullAnalysis.mode": "automatic",
-    "files.exclude": {
-        "**/.classpath": true,
-        "**/.project": true,
-        "**/.settings": true,
-        "**/.factorypath": true
-    },
-    "cmake.ignoreCMakeListsMissing": true
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

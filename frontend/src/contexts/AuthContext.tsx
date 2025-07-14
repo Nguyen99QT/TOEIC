@@ -1,17 +1,18 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { startAutoRefresh, stopAutoRefresh } from '../services/auth';
+import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from '../types';
 
 export interface AuthContextType {
-    user: User | null; // For backward compatibility
-    currentUser: User | null; // Primary user property
-    login: (email: string, password: string) => Promise<void>; // Fixed signature
-    loginWithUserData: (user: User, accessToken: string) => void; // NEW: For direct user data login
+    user: User | null;
+    currentUser: User | null;
+    login: (email: string, password: string) => Promise<void>;
+    loginWithUserData: (user: User, accessToken: string) => void;
     logout: () => void;
     signOut: () => void;
     updateCurrentUser: (user: User) => void;
     isAuthenticated: boolean;
     loading: boolean;
+    isRefreshing: boolean;
+    refreshToken: () => Promise<void>;
 }
 
 export const AuthContext = React.createContext<AuthContextType>({
@@ -19,219 +20,226 @@ export const AuthContext = React.createContext<AuthContextType>({
     currentUser: null,
     isAuthenticated: false,
     loading: true,
-    login: async () => { }, // Fixed default to match signature
-    loginWithUserData: () => { }, // NEW: Default for loginWithUserData
+    isRefreshing: false,
+    login: async () => { },
+    loginWithUserData: () => { },
     logout: () => { },
     signOut: () => { },
     updateCurrentUser: () => { },
+    refreshToken: async () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-    const initializeAuth = () => {
-        console.log('🔍 AuthProvider: Initializing authentication...');
-
-        try {
-            // Check for token first - use toeic_access_token as primary key
-            const token = localStorage.getItem("toeic_access_token") ||
-                localStorage.getItem("authToken");
-
-            if (!token) {
-                console.log('❌ No valid token found');
-                return false;
-            }
-
-            // Then check for user data - use toeic_current_user as primary key
-            const userData = localStorage.getItem("toeic_current_user") ||
-                localStorage.getItem("currentUser");
-
-            if (!userData) {
-                console.log('❌ No user data found');
-                return false;
-            }
-
-            try {
-                const user = JSON.parse(userData);
-                // Less strict validation to handle different user data formats
-                if (!user) {
-                    console.log('❌ Invalid user data format');
-                    return false;
-                }
-                console.log('✅ Found valid authentication data');
-                return { user, token };
-            } catch (e) {
-                console.error('❌ Error parsing user data:', e);
-                return false;
-            }
-        } catch (e) {
-            console.error('❌ Error during auth initialization:', e);
-            return false;
-        }
-    };
-
-    // Thêm hàm này vào AuthProvider để debug
-    const debugAuthState = () => {
-        console.group('🔍 Auth Debug Info');
-        // Kiểm tra tất cả các key có thể chứa token
-        console.log('toeic_access_token:', localStorage.getItem('toeic_access_token') ? '✅ Exists' : '❌ Missing');
-        console.log('authToken:', localStorage.getItem('authToken') ? '✅ Exists' : '❌ Missing');
-
-        // Kiểm tra tất cả các key có thể chứa user data
-        console.log('toeic_current_user:', localStorage.getItem('toeic_current_user') ? '✅ Exists' : '❌ Missing');
-        console.log('currentUser:', localStorage.getItem('currentUser') ? '✅ Exists' : '❌ Missing');
-
-        // Kiểm tra trạng thái auth trong React component
-        console.log('isAuthenticated state:', isAuthenticated);
-        console.log('currentUser state:', currentUser ? '✅ Exists' : '❌ Missing');
-        console.groupEnd();
-    };
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const initRef = useRef(false);
 
     useEffect(() => {
-        console.log('🔍 AuthProvider: Checking authentication status...');
-        debugAuthState(); // Thêm debug info
+        // Prevent multiple initialization
+        if (initRef.current) return;
+        initRef.current = true;
 
-        const authData = initializeAuth();
+        console.log('🔍 AuthProvider: Starting authentication initialization...');
 
-        if (authData) {
-            console.log('✅ Valid authentication found:', authData.user.email || authData.user.username);
-            setCurrentUser(authData.user);
-            setIsAuthenticated(true);
-            startAutoRefresh();
-        } else {
-            console.log('❌ No valid authentication found');
-            // Clean up any invalid auth data
-            localStorage.removeItem("toeic_access_token");
-            localStorage.removeItem("toeic_current_user");
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("currentUser");
-            setCurrentUser(null);
-            setIsAuthenticated(false);
-        }
-        setLoading(false);
+        const initAuth = async () => {
+            try {
+                // Use auth service functions to check authentication
+                const { getToken, getCurrentUser, isAuthenticated: checkAuth, startAutoRefresh } = await import('../services/auth');
+
+                const token = getToken();
+                const user = getCurrentUser();
+
+                console.log('🔍 AuthProvider: Checking existing auth...');
+                console.log('🔍 Token exists:', !!token);
+                console.log('🔍 User exists:', !!user);
+
+                if (token && user && checkAuth()) {
+                    console.log('✅ Found valid auth for:', user.username);
+                    setCurrentUser(user);
+                    setIsAuthenticated(true);
+                    startAutoRefresh();
+                } else {
+                    console.log('ℹ️ No valid authentication found - user is guest');
+                    setCurrentUser(null);
+                    setIsAuthenticated(false);
+                }
+            } catch (error) {
+                console.error('❌ Auth initialization error:', error);
+                // On error, assume no authentication
+                setCurrentUser(null);
+                setIsAuthenticated(false);
+            } finally {
+                // Ensure loading is always set to false
+                setLoading(false);
+                console.log('✅ Auth initialization completed');
+            }
+        };
+
+        // Initialize immediately, don't use timeout to delay
+        initAuth();
 
         return () => {
-            stopAutoRefresh();
+            // Cleanup on unmount
+            import('../services/auth').then(({ stopAutoRefresh }) => {
+                stopAutoRefresh();
+            });
         };
     }, []);
 
-    // ✅ FIXED: Proper login function for AuthContext
     const login = async (usernameOrEmail: string, password: string): Promise<void> => {
         try {
-            console.log('🔑 AuthContext: Attempting login for:', usernameOrEmail);
-
-            // Thêm kiểm tra tính hợp lệ của thông tin đăng nhập
-            if (!usernameOrEmail || !password) {
-                throw new Error('Tên đăng nhập và mật khẩu không được để trống');
-            }
-
-            // Log chi tiết hơn để debug
-            console.log(`🔍 Login attempt with: ${usernameOrEmail.length > 3 ? usernameOrEmail.substring(0, 3) + '...' : usernameOrEmail} / ${password ? '********' : 'empty'}`);
-
-            // ✅ Import the login function from auth service
-            const { login: authLogin } = await import('../services/auth');
-
-            // Thêm logic để kiểm tra xem đang nhập email hay username
-            const isEmail = usernameOrEmail.includes('@');
-
-            // ✅ Call with proper LoginRequest format, gửi đúng kiểu thông tin
+            const { login: authLogin, startAutoRefresh } = await import('../services/auth');
             const response = await authLogin({
                 username: usernameOrEmail,
-                // Không truyền email nữa
                 password: password
             });
 
-            if (response && response.user && response.accessToken) {
-                console.log('✅ Login successful, storing auth data...');
-                // Don't need to duplicate storage since login function already handles it
-                // Just update the local state
-                setCurrentUser(response.user);
+            console.log('🔍 AuthContext: Login response received:', response);
+
+            if (response && (response.token || response.accessToken)) {
+                const user: User = {
+                    id: response.id || 0,
+                    username: response.username || '',
+                    email: response.email || '',
+                    fullName: response.username || '',
+                    role: (response.role as "ADMIN" | "USER" | "COLLABORATOR") || 'USER',
+                    membershipType: "FREE"
+                };
+
+                console.log('✅ AuthContext: Setting user data:', user);
+
+                // ⚡ FIX: Use React's state batching to ensure updates happen together
+                setCurrentUser(user);
                 setIsAuthenticated(true);
+
+                // ⚡ ADD: Force state update with a small delay to ensure DOM updates
+                setTimeout(() => {
+                    console.log('🔍 Post-login state verification:', {
+                        isAuthenticated: true,
+                        currentUser: user.username
+                    });
+                }, 100);
+
                 startAutoRefresh();
-                console.log('✅ AuthContext: Login completed successfully');
+                console.log('✅ AuthContext: Login state updated successfully');
             } else {
-                throw new Error('Invalid login response - missing user or accessToken');
+                console.error('❌ AuthContext: Invalid login response structure:', response);
+                throw new Error('Invalid login response');
             }
         } catch (error: any) {
-            console.error('❌ AuthContext login error:', error);
-
-            // Cải thiện thông báo lỗi cụ thể về vấn đề mật khẩu
-            if (error.response) {
-                if (error.response.status === 401) {
-                    throw new Error('Sai tên đăng nhập hoặc mật khẩu');
-                } else if (error.response.data?.message?.toLowerCase().includes('password')) {
-                    throw new Error('Mật khẩu không hợp lệ: ' + error.response.data.message);
-                }
-            }
-
-            throw error; // Re-throw so components can handle the error
+            console.error('❌ AuthContext: Login error:', error);
+            throw error;
         }
     };
 
-    // ✅ NEW: Function to handle login with existing user data (for after successful API call)
-    const loginWithUserData = (user: User, accessToken: string) => {
-        console.log('🔑 AuthProvider: Setting up user session...');
+    const loginWithUserData = useCallback(async (user: User, accessToken: string) => {
+        try {
+            const { setToken, setCurrentUser: storeUser, startAutoRefresh } = await import('../services/auth');
+            setToken(accessToken);
+            storeUser(user);
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+            startAutoRefresh();
+        } catch (error) {
+            console.error('Error in loginWithUserData:', error);
+        }
+    }, []);
 
-        // Store with consistent keys
-        localStorage.setItem("toeic_access_token", accessToken);
-        localStorage.setItem("toeic_current_user", JSON.stringify(user));
+    const logout = useCallback(async () => {
+        try {
+            const { removeToken, stopAutoRefresh } = await import('../services/auth');
+            removeToken();
+            stopAutoRefresh();
+        } catch (error) {
+            console.error('Error during logout:', error);
+            // Fallback to manual cleanup
+            const keys = ['toeic_current_user', 'toeic_access_token', 'toeic_refresh_token', 'currentUser', 'authToken'];
+            keys.forEach(key => localStorage.removeItem(key));
+        }
 
-        // Update state
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        startAutoRefresh();
-
-        console.log('✅ User session initialized successfully');
-    };
-
-    const logout = () => {
-        console.log('🚪 AuthContext: Logging out...');
-
-        // Clear all possible token keys
-        localStorage.removeItem('toeic_current_user');
-        localStorage.removeItem('toeic_access_token');
-        localStorage.removeItem('toeic_refresh_token');
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
         setCurrentUser(null);
         setIsAuthenticated(false);
-        stopAutoRefresh();
+        console.log('✅ User logged out successfully');
+    }, []);
 
-        console.log('✅ Logout completed');
-    };
+    const signOut = useCallback(() => logout(), [logout]);
 
-    const signOut = () => {
-        console.log('🚪 AuthContext: Signing out...');
-        logout(); // Sử dụng logout function
-    };
+    const updateCurrentUser = useCallback(async (updatedUser: User) => {
+        try {
+            const { setCurrentUser: storeUser } = await import('../services/auth');
+            storeUser(updatedUser);
+            setCurrentUser(updatedUser);
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
+    }, []);
 
-    const updateCurrentUser = (updatedUser: User) => {
-        console.log('👤 AuthContext: Updating user info...');
+    // Add refresh token function
+    const refreshToken = useCallback(async (): Promise<void> => {
+        if (isRefreshing) {
+            console.log('🔄 Token refresh already in progress');
+            return;
+        }
 
-        localStorage.setItem('toeic_current_user', JSON.stringify(updatedUser));
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser)); // For backward compatibility
-        setCurrentUser(updatedUser);
+        try {
+            setIsRefreshing(true);
+            console.log('🔄 Starting token refresh...');
 
-        console.log('✅ User info updated');
-    };
+            // Import refresh function from auth service
+            const { refreshAuthToken } = await import('../services/auth');
+
+            const newAccessToken = await refreshAuthToken();
+
+            if (newAccessToken) {
+                console.log('✅ Token refreshed successfully');
+                // Token is automatically stored by the auth service
+                // No need to update user state unless user data changed
+            } else {
+                console.warn('⚠️ Token refresh failed - logging out');
+                logout();
+            }
+        } catch (error) {
+            console.error('❌ Token refresh error:', error);
+            logout(); // Logout on refresh failure
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, [isRefreshing, logout]);
+
+    useEffect(() => {
+        // Debug every state change
+        console.log('🔍 AuthContext State Change:', {
+            loading,
+            isAuthenticated,
+            currentUser: currentUser?.username || 'none',
+            timestamp: new Date().toISOString()
+        });
+
+        // If user just became authenticated, log it prominently
+        if (isAuthenticated && currentUser) {
+            console.log('🎉 AuthContext: User is now authenticated!', {
+                username: currentUser.username,
+                id: currentUser.id
+            });
+        }
+    }, [loading, isAuthenticated, currentUser]);
 
     return (
         <AuthContext.Provider
             value={{
-                user: currentUser, // Provide both for compatibility
+                user: currentUser,
                 currentUser,
                 isAuthenticated,
                 loading,
-                login, // Now uses the correct login function
-                loginWithUserData, // NEW: For direct user data login
+                isRefreshing,
+                login,
+                loginWithUserData,
                 logout,
                 signOut,
                 updateCurrentUser,
+                refreshToken,
             }}
         >
             {children}

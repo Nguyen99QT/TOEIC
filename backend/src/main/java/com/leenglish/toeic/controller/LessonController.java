@@ -182,4 +182,30 @@ public class LessonController {
 
         return dto;
     }
+
+    // Get public lessons for homepage (limited)
+    @GetMapping("/public")
+    public ResponseEntity<List<LessonDto>> getPublicLessons(@RequestParam(defaultValue = "4") int limit) {
+        try {
+            System.out.println("🎯 GET /api/lessons/public called with limit: " + limit);
+            List<LessonDto> publicLessons = lessonService.getPublicLessons(limit);
+            return ResponseEntity.ok(publicLessons);
+        } catch (Exception e) {
+            System.err.println("❌ Error getting public lessons: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // Get all public lessons
+    @GetMapping("/public/all")
+    public ResponseEntity<List<LessonDto>> getAllPublicLessons() {
+        try {
+            System.out.println("🎯 GET /api/lessons/public/all called");
+            List<LessonDto> publicLessons = lessonService.getAllPublicLessons();
+            return ResponseEntity.ok(publicLessons);
+        } catch (Exception e) {
+            System.err.println("❌ Error getting all public lessons: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

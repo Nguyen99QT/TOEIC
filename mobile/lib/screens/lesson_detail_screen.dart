@@ -8,7 +8,7 @@ import 'exercise_screen.dart';
 class LessonDetailScreen extends StatefulWidget {
   final Lesson lesson;
 
-  const LessonDetailScreen({Key? key, required this.lesson}) : super(key: key);
+  const LessonDetailScreen({super.key, required this.lesson});
 
   @override
   _LessonDetailScreenState createState() => _LessonDetailScreenState();

@@ -337,9 +337,10 @@ public class LessonService {
         dto.setImageUrl(lesson.getImageUrl());
         dto.setDuration(lesson.getDuration());
         dto.setIsActive(lesson.getIsActive());
+        dto.setIsPremium(lesson.getIsPremium());
+        dto.setIsPublic(lesson.getIsPublic());
         dto.setCreatedAt(lesson.getCreatedAt());
         dto.setUpdatedAt(lesson.getUpdatedAt());
-        // dto.setCategoryId(lesson.getCategoryId()); // Remove this for now
         return dto;
     }
 
@@ -358,7 +359,6 @@ public class LessonService {
         lesson.setIsActive(dto.getIsActive());
         lesson.setCreatedAt(dto.getCreatedAt());
         lesson.setUpdatedAt(dto.getUpdatedAt());
-        // lesson.setCategoryId(dto.getCategoryId()); // Remove this for now
         return lesson;
     }
 
@@ -452,5 +452,44 @@ public class LessonService {
         }
         // Get exercises by lesson ID
         return exerciseRepository.findByLessonIdAndIsActiveTrue(lessonId);
+    }
+
+    // Get public lessons for homepage display
+    public List<LessonDto> getPublicLessons(int limit) {
+        try {
+            System.out.println("🔄 Getting public lessons with limit: " + limit);
+            List<Lesson> publicLessons = lessonRepository.findByIsPublicTrueAndIsActiveTrue();
+
+            List<LessonDto> result = publicLessons.stream()
+                    .limit(limit)
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+            System.out.println("✅ Found " + result.size() + " public lessons");
+            return result;
+        } catch (Exception e) {
+            System.err.println("❌ Error getting public lessons: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    // Get all public lessons
+    public List<LessonDto> getAllPublicLessons() {
+        try {
+            System.out.println("🔄 Getting all public lessons");
+            List<Lesson> publicLessons = lessonRepository.findByIsPublicTrueAndIsActiveTrue();
+
+            List<LessonDto> result = publicLessons.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+            System.out.println("✅ Found " + result.size() + " public lessons");
+            return result;
+        } catch (Exception e) {
+            System.err.println("❌ Error getting all public lessons: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 }

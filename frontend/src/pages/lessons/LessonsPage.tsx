@@ -27,13 +27,13 @@ const LessonsPage: React.FC = () => {
 
   // Utility functions
   // Chỉ coi B2, C1, C2 là premium
-  const isLessonPremium = (level: string): boolean => {
-    return ['B2', 'C1', 'C2'].includes(level);
+  const isLessonPremium = (level: string | undefined): boolean => {
+    return ['B2', 'C1', 'C2'].includes(level || '');
   };
 
   // A1, A2, B1 là basic cho user thường
-  const isBasicLevel = (level: string): boolean => {
-    return ['A1', 'A2', 'B1'].includes(level);
+  const isBasicLevel = (level: string | undefined): boolean => {
+    return ['A1', 'A2', 'B1'].includes(level || '');
   };
 
   const canAccessLesson = (lesson: Lesson): boolean => {
@@ -47,14 +47,14 @@ const LessonsPage: React.FC = () => {
       return true;
     }
 
-    // Free users (registered) có thể truy cập A1-B1
+    // Free users (registered) có thể truy cập A1-B1c
     if (currentUser && currentUser.membershipType === 'FREE') {
-      return isBasicLevel(lesson.level);
+      return isBasicLevel(lesson.level) || lesson.level === 'B1';
     }
 
     // Unregistered users chỉ truy cập được 2 bài đầu A1-A2
     if (!currentUser) {
-      return ['A1', 'A2'].includes(lesson.level) && lesson.orderIndex <= 2;
+      return ['A1', 'A2'].includes(lesson.level || '') && lesson.orderIndex <= 2;
     }
 
     return false;
@@ -98,7 +98,7 @@ const LessonsPage: React.FC = () => {
     if (filter === 'PREMIUM' && !lesson.isPremium) return false;
 
     // Filter by level
-    if (levelFilter !== 'ALL' && lesson.level !== levelFilter) return false;
+    if (levelFilter !== 'ALL' && (lesson.level || '') !== levelFilter) return false;
 
     return true;
   });
@@ -347,7 +347,7 @@ const LessonsPage: React.FC = () => {
                     <div className="space-y-2 text-sm text-gray-500 mb-4">
                       <div className="flex justify-between">
                         <span>Level:</span>
-                        <span className="font-medium">{formatLevel(lesson.level)}</span>
+                        <span className="font-medium">{formatLevel(lesson.level || '')}</span>
                       </div>
 
                       {lesson.duration && (

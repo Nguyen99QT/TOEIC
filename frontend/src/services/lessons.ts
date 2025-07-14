@@ -130,31 +130,26 @@ export const lessonService = {
    * Get lesson by ID (free or authenticated based on lesson)
    */
   getLessonById: async (id: number): Promise<Lesson> => {
+    // First, try to find the lesson in window.allLessons (cache) before making API call
+    if (window && (window as any).allLessons) {
+      const found = (window as any).allLessons.find((l: Lesson) => l.id === id);
+      if (found) return processLessonMediaUrls(found);
+    }
+    // If not found in cache, try API
     try {
-      console.log(`🔍 Fetching lesson ${id}...`);
-      // Try free endpoint first
-      const response = await api.get(`/lessons/free/${id}`);
-
-      // ✅ Process media URLs
-      const lesson = response.data;
-      return processLessonMediaUrls(lesson);
+      const response = await api.get(`/lessons/${id}`);
+      if (response.data) return processLessonMediaUrls(response.data);
     } catch (error: any) {
-      // If free fails, try authenticated endpoint
-      if (error.response?.status === 404 || error.response?.status === 403) {
-        try {
-          const response = await api.get(`/lessons/${id}`);
-
-          // ✅ Process media URLs
-          const lesson = response.data;
-          return processLessonMediaUrls(lesson);
-        } catch (authError: any) {
-          console.error(`❌ Error fetching lesson ${id}:`, authError);
-          throw authError;
-        }
+      // If API fails, try cache again (for robustness)
+      if (window && (window as any).allLessons) {
+        const found = (window as any).allLessons.find(
+          (l: Lesson) => l.id === id
+        );
+        if (found) return processLessonMediaUrls(found);
       }
-      console.error(`❌ Error fetching lesson ${id}:`, error);
       throw error;
     }
+    throw new Error("Lesson not found");
   },
 
   /**
@@ -187,6 +182,32 @@ export const lessonService = {
         `Error fetching exercise ${exerciseId} for lesson ${lessonId}:`,
         error
       );
+      throw error;
+    }
+  },
+
+  /**
+   * Get public lessons for homepage (limited)
+   */
+  getPublicLessons: async (limit: number = 4): Promise<Lesson[]> => {
+    try {
+      const response = await api.get(`/lessons/public?limit=${limit}`);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching public lessons:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get all public lessons
+   */
+  getAllPublicLessons: async (): Promise<Lesson[]> => {
+    try {
+      const response = await api.get("/lessons/public/all");
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching all public lessons:", error);
       throw error;
     }
   },

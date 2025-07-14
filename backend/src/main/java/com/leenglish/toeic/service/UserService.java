@@ -3,6 +3,7 @@ package com.leenglish.toeic.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -82,7 +83,9 @@ public class UserService {
         return userRepository.findAll().stream()
                 .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
                 .collect(java.util.stream.Collectors.toList());
-    }// ========== USER MANAGEMENT METHODS ==========
+    }
+
+    // ========== USER MANAGEMENT METHODS ==========
 
     /**
      * Create new user
@@ -377,8 +380,7 @@ public class UserService {
      * Get active users with pagination
      */
     public Page<User> findActiveUsers(Pageable pageable) {
-        // Fallback implementation - return empty page for now
-        return Page.empty(pageable);
+        return userRepository.findByIsActiveTrue(pageable);
     }
 
     /**

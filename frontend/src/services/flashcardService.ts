@@ -1,7 +1,7 @@
 import { Flashcard, FlashcardSet } from "../types";
 import { mapBackendFlashcardSet } from "../utils/flashcards";
-
 import api from "./api";
+
 /**
  * ================================================================
  * FLASHCARD SERVICE
@@ -9,20 +9,76 @@ import api from "./api";
  * Handles all flashcard-related API calls
  */
 
-export const flashcardService = {
+// Add cache management
+interface Cache<T = any> {
+  data: T | null;
+  timestamp: number;
+}
+
+type CacheMap = {
+  [key: string]: Cache;
+};
+
+const cache: {
+  allSets: Cache<FlashcardSet[]>;
+  publicSets: Cache<FlashcardSet[]>;
+  sets: CacheMap;
+} = {
+  allSets: { data: null, timestamp: 0 },
+  publicSets: { data: null, timestamp: 0 },
+  sets: {} as CacheMap,
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+const isCacheValid = (cacheKey: string): boolean => {
+  if (cacheKey === "allSets") {
+    return (
+      cache.allSets.data !== null &&
+      Date.now() - cache.allSets.timestamp < CACHE_TTL
+    );
+  }
+  if (cacheKey === "publicSets") {
+    return (
+      cache.publicSets.data !== null &&
+      Date.now() - cache.publicSets.timestamp < CACHE_TTL
+    );
+  }
+  if (cacheKey.startsWith("set_") || cacheKey.startsWith("flashcards_")) {
+    const entry = cache.sets[cacheKey];
+    return (
+      entry && entry.data !== null && Date.now() - entry.timestamp < CACHE_TTL
+    );
+  }
+  return false;
+};
+
+const flashcardService = {
   /**
    * Get all flashcard sets (for authenticated users)
    */
-
   getAllSets: async (): Promise<FlashcardSet[]> => {
     try {
       console.log("🔄 Fetching all flashcard sets...");
+
+      // Use cache if available and not expired
+      if (isCacheValid("allSets")) {
+        console.log("📦 Using cached all flashcard sets");
+        return cache.allSets.data!;
+      }
+
       const response = await api.get("/flashcard-sets");
-      console.log("✅ Raw API response:", response.data);
+      console.log("✅ Raw all sets API response:", response.data);
 
       // Map backend response to frontend type
       const mappedSets = response.data.map(mapBackendFlashcardSet);
       console.log("✅ Mapped flashcard sets:", mappedSets.length);
+
+      // Update cache
+      cache.allSets = {
+        data: mappedSets,
+        timestamp: Date.now(),
+      };
 
       return mappedSets;
     } catch (error: any) {
@@ -31,7 +87,7 @@ export const flashcardService = {
       // If 401/403, user might not be authenticated
       if (error.response?.status === 401 || error.response?.status === 403) {
         console.log("🔄 Authentication failed, falling back to public sets...");
-        return await flashcardService.getPublicSets();
+        return flashcardService.getPublicSets();
       }
 
       throw error;
@@ -43,13 +99,24 @@ export const flashcardService = {
    */
   getPublicSets: async (): Promise<FlashcardSet[]> => {
     try {
+      // Use cache if available and not expired
+      if (isCacheValid("publicSets")) {
+        console.log("📦 Using cached public flashcard sets");
+        return cache.publicSets.data!;
+      }
+
       console.log("🌐 Fetching public flashcard sets...");
       const response = await api.get("/flashcard-sets/public");
-      console.log("✅ Raw public API response:", response.data);
+      console.log("✅ Raw public sets API response:", response.data);
 
-      // Map backend response to frontend type
       const mappedSets = response.data.map(mapBackendFlashcardSet);
       console.log("✅ Mapped public flashcard sets:", mappedSets.length);
+
+      // Update cache
+      cache.publicSets = {
+        data: mappedSets,
+        timestamp: Date.now(),
+      };
 
       return mappedSets;
     } catch (error: any) {
@@ -62,13 +129,26 @@ export const flashcardService = {
    * Get flashcard set by ID
    */
   getSetById: async (id: number): Promise<FlashcardSet> => {
+    const cacheKey = `set_${id}`;
+
     try {
+      // Use cache if available and not expired
+      if (cache.sets[cacheKey] && isCacheValid(cacheKey)) {
+        console.log(`📦 Using cached flashcard set ${id}`);
+        return cache.sets[cacheKey].data!;
+      }
+
       console.log(`🔄 Fetching flashcard set ${id}...`);
       const response = await api.get(`/flashcard-sets/${id}`);
-      console.log("✅ Raw set API response:", response.data);
+      console.log("✅ Raw flashcard set API response:", response.data);
 
       const mappedSet = mapBackendFlashcardSet(response.data);
-      console.log("✅ Mapped flashcard set:", mappedSet);
+
+      // Update cache
+      cache.sets[cacheKey] = {
+        data: mappedSet,
+        timestamp: Date.now(),
+      };
 
       return mappedSet;
     } catch (error: any) {
@@ -81,16 +161,40 @@ export const flashcardService = {
    * Get flashcards in a set
    */
   getFlashcards: async (setId: number): Promise<Flashcard[]> => {
+    const cacheKey = `flashcards_${setId}`;
+
     try {
+      // Use cache if available and not expired
+      if (cache.sets[cacheKey] && isCacheValid(cacheKey)) {
+        console.log(`📦 Using cached flashcards for set ${setId}`);
+        return cache.sets[cacheKey].data!;
+      }
+
       console.log(`🔄 Fetching flashcards for set ${setId}...`);
-      const response = await api.get(`/flashcard-sets/${setId}/flashcards`);
+      const response = await api.get(`/flashcards/by-set/${setId}`);
       console.log("✅ Raw flashcards API response:", response.data);
+
+      // Update cache
+      cache.sets[cacheKey] = {
+        data: response.data,
+        timestamp: Date.now(),
+      };
 
       return response.data;
     } catch (error: any) {
       console.error(`❌ Error fetching flashcards for set ${setId}:`, error);
       throw error;
     }
+  },
+
+  /**
+   * Clear all caches - call this after mutations
+   */
+  clearCache: () => {
+    cache.allSets = { data: null, timestamp: 0 };
+    cache.publicSets = { data: null, timestamp: 0 };
+    cache.sets = {} as CacheMap;
+    console.log("🗑️ Flashcard cache cleared");
   },
 
   /**
@@ -374,6 +478,30 @@ export const flashcardService = {
       console.log("✅ Flashcard deleted");
     } catch (error: any) {
       console.error(`❌ Error deleting flashcard ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get featured public flashcard sets (limited for homepage)
+   */
+  getFeaturedSets: async (limit: number = 4): Promise<FlashcardSet[]> => {
+    try {
+      console.log(
+        `🔄 Fetching featured flashcard sets with limit: ${limit}...`
+      );
+      const response = await api.get(
+        `/flashcard-sets/public/featured?limit=${limit}`
+      );
+      console.log("✅ Featured sets API response:", response.data);
+
+      // Map backend response to frontend type
+      const mappedSets = response.data.map(mapBackendFlashcardSet);
+      console.log("✅ Mapped featured flashcard sets:", mappedSets.length);
+
+      return mappedSets;
+    } catch (error: any) {
+      console.error("❌ Error fetching featured flashcard sets:", error);
       throw error;
     }
   },

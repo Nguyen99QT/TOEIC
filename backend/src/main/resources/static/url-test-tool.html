@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOEIC URL Test Tool</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      h1,
+      h2 {
+        color: #2c3e50;
+      }
+      .test-section {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+      .result-area {
+        margin-top: 10px;
+        font-family: monospace;
+        min-height: 30px;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+      input[type="text"] {
+        width: 80%;
+        padding: 8px;
+        margin: 5px 0;
+      }
+      button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #3367d6;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .url-input {
+        display: flex;
+        gap: 10px;
+      }
+      .url-input input {
+        flex-grow: 1;
+      }
+      .media-preview {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px dashed #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>TOEIC URL Test Tool</h1>
+    <p>
+      Công cụ này giúp kiểm tra các đường dẫn tài nguyên (audio và hình ảnh)
+      trong ứng dụng TOEIC
+    </p>
+
+    <div class="test-section">
+      <h2>1. Kiểm tra đường dẫn audio</h2>
+
+      <div class="url-input">
+        <input
+          type="text"
+          id="audio-url"
+          placeholder="Nhập đường dẫn audio (ví dụ: /audio/greetings/greetings_ex1_q1.mp3)"
+        />
+        <button onclick="testAudioUrl()">Kiểm tra</button>
+      </div>
+
+      <div class="result-area" id="audio-result"></div>
+
+      <div class="media-preview" id="audio-preview"></div>
+
+      <h3>Các đường dẫn audio thông dụng:</h3>
+      <table id="common-audio-urls">
+        <tr>
+          <th>Dạng đường dẫn</th>
+          <th>Ví dụ</th>
+          <th>Thao tác</th>
+        </tr>
+        <tr>
+          <td>Cũ (files)</td>
+          <td>/files/audio/exercises/greetings_morning_1.mp3</td>
+          <td>
+            <button
+              onclick="testUrl('/files/audio/exercises/greetings_morning_1.mp3', 'audio')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>Mới (không có /static/)</td>
+          <td>/audio/greetings/greetings_ex1_q1.mp3</td>
+          <td>
+            <button
+              onclick="testUrl('/audio/greetings/greetings_ex1_q1.mp3', 'audio')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>Mới (có /static/)</td>
+          <td>/static/audio/greetings/greetings_ex1_q1.mp3</td>
+          <td>
+            <button
+              onclick="testUrl('/static/audio/greetings/greetings_ex1_q1.mp3', 'audio')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="test-section">
+      <h2>2. Kiểm tra đường dẫn hình ảnh</h2>
+
+      <div class="url-input">
+        <input
+          type="text"
+          id="image-url"
+          placeholder="Nhập đường dẫn hình ảnh (ví dụ: /images/greetings/greetings_ex1_q1.jpg)"
+        />
+        <button onclick="testImageUrl()">Kiểm tra</button>
+      </div>
+
+      <div class="result-area" id="image-result"></div>
+
+      <div class="media-preview" id="image-preview"></div>
+
+      <h3>Các đường dẫn hình ảnh thông dụng:</h3>
+      <table id="common-image-urls">
+        <tr>
+          <th>Dạng đường dẫn</th>
+          <th>Ví dụ</th>
+          <th>Thao tác</th>
+        </tr>
+        <tr>
+          <td>Cũ (files)</td>
+          <td>/files/images/exercises/greetings_morning_1.jpg</td>
+          <td>
+            <button
+              onclick="testUrl('/files/images/exercises/greetings_morning_1.jpg', 'image')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>Mới (không có /static/)</td>
+          <td>/images/greetings/greetings_ex1_q1.jpg</td>
+          <td>
+            <button
+              onclick="testUrl('/images/greetings/greetings_ex1_q1.jpg', 'image')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td>Mới (có /static/)</td>
+          <td>/static/images/greetings/greetings_ex1_q1.jpg</td>
+          <td>
+            <button
+              onclick="testUrl('/static/images/greetings/greetings_ex1_q1.jpg', 'image')"
+            >
+              Kiểm tra
+            </button>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <script>
+      // Base URL (change this to your backend URL if needed)
+      const BASE_URL = "http://localhost:8080";
+
+      // Function to test any URL
+      function testUrl(url, type) {
+        const fullUrl = BASE_URL + url;
+
+        if (type === "audio") {
+          document.getElementById("audio-url").value = url;
+          testAudioUrl();
+        } else if (type === "image") {
+          document.getElementById("image-url").value = url;
+          testImageUrl();
+        }
+      }
+
+      // Function to test audio URL
+      function testAudioUrl() {
+        const url = document.getElementById("audio-url").value;
+        const resultArea = document.getElementById("audio-result");
+        const previewArea = document.getElementById("audio-preview");
+
+        if (!url) {
+          resultArea.innerHTML =
+            '<span class="error">Vui lòng nhập đường dẫn audio</span>';
+          previewArea.innerHTML = "";
+          return;
+        }
+
+        const fullUrl = BASE_URL + url;
+        resultArea.innerHTML = "Đang kiểm tra...";
+
+        fetch(fullUrl)
+          .then((response) => {
+            if (response.ok) {
+              resultArea.innerHTML = `<span class="success">✓ Tài nguyên tồn tại! URL: ${fullUrl}</span>`;
+              previewArea.innerHTML = `
+                            <p>Xem trước audio:</p>
+                            <audio controls>
+                                <source src="${fullUrl}" type="audio/mpeg">
+                                Trình duyệt của bạn không hỗ trợ audio HTML5.
+                            </audio>
+                        `;
+            } else {
+              throw new Error(`Status: ${response.status}`);
+            }
+          })
+          .catch((error) => {
+            resultArea.innerHTML = `<span class="error">✗ Lỗi: Không thể truy cập ${fullUrl} - ${error.message}</span>`;
+            previewArea.innerHTML = "";
+          });
+      }
+
+      // Function to test image URL
+      function testImageUrl() {
+        const url = document.getElementById("image-url").value;
+        const resultArea = document.getElementById("image-result");
+        const previewArea = document.getElementById("image-preview");
+
+        if (!url) {
+          resultArea.innerHTML =
+            '<span class="error">Vui lòng nhập đường dẫn hình ảnh</span>';
+          previewArea.innerHTML = "";
+          return;
+        }
+
+        const fullUrl = BASE_URL + url;
+        resultArea.innerHTML = "Đang kiểm tra...";
+
+        const img = new Image();
+        img.onload = function () {
+          resultArea.innerHTML = `<span class="success">✓ Tài nguyên tồn tại! URL: ${fullUrl}</span>`;
+          previewArea.innerHTML = `
+                    <p>Xem trước hình ảnh:</p>
+                    <img src="${fullUrl}" alt="Preview" style="max-width: 300px; max-height: 300px;">
+                `;
+        };
+
+        img.onerror = function () {
+          resultArea.innerHTML = `<span class="error">✗ Lỗi: Không thể truy cập ${fullUrl}</span>`;
+          previewArea.innerHTML = "";
+
+          // Double-check with fetch to get more details
+          fetch(fullUrl)
+            .then((response) => {
+              if (!response.ok) {
+                resultArea.innerHTML += `<br><span class="error">Lỗi HTTP: ${response.status} ${response.statusText}</span>`;
+              }
+            })
+            .catch((error) => {
+              resultArea.innerHTML += `<br><span class="error">Lỗi mạng: ${error.message}</span>`;
+            });
+        };
+
+        img.src = fullUrl;
+      }
+    </script>
+  </body>
+</html>

@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import custom animations */
+@import "./styles/animations.css";
+
 /* ========== CUSTOM GLOBAL STYLES ========== */
 
 @layer base {

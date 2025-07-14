@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOEIC Resource Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      h1 {
+        color: #2c3e50;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+      }
+      .test-section {
+        margin-bottom: 30px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+      }
+      .test-item {
+        margin-bottom: 15px;
+      }
+      .success {
+        color: green;
+        font-weight: bold;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+      button {
+        padding: 5px 10px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      img {
+        max-width: 300px;
+        border: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>TOEIC Resource Test</h1>
+
+    <div class="test-section">
+      <h2>Test Image Resources</h2>
+
+      <div class="test-item">
+        <h3>Test 1: Direct URL</h3>
+        <div id="image-test-1">Testing...</div>
+        <img id="image-1" src="" alt="Test image 1" style="display: none" />
+      </div>
+
+      <div class="test-item">
+        <h3>Test 2: With /static/ prefix</h3>
+        <div id="image-test-2">Testing...</div>
+        <img id="image-2" src="" alt="Test image 2" style="display: none" />
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h2>Test Audio Resources</h2>
+
+      <div class="test-item">
+        <h3>Test 1: Direct URL</h3>
+        <div id="audio-test-1">Testing...</div>
+        <audio id="audio-1" controls style="display: none"></audio>
+        <button onclick="playAudio('audio-1')">Play Audio</button>
+      </div>
+
+      <div class="test-item">
+        <h3>Test 2: With /static/ prefix</h3>
+        <div id="audio-test-2">Testing...</div>
+        <audio id="audio-2" controls style="display: none"></audio>
+        <button onclick="playAudio('audio-2')">Play Audio</button>
+      </div>
+    </div>
+
+    <script>
+      // Base URL for your backend
+      const baseUrl = "http://localhost:8080";
+
+      // Test paths
+      const testPaths = {
+        imageDirect: "/images/greetings/greetings_ex1_q1.jpg",
+        imageStatic: "/static/images/greetings/greetings_ex1_q1.jpg",
+        audioDirect: "/audio/greetings/greetings_ex1_q1.mp3",
+        audioStatic: "/static/audio/greetings/greetings_ex1_q1.mp3",
+      };
+
+      // Test function
+      function testResource(url, elementId, isImage = true) {
+        const fullUrl = baseUrl + url;
+        const element = document.getElementById(elementId);
+        const statusElement = document.getElementById(elementId + "-test");
+
+        if (isImage) {
+          element.src = fullUrl;
+          element.onload = function () {
+            statusElement.innerHTML = `<span class="success">✓ SUCCESS: Image loaded successfully from ${url}</span>`;
+            element.style.display = "block";
+          };
+          element.onerror = function () {
+            statusElement.innerHTML = `<span class="error">✗ ERROR: Could not load image from ${url}</span>`;
+          };
+        } else {
+          element.src = fullUrl;
+
+          // Test if audio can be loaded
+          fetch(fullUrl)
+            .then((response) => {
+              if (response.ok) {
+                statusElement.innerHTML = `<span class="success">✓ SUCCESS: Audio resource available at ${url}</span>`;
+                element.style.display = "block";
+              } else {
+                throw new Error("Network response was not ok");
+              }
+            })
+            .catch((error) => {
+              statusElement.innerHTML = `<span class="error">✗ ERROR: Could not load audio from ${url} - ${error.message}</span>`;
+            });
+        }
+      }
+
+      // Play audio function
+      function playAudio(id) {
+        const audio = document.getElementById(id);
+        audio.play();
+      }
+
+      // Run tests when page loads
+      window.onload = function () {
+        // Test images
+        testResource(testPaths.imageDirect, "image-1", true);
+        testResource(testPaths.imageStatic, "image-2", true);
+
+        // Test audio
+        testResource(testPaths.audioDirect, "audio-1", false);
+        testResource(testPaths.audioStatic, "audio-2", false);
+      };
+    </script>
+  </body>
+</html>

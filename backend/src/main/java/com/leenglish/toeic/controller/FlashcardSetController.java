@@ -29,14 +29,14 @@ import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.ApiResponse;
 import com.leenglish.toeic.dto.FlashcardSetCreateRequest;
 import com.leenglish.toeic.dto.FlashcardSetUpdateRequest;
-import  com.leenglish.toeic.service.FlashcardSetService;
+import com.leenglish.toeic.service.FlashcardSetService;
 import com.leenglish.toeic.service.UserService;
+import com.leenglish.toeic.dto.FlashcardSetDto;
 
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/flashcard-sets")
-@CrossOrigin(origins = "*")
 public class FlashcardSetController {
 
     @Autowired
@@ -45,37 +45,18 @@ public class FlashcardSetController {
     @Autowired
     private UserService userService;
 
-    // Lấy tất cả bộ flashcard công khai (cho khách)
+    // Featured sets
+    @GetMapping("/public/featured")
+    public ResponseEntity<List<FlashcardSetDto>> getFeaturedPublicSets(@RequestParam(defaultValue = "4") int limit) {
+        List<FlashcardSetDto> sets = flashcardSetService.getFeaturedPublicSets(limit);
+        return ResponseEntity.ok(sets);
+    }
+
+    // All public sets
     @GetMapping("/public")
-    public ResponseEntity<ApiResponse<List<FlashcardSet>>> getPublicSets(
-            @RequestParam(required = false) String difficulty,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-
-        try {
-            Sort sort = sortDir.equals("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<FlashcardSet> setsPage = flashcardSetService.getPublicSets(difficulty, category, search, pageable);
-
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("totalElements", setsPage.getTotalElements());
-            metadata.put("totalPages", setsPage.getTotalPages());
-            metadata.put("currentPage", page);
-
-            return ResponseEntity.ok(new ApiResponse<>(
-                    true,
-                    "Public flashcard sets retrieved successfully",
-                    setsPage.getContent(),
-                    metadata));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "Failed to retrieve public flashcard sets: " + e.getMessage(),
-                            null));
-        }
+    public ResponseEntity<List<FlashcardSetDto>> getPublicSets() {
+        List<FlashcardSetDto> sets = flashcardSetService.getPublicSets();
+        return ResponseEntity.ok(sets);
     }
 
     // Lấy bộ flashcard theo ID (có kiểm tra quyền truy cập)
@@ -190,7 +171,7 @@ public class FlashcardSetController {
     }
 
     // Cập nhật bộ flashcard (chỉ chủ sở hữu/cộng tác viên/admin)
-    
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<FlashcardSet>> updateSet(
             @PathVariable Long id,
@@ -294,5 +275,74 @@ public class FlashcardSetController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "Failed to update view count: " + e.getMessage(), null));
         }
+    }
+
+    // Lấy tất cả bộ flashcard (cho người dùng đã đăng nhập)
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getAllSets(
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir,
+            Authentication auth) {
+
+        try {
+            System.out.println(
+                    "🎯 GET /api/flashcard-sets called with auth: " + (auth != null ? auth.getName() : "anonymous"));
+
+            Sort sort = sortDir.equals("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            // For authenticated users, get all accessible sets (public + premium if
+            // allowed)
+            Page<FlashcardSet> setsPage;
+            if (auth != null) {
+                String username = auth.getName();
+                User user = userService.findByUsername(username).orElse(null);
+                if (user != null) {
+                    System.out.println("✅ Getting sets for authenticated user: " + username);
+                    // Get sets based on user's access level - fallback to public sets for now
+                    setsPage = flashcardSetService.getPublicSets(difficulty, category, search, pageable);
+                } else {
+                    System.out.println("⚠️ User not found, falling back to public sets");
+                    setsPage = flashcardSetService.getPublicSets(difficulty, category, search, pageable);
+                }
+            } else {
+                System.out.println("ℹ️ Anonymous user, returning public sets");
+                setsPage = flashcardSetService.getPublicSets(difficulty, category, search, pageable);
+            }
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("totalElements", setsPage.getTotalElements());
+            metadata.put("totalPages", setsPage.getTotalPages());
+            metadata.put("currentPage", page);
+
+            System.out.println("✅ Returning " + setsPage.getContent().size() + " flashcard sets");
+
+            // Convert to DTOs to avoid lazy loading issues
+            List<FlashcardSetDto> setDtos = setsPage.getContent().stream()
+                    .map(flashcardSetService::mapToDto)
+                    .collect(java.util.stream.Collectors.toList());
+
+            return ResponseEntity.ok(new ApiResponse<>(
+                    true,
+                    "Flashcard sets retrieved successfully",
+                    setDtos,
+                    metadata));
+        } catch (Exception e) {
+            System.err.println("❌ Error in getAllSets: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "Failed to retrieve flashcard sets: " + e.getMessage(),
+                            null));
+        }
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("Flashcard Sets API is working! " + java.time.LocalDateTime.now());
     }
 }

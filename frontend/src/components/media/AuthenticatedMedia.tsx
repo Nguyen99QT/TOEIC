@@ -49,8 +49,22 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
                     if (process.env.NODE_ENV === 'development') {
                         console.log('🔓 Loading public media:', src.split('/').pop()); // Just filename
                     }
+                    
+                    // Add authorization header for file endpoints since we've updated the backend to support both
+                    // authenticated and unauthenticated access
+                    const token = localStorage.getItem('toeic_access_token') ||
+                       localStorage.getItem('authToken');
+                    
+                    const headers: Record<string, string> = {};
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     try {
-                        const response = await fetch(src, { mode: 'cors' });
+                        const response = await fetch(src, { 
+                            headers,
+                            mode: 'cors' 
+                        });
                         if (response.ok) {
                             const blob = await response.blob();
                             const imageUrl = URL.createObjectURL(blob);
@@ -59,7 +73,21 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
                             return;
                         }
                     } catch (publicErr) {
-                        // Silent fallback to auth - no need to log this normal flow
+                        console.warn('⚠️ Failed to load media with token, trying without token:', publicErr);
+                        // Try without token as fallback
+                        try {
+                            const response = await fetch(src, { mode: 'cors' });
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const imageUrl = URL.createObjectURL(blob);
+                                setImageSrc(imageUrl);
+                                onLoad?.();
+                                return;
+                            }
+                        } catch (err) {
+                            // Will be handled in the catch block below
+                            throw err;
+                        }
                     }
                 }
 
@@ -208,8 +236,22 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
                     if (process.env.NODE_ENV === 'development') {
                         console.log('� Loading public audio:', src.split('/').pop()); // Just filename
                     }
+                    
+                    // Add authorization header for file endpoints since we've updated the backend to support both
+                    // authenticated and unauthenticated access
+                    const token = localStorage.getItem('toeic_access_token') ||
+                       localStorage.getItem('authToken');
+                    
+                    const headers: Record<string, string> = {};
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     try {
-                        const response = await fetch(src, { mode: 'cors' });
+                        const response = await fetch(src, { 
+                            headers,
+                            mode: 'cors' 
+                        });
                         if (response.ok) {
                             const blob = await response.blob();
                             const audioUrl = URL.createObjectURL(blob);
@@ -218,7 +260,21 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
                             return;
                         }
                     } catch (publicErr) {
-                        // Silent fallback to auth - no need to log this normal flow
+                        console.warn('⚠️ Failed to load audio with token, trying without token:', publicErr);
+                        // Try without token as fallback
+                        try {
+                            const response = await fetch(src, { mode: 'cors' });
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const audioUrl = URL.createObjectURL(blob);
+                                setAudioSrc(audioUrl);
+                                onLoad?.();
+                                return;
+                            }
+                        } catch (err) {
+                            // Will be handled in the catch block below
+                            throw err;
+                        }
                     }
                 }
 

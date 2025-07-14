@@ -6,10 +6,10 @@ class ResultScreen extends StatelessWidget {
   final List<Question> questions;
 
   const ResultScreen({
-    Key? key,
+    super.key,
     required this.selectedAnswers,
     required this.questions,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

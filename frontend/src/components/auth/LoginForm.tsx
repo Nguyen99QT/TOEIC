@@ -1,29 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import {useAuth}  from '../../contexts/AuthContext';
 
 const LoginForm: React.FC = () => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
+    const [error, setError] = useState<string | null>(null);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
+        setError(null);
 
         try {
-            console.log('Attempting login with email:', email);
-            await login(email, password);
-            console.log('Login successful, navigating to dashboard');
-            navigate('/dashboard');
+            await login(username, password);
+            console.log('✅ Login successful in form, navigating to home');
+            navigate('/'); // Navigate to home after successful login
         } catch (err: any) {
-            console.error('Login error in form:', err);
-            setError(err.message || 'Login failed');
+            console.error('❌ Login error:', err);
+            setError(err.message || 'Failed to login. Please check your credentials.');
         } finally {
             setLoading(false);
         }
@@ -38,14 +36,14 @@ const LoginForm: React.FC = () => {
             )}
 
             <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                     Email or Username
                 </label>
                 <input
-                    id="email"
+                    id="username"
                     type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     required
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your email or username"

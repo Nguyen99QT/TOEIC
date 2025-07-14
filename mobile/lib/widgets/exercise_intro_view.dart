@@ -6,10 +6,10 @@ class ExerciseIntroView extends StatelessWidget {
   final VoidCallback onStart;
 
   const ExerciseIntroView({
-    Key? key,
+    super.key,
     required this.exercise,
     required this.onStart,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

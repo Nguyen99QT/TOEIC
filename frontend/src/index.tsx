@@ -28,9 +28,3 @@ if (
 } else {
   serviceWorkerRegistration.unregister();
 }
-
-export interface FlashcardSet {
-  // ...fields...
-  flashcards?: FlashcardSet[];
-  // ...other fields...
-}

@@ -7,7 +7,7 @@ import 'question_list_screen.dart';
 class ExerciseScreen extends StatefulWidget {
   final Exercise exercise;
 
-  const ExerciseScreen({Key? key, required this.exercise}) : super(key: key);
+  const ExerciseScreen({super.key, required this.exercise});
 
   @override
   _ExerciseScreenState createState() => _ExerciseScreenState();

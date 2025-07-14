@@ -2,39 +2,32 @@ package com.leenglish.toeic.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.leenglish.toeic.dto.FlashcardDto;
 
 public class FlashcardSetDto {
     private Long id;
     private String name;
+    private String title;
     private String description;
     private Boolean isPublic;
     private Boolean isActive;
-    // Nếu có các trường sau thì thêm getter/setter:
-    private String title;
     private Boolean isPremium;
     private Integer estimatedTimeMinutes;
+    private Integer cardCount; // ⚡ ADD THIS FIELD
+    private Integer flashcardCount; // For compatibility
+    private Integer viewCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Long createdBy; // User ID
     private List<FlashcardDto> flashcards;
 
+    // Constructors
     public FlashcardSetDto() {
     }
 
-    public FlashcardSetDto(Long id, String name, String description, Boolean isPublic, Boolean isActive,
-            String title, Boolean isPremium, Integer estimatedTimeMinutes,
-            LocalDateTime createdAt, LocalDateTime updatedAt, Long createdBy) {
+    public FlashcardSetDto(Long id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.isPublic = isPublic;
-        this.isActive = isActive;
-        this.title = title;
-        this.isPremium = isPremium;
-        this.estimatedTimeMinutes = estimatedTimeMinutes;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.createdBy = createdBy;
     }
 
     // Getters and Setters
@@ -53,6 +46,14 @@ public class FlashcardSetDto {
     public void setName(String name) {
         this.name = name;
     }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    } // ⚡ ADD THIS
 
     public String getDescription() {
         return description;
@@ -78,21 +79,13 @@ public class FlashcardSetDto {
         this.isActive = isActive;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public Boolean getIsPremium() {
         return isPremium;
     }
 
     public void setIsPremium(Boolean isPremium) {
         this.isPremium = isPremium;
-    }
+    } // ⚡ ADD THIS
 
     public Integer getEstimatedTimeMinutes() {
         return estimatedTimeMinutes;
@@ -100,6 +93,35 @@ public class FlashcardSetDto {
 
     public void setEstimatedTimeMinutes(Integer estimatedTimeMinutes) {
         this.estimatedTimeMinutes = estimatedTimeMinutes;
+    } // ⚡ ADD THIS
+
+    // ⚡ ADD THESE CARD COUNT METHODS
+    public Integer getCardCount() {
+        return cardCount;
+    }
+
+    public void setCardCount(Integer cardCount) {
+        this.cardCount = cardCount;
+    }
+
+    public Integer getFlashcardCount() {
+        return flashcardCount;
+    }
+
+    public void setFlashcardCount(Integer flashcardCount) {
+        this.flashcardCount = flashcardCount;
+        // Keep both fields in sync
+        if (this.cardCount == null) {
+            this.cardCount = flashcardCount;
+        }
+    }
+
+    public Integer getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(Integer viewCount) {
+        this.viewCount = viewCount;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -118,19 +140,27 @@ public class FlashcardSetDto {
         this.updatedAt = updatedAt;
     }
 
-    public Long getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public List<FlashcardDto> getFlashcards() {
         return flashcards;
     }
 
     public void setFlashcards(List<FlashcardDto> flashcards) {
         this.flashcards = flashcards;
+    }
+
+    @Override
+    public String toString() {
+        return "FlashcardSetDto{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", isPublic=" + isPublic +
+                ", isActive=" + isActive +
+                ", isPremium=" + isPremium +
+                ", cardCount=" + cardCount +
+                ", viewCount=" + viewCount +
+                ", estimatedTimeMinutes=" + estimatedTimeMinutes +
+                '}';
     }
 }

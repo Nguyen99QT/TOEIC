@@ -36,11 +36,18 @@ const DashboardPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('🔄 DashboardPage: Starting to fetch dashboard data...');
         const dashboardStats = await dashboardService.getDashboardStats();
+        console.log('✅ DashboardPage: Dashboard data fetched successfully');
         setStats(dashboardStats);
       } catch (err: any) {
+        console.error('❌ DashboardPage: Dashboard data fetch error:', {
+          message: err.message,
+          status: err?.response?.status,
+          statusText: err?.response?.statusText,
+          endpoint: err?.config?.url
+        });
         setError(err.message || 'Failed to load dashboard data');
-        console.error('Dashboard data fetch error:', err);
       } finally {
         setLoading(false);
       }

@@ -4,7 +4,7 @@ import '../models/toeic_study_models.dart';
 class LessonHeader extends StatelessWidget {
   final Lesson lesson;
 
-  const LessonHeader({Key? key, required this.lesson}) : super(key: key);
+  const LessonHeader({super.key, required this.lesson});
 
   @override
   Widget build(BuildContext context) {

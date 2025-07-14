@@ -1,676 +1,582 @@
-import {
-  AcademicCapIcon,
-  ArrowRightIcon,
-  BookOpenIcon,
-  ChartBarIcon,
-  ClockIcon,
-  LightBulbIcon,
-  PlayIcon,
-  SparklesIcon,
-  StarIcon,
-  TrophyIcon
-} from '@heroicons/react/24/outline';
-import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/layout/Navbar';
-import { useAuth } from '../contexts/AuthContext'; // Use AuthContext instead of direct service
-import { flashcardService } from '../services/flashcards'; // Thêm dòng này nếu chưa có
-import { lessonService } from '../services/lessons'; // Named import, not default
+import { motion } from 'framer-motion';
+import flashcardService from '../services/flashcardService';
+import { lessonService } from '../services/lessons';
 import { FlashcardSet, Lesson } from '../types';
+import EnhancedButton from '../components/ui/EnhancedButton';
+import GuestInteraction from '../components/auth/GuestInteraction';
+import StatsDynamic from '../components/ui/StatsDynamic';
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated, currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { currentUser, isAuthenticated } = useAuth();
-
+  const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
-  const [flashcards, setFlashcards] = useState<FlashcardSet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeFeature, setActiveFeature] = useState(0);
-
-  const features = [
-    {
-      icon: <BookOpenIcon className="w-8 h-8" />,
-      title: "Interactive Lessons",
-      description: "Comprehensive TOEIC preparation with real exam scenarios"
-    },
-    {
-      icon: <AcademicCapIcon className="w-8 h-8" />,
-      title: "Smart Flashcards",
-      description: "Spaced repetition system for vocabulary mastery"
-    },
-    {
-      icon: <ChartBarIcon className="w-8 h-8" />,
-      title: "Progress Tracking",
-      description: "Detailed analytics to monitor your improvement"
-    },
-    {
-      icon: <TrophyIcon className="w-8 h-8" />,
-      title: "Achievement System",
-      description: "Gamified learning with rewards and milestones"
-    }
-  ];
+  const fetchAttempted = useRef(false);
 
   useEffect(() => {
+    if (authLoading) {
+      console.log('🔄 HomePage: Waiting for auth to complete...');
+      return;
+    }
+
+    if (fetchAttempted.current) return;
+    fetchAttempted.current = true;
+
     const fetchData = async () => {
       try {
-        setLoading(true);
-        // Only log in development mode
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 Loading homepage data...');
-        }
+        console.log('🔄 HomePage: Fetching flashcard sets and lessons...');
 
-        // Fetch lessons based on authentication status
-        let lessonsData: Lesson[] = [];
-        let flashcardsData: FlashcardSet[] = [];
-
-        try {
-          if (isAuthenticated) {
-            console.log('🔐 User authenticated, fetching all lessons...');
-            lessonsData = await lessonService.getAllLessons();
-          } else {
-            console.log('👤 Guest user, fetching free lessons...');
-            lessonsData = await lessonService.getFreeLessons();
-          }
-        } catch (error: any) {
-          console.error('❌ Error fetching lessons:', error);
+        // Fetch flashcard sets
+        let sets: FlashcardSet[] = [];
+        if (isAuthenticated) {
           try {
-            lessonsData = await lessonService.getFreeLessons();
-          } catch (fallbackError) {
-            console.error('❌ Fallback also failed:', fallbackError);
-            lessonsData = [];
+            sets = await flashcardService.getFeaturedSets(4);
+          } catch (authError: any) {
+            console.warn('⚠️ Authenticated fetch failed:', authError?.response?.status || authError?.message, 'trying public sets...');
+            try {
+              sets = await flashcardService.getPublicSets();
+              sets = sets.slice(0, 4); // Limit to 4
+            } catch (publicError: any) {
+              console.warn('⚠️ Public sets also failed:', publicError?.response?.status || publicError?.message);
+              sets = [];
+            }
+          }
+        } else {
+          try {
+            sets = await flashcardService.getFeaturedSets(4);
+          } catch (error: any) {
+            console.warn('⚠️ Featured flashcards failed:', error?.response?.status || error?.message);
+            sets = [];
           }
         }
 
-        // Lấy flashcard sets từ backend thay vì mock
+        // Fetch lessons
+        let lessonData: Lesson[] = [];
         try {
-          flashcardsData = await flashcardService.getAllFlashcardSets();
-          console.log('✅ Flashcard sets loaded:', flashcardsData);
-        } catch (error) {
-          console.error('❌ Error fetching flashcard sets:', error);
-          flashcardsData = [];
+          // Fetch all public lessons instead of just 4
+          lessonData = await lessonService.getAllPublicLessons();
+        } catch (lessonError: any) {
+          console.warn('⚠️ Public lessons failed:', lessonError?.response?.status || lessonError?.message);
+          lessonData = [];
         }
 
-        setLessons(Array.isArray(lessonsData) ? lessonsData : []);
-        setFlashcards(Array.isArray(flashcardsData) ? flashcardsData : []);
-
-        console.log('✅ Homepage data loaded:', {
-          lessonsCount: lessonsData.length,
-          flashcardsCount: flashcardsData.length,
-          lessonsData,
-          flashcardsData,
-        });
-
+        console.log('✅ HomePage: Flashcard sets loaded:', sets.length);
+        console.log('✅ HomePage: Lessons loaded:', lessonData.length);
+        setFlashcardSets(sets);
+        setLessons(lessonData);
+        // Lưu vào window để các trang khác có thể truy cập
+        if (typeof window !== 'undefined') {
+          (window as any).allLessons = lessonData;
+        }
       } catch (error) {
-        console.error('❌ Failed to fetch homepage data:', error);
-      } finally {
-        setLoading(false);
+        console.error('❌ HomePage: Error fetching data:', error);
+        setFlashcardSets([]);
+        setLessons([]);
       }
     };
 
     fetchData();
-  }, [isAuthenticated, currentUser]); // Proper dependencies
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature(prev => (prev + 1) % features.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [features.length]);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.8, y: 20 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        type: "spring" as const,
-        damping: 20,
-        stiffness: 300
-      }
-    },
-    hover: {
-      scale: 1.05,
-      y: -5,
-      transition: {
-        type: "spring" as const,
-        damping: 20,
-        stiffness: 400
-      }
-    }
-  };
-
-  const heroVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        ease: [0.6, -0.05, 0.01, 0.99] as [number, number, number, number]
-      }
-    }
-  };
-
-  // Event handlers
-  const handleStartLesson = (lessonId: number) => {
-    if (!isAuthenticated) {
-      navigate('/auth/login', {
-        state: {
-          message: 'Please log in to access lessons',
-          from: `/lessons/${lessonId}`
-        }
-      });
-      return;
-    }
-    navigate(`/lessons/${lessonId}`);
-  };
-
-  const handleStudyFlashcards = (setId: number) => {
-    // Chỉ chuyển hướng sang trang study, không kiểm tra đăng nhập, không redirect login
-    navigate(`/flashcards/study/${setId}`);
-  };
-
-  // Handler for mobile menu click is now handled in Navbar internally
-
-  // Helper function to format lesson level
-  const formatLessonLevel = (level: string): string => {
-    switch (level) {
-      case 'A1': return 'Beginner';
-      case 'A2': return 'Elementary';
-      case 'B1': return 'Intermediate';
-      case 'B2': return 'Upper Intermediate';
-      case 'C1': return 'Advanced';
-      case 'C2': return 'Proficient';
-      default: return level;
-    }
-  };
-
-  const getLevelColorClass = (level: string): string => {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return 'bg-green-100 text-green-800';
-      case 'B1':
-      case 'B2':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'C1':
-      case 'C2':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Only log in development mode when needed
-  if (process.env.NODE_ENV === 'development' && loading) {
-    console.log("🏠 HomePage loading...");
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          className="flex flex-col items-center space-y-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="text-gray-600 animate-pulse">Loading your learning journey...</p>
-        </motion.div>
-      </div>
-    );
-  }
+  }, [authLoading, isAuthenticated]);
 
   return (
-    <>
-      <Navbar />
+    <motion.div
+      className="min-h-screen bg-gray-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Hero Section */}
       <motion.div
-        className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+        className="bg-gradient-to-r from-blue-600 to-purple-700 text-white relative overflow-hidden"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8 }}
       >
-        {/* Hero Section */}
-        <motion.section
-          className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white"
-          variants={heroVariants}
-        >
-          <div className="absolute inset-0 bg-black opacity-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/50 to-purple-600/50"></div>
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-20 h-20 border border-white rounded-full"></div>
+          <div className="absolute top-32 right-20 w-16 h-16 border border-white rounded-full"></div>
+          <div className="absolute bottom-20 left-1/4 w-12 h-12 border border-white rounded-full"></div>
+          <div className="absolute bottom-32 right-1/3 w-8 h-8 border border-white rounded-full"></div>
+        </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-            <motion.div
-              className="text-center"
-              variants={itemVariants}
-            >
-              <motion.h1
-                className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-purple-100"
-                initial={{ opacity: 0, y: -50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                Master TOEIC
-                <motion.span
-                  className="block text-yellow-300"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                >
-                  with TOICEnglish
-                </motion.span>
-              </motion.h1>
+        <div className="container mx-auto px-4 py-20 text-center relative z-10">
+          <motion.h1
+            className="text-5xl md:text-6xl font-bold mb-6"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            Master TOEIC with{' '}
+            <span className="bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
+              LeEnglish
+            </span>
+          </motion.h1>
+          <motion.p
+            className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            Comprehensive TOEIC preparation platform designed to help you achieve your target score with
+            interactive lessons, practice tests, and personalized learning paths.
+          </motion.p>
 
-              <motion.p
-                className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto leading-relaxed"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                Experience the future of English learning with AI-powered lessons,
-                interactive flashcards, and personalized progress tracking.
-              </motion.p>
-
-              <motion.div
-                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-              >
-                <motion.button
-                  className="bg-white text-blue-600 px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-50 transition-colors flex items-center"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/lessons')}
-                >
-                  <PlayIcon className="w-5 h-5 mr-2" />
-                  Start Learning
-                  <ArrowRightIcon className="w-5 h-5 ml-2" />
-                </motion.button>
-
-                <motion.button
-                  className="border-2 border-white text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors flex items-center"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/flashcards')}
-                >
-                  <SparklesIcon className="w-5 h-5 mr-2" />
-                  Explore Flashcards
-                </motion.button>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Floating Elements */}
           <motion.div
-            className="absolute top-20 left-10 w-20 h-20 bg-yellow-300 rounded-full opacity-20"
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 180, 360]
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.div
-            className="absolute bottom-20 right-10 w-16 h-16 bg-pink-300 rounded-full opacity-20"
-            animate={{
-              y: [0, 20, 0],
-              rotate: [360, 180, 0]
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </motion.section>
-
-        {/* Features Showcase */}
-        <motion.section
-          className="py-20 bg-white"
-          variants={itemVariants}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              className="text-center mb-16"
-              variants={itemVariants}
-            >
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Why Choose TOICEnglish?
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Advanced learning technology meets proven teaching methods
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  className={`bg-white rounded-lg p-8 text-center cursor-pointer border shadow-sm hover:shadow-lg transition-all ${activeFeature === index ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                    }`}
-                  variants={cardVariants}
-                  whileHover="hover"
-                  onClick={() => setActiveFeature(index)}
+            className="max-w-md mx-auto"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            {isAuthenticated ? (
+              <div className="space-y-4">
+                <motion.p
+                  className="text-lg"
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <motion.div
-                    className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 ${activeFeature === index
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-100 text-blue-600'
-                      }`}
-                    animate={activeFeature === index ? { scale: [1, 1.1, 1] } : {}}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {feature.icon}
+                  Welcome back, <span className="font-bold text-yellow-300">{currentUser?.username}</span>!
+                  Ready to improve your TOEIC score?
+                </motion.p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="secondary"
+                      size="lg"
+                      onClick={() => navigate('/dashboard')}
+                      className="w-full sm:w-auto"
+                    >
+                      📊 Go to Dashboard
+                    </EnhancedButton>
                   </motion.div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {feature.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Lessons Section */}
-        <motion.section
-          className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100"
-          variants={itemVariants}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              className="flex justify-between items-center mb-12"
-              variants={itemVariants}
-            >
-              <div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                  Featured Lessons
-                </h2>
-                <p className="text-xl text-gray-600">
-                  {isAuthenticated
-                    ? "Your personalized learning path awaits"
-                    : "Try our free lessons to get started"
-                  }
-                </p>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="ghost"
+                      size="lg"
+                      onClick={() => navigate('/lessons')}
+                      className="w-full sm:w-auto border-2 border-white/30"
+                    >
+                      📚 Continue Learning
+                    </EnhancedButton>
+                  </motion.div>
+                </div>
               </div>
-              <motion.button
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/lessons')}
-              >
-                View All Lessons
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </motion.button>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <AnimatePresence>
-                {lessons.slice(0, 3).map((lesson, index) => (
-                  <motion.div
-                    key={lesson.id}
-                    className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
-                    variants={cardVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    transition={{ delay: index * 0.1 }}
-                    whileHover="hover"
-                    onClick={() => handleStartLesson(lesson.id)}
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <EnhancedButton
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => navigate('/register')}
+                    className="w-full sm:w-auto font-semibold"
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getLevelColorClass(lesson.level)}`}>
-                        {formatLessonLevel(lesson.level)}
-                      </span>
-                      <ClockIcon className="w-5 h-5 text-gray-500" />
-                    </div>
+                    🚀 Get Started Free
+                  </EnhancedButton>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <EnhancedButton
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => navigate('/pricing')}
+                    className="w-full sm:w-auto border-2 border-white/30"
+                  >
+                    💡 Learn More
+                  </EnhancedButton>
+                </motion.div>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </motion.div>
 
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-blue-600 transition-colors">
-                      {lesson.title}
-                    </h3>
+      {/* Features Section */}
+      <div className="container mx-auto px-4 py-16">
+        {/* Dynamic Stats Section */}
+        <div className="mb-12">
+          <StatsDynamic />
+        </div>
+        <div className="text-center mb-12">
+          <motion.h2
+            className="text-3xl font-bold text-gray-900 mb-4"
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            Why Choose LeEnglish?
+          </motion.h2>
+          <motion.p
+            className="text-xl text-gray-600"
+            initial={{ y: 20, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
+            Comprehensive TOEIC preparation with proven results
+          </motion.p>
+        </div>
 
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {lesson.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <LightBulbIcon className="w-4 h-4 mr-1" />
-                        Interactive
-                      </div>
-                      <motion.div
-                        className="flex items-center text-blue-600 font-medium hover:text-blue-700"
-                        whileHover={{ x: 5 }}
-                      >
-                        Start Now
-                        <ArrowRightIcon className="w-4 h-4 ml-1" />
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <motion.div
+            className="text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -5 }}
+          >
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-blue-600 text-2xl">📚</span>
             </div>
+            <h3 className="text-xl font-semibold mb-2">Interactive Lessons</h3>
+            <p className="text-gray-600">
+              Engaging content designed to improve your listening and reading skills
+            </p>
+          </motion.div>
 
-            {/* Show message if no lessons */}
-            {lessons.length === 0 && (
-              <motion.div
-                className="text-center py-12"
-                variants={itemVariants}
-              >
-                <BookOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No lessons available</h3>
-                <p className="text-gray-600">
-                  Lessons are being prepared. Please check back later or contact admin if this is unexpected.
-                </p>
-              </motion.div>
+          <motion.div
+            className="text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -5 }}
+          >
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-green-600 text-2xl">🎯</span>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Practice Tests</h3>
+            <p className="text-gray-600">
+              Realistic practice tests that simulate the actual TOEIC experience
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="text-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            initial={{ y: 30, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -5 }}
+          >
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-purple-600 text-2xl">📊</span>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Progress Tracking</h3>
+            <p className="text-gray-600">
+              Monitor your improvement with detailed analytics and insights
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Flashcard Sets Section */}
+        <motion.div
+          className="mb-16"
+          initial={{ y: 40, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Featured Flashcard Sets
+            </h2>
+            <p className="text-xl text-gray-600">
+              Start learning with our curated flashcard collections
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {flashcardSets.length > 0 ? (
+              flashcardSets.slice(0, 6).map((set, index) => (
+                <motion.div
+                  key={set.id}
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                  initial={{ y: 30, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                >
+                  <h3 className="text-xl font-semibold mb-2">{set.title}</h3>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{set.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      {set.flashcards?.length || 0} cards
+                    </span>
+                    <GuestInteraction actionName="study flashcards">
+                      <EnhancedButton
+                        variant={isAuthenticated ? "primary" : "ghost"}
+                        size="sm"
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            navigate(`/flashcards/${set.id}`);
+                          } else {
+                            navigate('/login');
+                          }
+                        }}
+                      >
+                        {isAuthenticated ? "Study Now" : "Login to Study"}
+                      </EnhancedButton>
+                    </GuestInteraction>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full">
+                <motion.div
+                  className="text-center py-12"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-gray-400 text-2xl">📚</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    Flashcards Coming Soon
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                    {isAuthenticated
+                      ? "We're preparing amazing flashcard sets for your TOEIC preparation. Check back soon!"
+                      : "Sign up to access our comprehensive flashcard collections and accelerate your TOEIC learning journey."
+                    }
+                  </p>
+                  {!isAuthenticated && (
+                    <EnhancedButton
+                      variant="primary"
+                      size="md"
+                      onClick={() => navigate('/register')}
+                    >
+                      Get Started Free
+                    </EnhancedButton>
+                  )}
+                </motion.div>
+              </div>
             )}
           </div>
-        </motion.section>
 
-        {/* Flashcards Section */}
-        <motion.section
-          className="py-20 bg-white"
-          variants={itemVariants}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {flashcardSets.length > 6 && (
             <motion.div
-              className="flex justify-between items-center mb-12"
-              variants={itemVariants}
+              className="text-center mt-8"
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
             >
-              <div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                  Smart Flashcards
-                </h2>
-                <p className="text-xl text-gray-600">
-                  Master vocabulary with our intelligent spaced repetition system
-                </p>
-              </div>
-              <motion.button
-                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/flashcards')}
-              >
-                View All Sets
-                <ArrowRightIcon className="w-4 h-4 ml-2" />
-              </motion.button>
+              <GuestInteraction actionName="view all flashcard sets">
+                <EnhancedButton
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      navigate('/flashcards');
+                    } else {
+                      navigate('/login');
+                    }
+                  }}
+                >
+                  {isAuthenticated ? "View All Flashcard Sets" : "Login to View All"}
+                </EnhancedButton>
+              </GuestInteraction>
             </motion.div>
+          )}
+        </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <AnimatePresence>
-                {(Array.isArray(flashcards) ? flashcards : []).slice(0, 3).map((set, index) => (
-                  <motion.div
-                    key={set.id}
-                    className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
-                    variants={cardVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="hidden"
-                    transition={{ delay: index * 0.1 }}
-                    whileHover="hover"
-                    onClick={() => handleStudyFlashcards(set.id)}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        <StarIcon className="w-5 h-5 text-yellow-500 mr-2" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {set.flashcards?.length || 0} cards
-                        </span>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${set.difficultyLevel === 'BEGINNER' ? 'bg-green-100 text-green-800' :
-                        set.difficultyLevel === 'INTERMEDIATE' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                        {set.difficultyLevel}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-purple-600 transition-colors">
-                      {set.title || set.name} {/* Use title if available, fallback to name */}
-                    </h3>
-
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {set.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <ClockIcon className="w-4 h-4 mr-1" />
-                        {set.estimatedTimeMinutes} min
-                      </div>
-                      <motion.div
-                        className="flex items-center text-purple-600 font-medium hover:text-purple-700"
-                        whileHover={{ x: 5 }}
-                        onClick={e => { e.stopPropagation(); handleStudyFlashcards(set.id); }}
-                      >
-                        Study Now
-                        <ArrowRightIcon className="w-4 h-4 ml-1" />
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Call to Action */}
-        <motion.section
-          className="py-20 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white relative overflow-hidden"
-          variants={itemVariants}
+        {/* Lessons Section */}
+        <motion.div
+          className="mb-16"
+          initial={{ y: 40, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/50 to-blue-600/50"></div>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Featured Lessons
+            </h2>
+            <p className="text-xl text-gray-600">
+              Explore interactive lessons designed to boost your TOEIC skills
+            </p>
+          </div>
 
-          <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lessons.length > 0 ? (
+              lessons.slice(0, 6).map((lesson, index) => (
+                <motion.div
+                  key={lesson.id}
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                  initial={{ y: 30, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                >
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                      <span className="text-blue-600 text-lg">📖</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold">{lesson.title}</h3>
+                      {lesson.difficulty && (
+                        <span className={`inline-block text-xs px-2 py-1 rounded-full ${lesson.difficulty.toUpperCase() === 'BEGINNER' || lesson.difficulty.toUpperCase() === 'EASY' ? 'bg-green-100 text-green-800' :
+                          lesson.difficulty.toUpperCase() === 'INTERMEDIATE' || lesson.difficulty.toUpperCase() === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                          {lesson.difficulty}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{lesson.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      {lesson.duration ? `${lesson.duration} min` :
+                        lesson.estimatedTimeMinutes ? `${lesson.estimatedTimeMinutes} min` :
+                          'Quick lesson'}
+                    </span>
+                    <GuestInteraction actionName="start lesson">
+                      <EnhancedButton
+                        variant={isAuthenticated ? "primary" : "ghost"}
+                        size="sm"
+                        onClick={() => {
+                          if (isAuthenticated) {
+                            navigate(`/lessons/${lesson.id}`);
+                          } else {
+                            navigate('/login');
+                          }
+                        }}
+                      >
+                        {isAuthenticated ? "Start Lesson" : "Login to Learn"}
+                      </EnhancedButton>
+                    </GuestInteraction>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full">
+                <motion.div
+                  className="text-center py-12"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.6 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-gray-400 text-2xl">📖</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    Lessons Coming Soon
+                  </h3>
+                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                    {isAuthenticated
+                      ? "We're creating comprehensive lesson plans for your TOEIC preparation. Check back soon!"
+                      : "Sign up to access our interactive lessons and accelerate your TOEIC learning journey."
+                    }
+                  </p>
+                  {!isAuthenticated && (
+                    <EnhancedButton
+                      variant="primary"
+                      size="md"
+                      onClick={() => navigate('/register')}
+                    >
+                      Get Started Free
+                    </EnhancedButton>
+                  )}
+                </motion.div>
+              </div>
+            )}
+          </div>
+
+          {lessons.length > 6 && (
+            <motion.div
+              className="text-center mt-8"
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <GuestInteraction actionName="view all lessons">
+                <EnhancedButton
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      navigate('/lessons');
+                    } else {
+                      navigate('/login');
+                    }
+                  }}
+                >
+                  {isAuthenticated ? "View All Lessons" : "Login to View All"}
+                </EnhancedButton>
+              </GuestInteraction>
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* Call to Action Section */}
+        {!isAuthenticated && (
+          <motion.div
+            className="bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-lg p-8 text-center"
+            initial={{ y: 40, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
             <motion.h2
-              className="text-4xl md:text-5xl font-bold mb-6"
-              variants={itemVariants}
+              className="text-3xl font-bold mb-4"
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
             >
-              Ready to Transform Your English?
+              Ready to Start Learning?
             </motion.h2>
-
             <motion.p
-              className="text-xl mb-8 text-blue-100"
-              variants={itemVariants}
+              className="text-xl mb-6"
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
             >
-              Join thousands of successful learners who've achieved their TOEIC goals with LeEnglish
+              Join thousands of students who have improved their TOEIC scores with LeEnglish
             </motion.p>
-
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
-              variants={itemVariants}
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
             >
-              {!isAuthenticated ? (
-                <>
-                  <motion.button
-                    className="bg-white text-blue-600 px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/auth/register')}
-                  >
-                    Start Free Trial
-                    <SparklesIcon className="w-5 h-5 ml-2" />
-                  </motion.button>
-                  <motion.button
-                    className="border-2 border-white text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/auth/login')}
-                  >
-                    Sign In
-                  </motion.button>
-                </>
-              ) : (
-                <motion.button
-                  className="bg-white text-blue-600 px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-50 transition-colors flex items-center justify-center"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/dashboard')}
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <EnhancedButton
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => navigate('/register')}
+                  className="w-full sm:w-auto"
                 >
-                  Continue Learning
-                  <ArrowRightIcon className="w-5 h-5 ml-2" />
-                </motion.button>
-              )}
+                  🚀 Create Free Account
+                </EnhancedButton>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <EnhancedButton
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => navigate('/login')}
+                  className="w-full sm:w-auto border-2 border-white/30"
+                >
+                  🔑 Login
+                </EnhancedButton>
+              </motion.div>
             </motion.div>
-          </div>
-
-          {/* Decorative Elements */}
-          <motion.div
-            className="absolute top-10 left-10 w-24 h-24 bg-yellow-300 rounded-full opacity-20"
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 180, 360]
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          <motion.div
-            className="absolute bottom-10 right-10 w-20 h-20 bg-pink-300 rounded-full opacity-20"
-            animate={{
-              scale: [1.2, 1, 1.2],
-              rotate: [360, 180, 0]
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </motion.section>
-      </motion.div>
-    </>
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
   );
 };
 

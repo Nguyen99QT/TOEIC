@@ -6,8 +6,7 @@ import '../widgets/question_widget.dart';
 class QuestionListScreen extends StatefulWidget {
   final List<Question> questions;
 
-  const QuestionListScreen({Key? key, required this.questions})
-    : super(key: key);
+  const QuestionListScreen({super.key, required this.questions});
 
   @override
   _QuestionListScreenState createState() => _QuestionListScreenState();
@@ -16,7 +15,7 @@ class QuestionListScreen extends StatefulWidget {
 class _QuestionListScreenState extends State<QuestionListScreen> {
   late PageController _pageController;
   int _currentIndex = 0;
-  Map<int, Answer> _selectedAnswers = {};
+  final Map<int, Answer> _selectedAnswers = {};
   bool _isSubmitted = false;
   bool _isAudioPlaying = false;
   DateTime? _startTime;

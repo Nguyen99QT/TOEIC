@@ -28,6 +28,9 @@ public interface FlashcardSetService {
      */
     Page<FlashcardSet> getPublicSets(String difficulty, String category, String search, Pageable pageable);
 
+    Page<FlashcardSet> getAccessibleSets(User user, String difficulty, String category, String search,
+            Pageable pageable);
+
     FlashcardSet getSetById(Long id);
 
     boolean canUserAccessSet(User user, FlashcardSet set);
@@ -52,6 +55,13 @@ public interface FlashcardSetService {
 
     void incrementViewCount(Long id);
 
+    /**
+     * Lấy danh sách các flashcard trong bộ flashcard theo ID.
+     * 
+     * @param id ID của bộ flashcard.
+     * @return Danh sách các flashcard trong bộ.
+     */
+
     List<Flashcard> getFlashcardsBySetId(Long id);
 
     FlashcardSet createSet(FlashcardSetCreateRequest request, User user);
@@ -66,4 +76,13 @@ public interface FlashcardSetService {
      * @return List of all flashcard sets
      */
     List<FlashcardSetDto> getAllFlashcardSets();
+
+    // Methods for homepage display
+    List<FlashcardSetDto> getFeaturedPublicSets(int limit);
+
+    List<FlashcardSetDto> getPublicSets();
+
+    // Utility method to convert entity to DTO
+    FlashcardSetDto mapToDto(FlashcardSet set);
+
 }

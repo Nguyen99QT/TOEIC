@@ -5,13 +5,14 @@
  */
 
 import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import { useToast } from '../../components/ui/SimpleToast';
 import { Link, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { register } from '../../services/auth';
 import { Gender } from '../../types';
 
 const RegisterPage: React.FC = () => {
+  const { success, error } = useToast();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -36,7 +37,7 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      error('Passwords do not match');
       return;
     }
 
@@ -53,12 +54,12 @@ const RegisterPage: React.FC = () => {
         gender: formData.gender as Gender,
         phoneNumber: formData.phoneNumber || undefined,
       }; await register(registerData);
-      toast.success('Registration successful!');
+      success('Registration successful!');
       // FIX: Redirect to home page instead of dashboard after successful registration
       // This provides consistent user experience with login flow
       navigate('/');
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
+    } catch (registerError: any) {
+      error(registerError.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }

@@ -5,7 +5,7 @@ import '../widgets/lesson_card.dart';
 import 'lesson_detail_screen.dart';
 
 class LessonListScreen extends StatefulWidget {
-  const LessonListScreen({Key? key}) : super(key: key);
+  const LessonListScreen({super.key});
 
   @override
   _LessonListScreenState createState() => _LessonListScreenState();
@@ -201,8 +201,8 @@ class _LessonListScreenState extends State<LessonListScreen> {
                   child: const Text('Apply'),
                   onPressed: () {
                     this.setState(() {
-                      this.selectedLevel = selectedLevel;
-                      this.isPremiumFilter = isPremiumFilter;
+                      selectedLevel = selectedLevel;
+                      isPremiumFilter = isPremiumFilter;
                     });
                     _applyFilters();
                     Navigator.of(context).pop();

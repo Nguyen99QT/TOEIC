@@ -23,9 +23,17 @@ const USER_KEY = "toeic_current_user";
 
 export interface LoginResponse {
   accessToken: string;
+  token?: string; // Backend sometimes returns 'token' instead of 'accessToken'
   refreshToken?: string;
-  user: User;
+  user?: User;
   expiresIn?: number;
+  // Additional fields that backend actually returns
+  id?: number;
+  username?: string;
+  email?: string;
+  role?: string;
+  roles?: string[];
+  type?: string;
 }
 
 export interface AuthResponse {
@@ -351,19 +359,49 @@ export const login = async (
     // Use the correct endpoint /api/auth/login that matches the backend
     const response = await api.post("/api/auth/login", credentials);
 
-    if (!response.data || !response.data.accessToken) {
+    console.log("🔍 Raw login response:", response.data);
+
+    // Handle both formats (backend returns token, frontend expects accessToken)
+    if (
+      !response.data ||
+      (!response.data.accessToken && !response.data.token)
+    ) {
       console.error("❌ Invalid login response:", response.data);
       throw new Error("Server returned invalid login data");
     }
 
-    const { accessToken, refreshToken, user } = response.data;
+    // Map response to our expected format
+    const accessToken = response.data.accessToken || response.data.token;
+    const refreshToken = response.data.refreshToken || null;
+
+    // Handle backend response format which returns individual user fields
+    const user = response.data.user || {
+      id: response.data.id,
+      username: response.data.username,
+      email: response.data.email,
+      role:
+        response.data.roles && response.data.roles.length > 0
+          ? response.data.roles[0].replace("ROLE_", "")
+          : "USER",
+      roles: response.data.roles,
+    };
 
     // Add explicit console logs for debugging
     console.log("🔐 Received login response:", {
+      token: response.data.token ? "✓ Present" : "✗ Missing",
       accessToken: response.data.accessToken ? "✓ Present" : "✗ Missing",
       refreshToken: response.data.refreshToken ? "✓ Present" : "✗ Missing",
       user: response.data.user ? "✓ Present" : "✗ Missing",
-      tokenLength: response.data.accessToken?.length,
+      id: response.data.id ? "✓ Present" : "✗ Missing",
+      username: response.data.username ? "✓ Present" : "✗ Missing",
+      email: response.data.email ? "✓ Present" : "✗ Missing",
+      roles: response.data.roles
+        ? `✓ Present (${response.data.roles.join(", ")})`
+        : "✗ Missing",
+      mappedToken: accessToken
+        ? `✓ Length: ${accessToken.length}`
+        : "✗ Missing",
+      mappedUser: user ? `✓ Username: ${user.username}` : "✗ Missing",
     });
 
     // Store tokens and user data with explicit success checks
@@ -479,7 +517,7 @@ export const handleLogout = async (): Promise<void> => {
     // Even if logout fails, ensure local data is cleared
     clearAuthData();
     // Redirect to login page
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   }
 };
 
@@ -500,7 +538,7 @@ export const logout = async (): Promise<void> => {
     removeCurrentUser();
     stopAutoRefresh();
     // Force reload to reset app state and AuthContext
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
     console.log("✅ Local data cleared and redirected to login");
   }
 };
@@ -560,7 +598,7 @@ export const changePassword = async (
   newPassword: string
 ): Promise<void> => {
   try {
-    await api.put("/auth/change-password", {
+    await api.put("/api/auth/change-password", {
       currentPassword,
       newPassword,
     });
@@ -573,7 +611,7 @@ export const changePassword = async (
 
 export const requestPasswordReset = async (email: string): Promise<void> => {
   try {
-    await api.post("/auth/forgot-password", { email });
+    await api.post("/api/auth/forgot-password", { email });
     console.log("✅ Password reset requested");
   } catch (error: any) {
     console.error("❌ Password reset request failed:", error);
@@ -588,7 +626,7 @@ export const resetPassword = async (
   newPassword: string
 ): Promise<void> => {
   try {
-    await api.post("/auth/reset-password", {
+    await api.post("/api/auth/reset-password", {
       token,
       newPassword,
     });

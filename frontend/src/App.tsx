@@ -29,7 +29,7 @@ import LogoutPage from './pages/auth/LogoutPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
-import ExercisesPage from './pages/ExercisesPage';
+import ExercisesPage from './pages/exercises/ExercisesPage';
 // import QuestionPage from './pages/exercises/QuestionPage';
 import FlashcardsPage from './pages/flashcards/FlashcardsPage';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';

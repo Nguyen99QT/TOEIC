@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.leenglish.toeic.domain.Exercise;
@@ -42,6 +43,27 @@ public class ExerciseController {
 
     @Autowired
     private UserService userService;
+
+    // Gửi feedback sau khi hoàn thành bài tập (chỉ cho phép user đã đăng nhập)
+    @PostMapping("/feedback")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> submitFeedback(
+            @Valid @RequestBody FeedbackDto feedbackDto,
+            Authentication authentication) {
+
+        // Get username from authentication and find user
+        User user = getUserFromAuthentication(authentication);
+        Long userId = user.getId();
+
+        // Log the authenticated user information
+        System.out.println("Processing feedback submission for user: " + user.getUsername() +
+                " (ID: " + userId + ", Email: " + user.getEmail() + ")");
+
+        // Submit feedback (always use authenticated user)
+        exerciseResultService.submitFeedback(userId, feedbackDto);
+
+        return ResponseEntity.ok().build();
+    }
 
     // Lấy 1 exercise theo id
     @GetMapping("/{id}")
@@ -77,7 +99,7 @@ public class ExerciseController {
         return ResponseEntity.ok().build();
     }
 
-    // Nộp bài làm exercise
+    // Nộp bài làm exercise (chỉ cho phép user đã đăng nhập)
     @PostMapping("/{id}/submit")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ExerciseResultDto> submitExercise(
@@ -104,29 +126,9 @@ public class ExerciseController {
                 userId, submissionDto);
 
         return ResponseEntity.ok(result);
-    } // Gửi feedback sau khi hoàn thành bài tập
+    }
 
-    @PostMapping("/feedback")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> submitFeedback(
-            @Valid @RequestBody FeedbackDto feedbackDto,
-            Authentication authentication) {
-
-        // Get username from authentication and find user
-        User user = getUserFromAuthentication(authentication);
-
-        Long userId = user.getId();
-
-        // Log the authenticated user information
-        System.out.println("Processing feedback submission for user: " + user.getUsername() +
-                " (ID: " + userId + ", Email: " + user.getEmail() + ")");
-
-        // Submit feedback
-        exerciseResultService.submitFeedback(userId, feedbackDto);
-
-        return ResponseEntity.ok().build();
-    } // Lấy kết quả làm bài của user
-
+    // Lấy kết quả làm bài của user (chỉ cho phép user đã đăng nhập)
     @GetMapping("/{id}/results")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ExerciseResultDto>> getExerciseResults(
@@ -147,6 +149,29 @@ public class ExerciseController {
 
         return ResponseEntity.ok(results);
     }
+
+    // Lấy feedback của user cho 1 exercise (chỉ cho phép user đã đăng nhập)
+    @GetMapping("/feedback")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<FeedbackDto> getFeedback(
+            @RequestParam Long exerciseId,
+            Authentication authentication) {
+        User user = getUserFromAuthentication(authentication);
+        Long userId = user.getId();
+        FeedbackDto feedback = exerciseResultService.getFeedbackByUserAndExercise(userId, exerciseId);
+        if (feedback == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(feedback);
+    }
+
+    // Nhận kết quả làm bài tập (CHỈ DÙNG TEST, KHÔNG DÙNG PRODUCTION)
+    // @PostMapping("/submit")
+    // public ResponseEntity<?> submitExerciseResult(@RequestBody ExerciseResultDto result) {
+    //     // Xử lý lưu kết quả vào DB
+    //     // ...
+    //     return ResponseEntity.ok("Exercise result submitted successfully");
+    // }
 
     // Chuyển đổi entity sang dto
     private ExerciseDto convertToDto(Exercise exercise) {

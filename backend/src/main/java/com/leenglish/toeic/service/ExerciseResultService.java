@@ -31,170 +31,189 @@ import com.leenglish.toeic.repository.UserRepository;
 @Service
 public class ExerciseResultService {
 
-    @Autowired
-    private UserExerciseResultRepository userExerciseResultRepository;
+        @Autowired
+        private UserExerciseResultRepository userExerciseResultRepository;
 
-    @Autowired
-    private UserQuestionAnswerRepository userQuestionAnswerRepository;
+        @Autowired
+        private UserQuestionAnswerRepository userQuestionAnswerRepository;
 
-    @Autowired
-    private UserFeedbackRepository userFeedbackRepository;
+        @Autowired
+        private UserFeedbackRepository userFeedbackRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private ExerciseRepository exerciseRepository;
+        @Autowired
+        private ExerciseRepository exerciseRepository;
 
-    @Autowired
-    private LessonRepository lessonRepository;
+        @Autowired
+        private LessonRepository lessonRepository;
 
-    @Autowired
-    private QuestionRepository questionRepository;
+        @Autowired
+        private QuestionRepository questionRepository;
 
-    @Transactional
-    public ExerciseResultDto submitExerciseResult(Long userId, ExerciseSubmissionDto submissionDto) {
-        // Fetch necessary entities
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        @Transactional
+        public ExerciseResultDto submitExerciseResult(Long userId, ExerciseSubmissionDto submissionDto) {
+                // Fetch necessary entities
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Exercise exercise = exerciseRepository.findById(submissionDto.getExerciseId())
-                .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                Exercise exercise = exerciseRepository.findById(submissionDto.getExerciseId())
+                                .orElseThrow(() -> new RuntimeException("Exercise not found"));
 
-        Lesson lesson = lessonRepository.findById(submissionDto.getLessonId())
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
+                Lesson lesson = lessonRepository.findById(submissionDto.getLessonId())
+                                .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        // Get questions and correct answers
-        List<Question> questions = questionRepository
-                .findByExerciseIdAndIsActiveTrueOrderByQuestionOrder(exercise.getId());
+                // Get questions and correct answers
+                List<Question> questions = questionRepository
+                                .findByExerciseIdAndIsActiveTrueOrderByQuestionOrder(exercise.getId());
 
-        // Calculate score
-        int totalQuestions = questions.size();
-        int answersCorrect = 0;
+                // Calculate score
+                int totalQuestions = questions.size();
+                int answersCorrect = 0;
 
-        List<QuestionAnswerRequest> answers = submissionDto.getAnswers();
+                List<QuestionAnswerRequest> answers = submissionDto.getAnswers();
 
-        // Create and save result
-        UserExerciseResult result = new UserExerciseResult();
-        result.setUser(user);
-        result.setExercise(exercise);
-        result.setLesson(lesson);
-        result.setTotalQuestions(totalQuestions);
-        result.setTimeTaken(submissionDto.getTimeTaken());
-        result.setCompletedAt(LocalDateTime.now());
+                // Create and save result
+                UserExerciseResult result = new UserExerciseResult();
+                result.setUser(user);
+                result.setExercise(exercise);
+                result.setLesson(lesson);
+                result.setTotalQuestions(totalQuestions);
+                result.setTimeTaken(submissionDto.getTimeTaken());
+                result.setCompletedAt(LocalDateTime.now());
 
-        // Process each answer and calculate score
-        List<UserQuestionAnswer> userAnswers = new ArrayList<>();
-        List<ExerciseResultDto.QuestionResultDto> questionResults = new ArrayList<>();
+                // Process each answer and calculate score
+                List<UserQuestionAnswer> userAnswers = new ArrayList<>();
+                List<ExerciseResultDto.QuestionResultDto> questionResults = new ArrayList<>();
 
-        for (QuestionAnswerRequest answerRequest : answers) {
-            Question question = questionRepository.findById(answerRequest.getQuestionId())
-                    .orElseThrow(() -> new RuntimeException("Question not found: " + answerRequest.getQuestionId()));
+                for (QuestionAnswerRequest answerRequest : answers) {
+                        Question question = questionRepository.findById(answerRequest.getQuestionId())
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Question not found: " + answerRequest.getQuestionId()));
 
-            String correctAnswer = question.getCorrectAnswer();
-            boolean isCorrect = correctAnswer.equals(answerRequest.getSelectedAnswer());
+                        String correctAnswer = question.getCorrectAnswer();
+                        boolean isCorrect = correctAnswer.equals(answerRequest.getSelectedAnswer());
 
-            if (isCorrect) {
-                answersCorrect++;
-            }
+                        if (isCorrect) {
+                                answersCorrect++;
+                        }
 
-            UserQuestionAnswer userAnswer = new UserQuestionAnswer();
-            userAnswer.setQuestion(question);
-            userAnswer.setSelectedAnswer(answerRequest.getSelectedAnswer());
-            userAnswer.setIsCorrect(isCorrect);
-            userAnswers.add(userAnswer);
+                        UserQuestionAnswer userAnswer = new UserQuestionAnswer();
+                        userAnswer.setQuestion(question);
+                        userAnswer.setSelectedAnswer(answerRequest.getSelectedAnswer());
+                        userAnswer.setIsCorrect(isCorrect);
+                        userAnswers.add(userAnswer);
 
-            questionResults.add(new ExerciseResultDto.QuestionResultDto(
-                    question.getId(),
-                    answerRequest.getSelectedAnswer(),
-                    correctAnswer,
-                    isCorrect));
+                        questionResults.add(new ExerciseResultDto.QuestionResultDto(
+                                        question.getId(),
+                                        answerRequest.getSelectedAnswer(),
+                                        correctAnswer,
+                                        isCorrect));
+                }
+
+                // Calculate final score (as a percentage)
+                int score = (int) Math.round((double) answersCorrect / totalQuestions * 100);
+
+                result.setAnswersCorrect(answersCorrect);
+                result.setScore(score);
+
+                // Save result
+                UserExerciseResult savedResult = userExerciseResultRepository.save(result);
+
+                // Save question answers
+                for (UserQuestionAnswer answer : userAnswers) {
+                        answer.setResult(savedResult);
+                        userQuestionAnswerRepository.save(answer);
+                }
+
+                // Return result DTO
+                return new ExerciseResultDto(
+                                savedResult.getId(),
+                                savedResult.getScore(),
+                                savedResult.getAnswersCorrect(),
+                                savedResult.getTotalQuestions(),
+                                savedResult.getTimeTaken(),
+                                savedResult.getCompletedAt(),
+                                questionResults);
         }
 
-        // Calculate final score (as a percentage)
-        int score = (int) Math.round((double) answersCorrect / totalQuestions * 100);
+        @Transactional
+        public void submitFeedback(Long userId, FeedbackDto feedbackDto) {
+                // Fetch necessary entities
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        result.setAnswersCorrect(answersCorrect);
-        result.setScore(score);
+                Lesson lesson = lessonRepository.findById(feedbackDto.getLessonId())
+                                .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
-        // Save result
-        UserExerciseResult savedResult = userExerciseResultRepository.save(result);
+                // Create feedback entity
+                UserFeedback feedback = new UserFeedback();
+                feedback.setUser(user);
+                feedback.setLesson(lesson);
+                feedback.setRating(feedbackDto.getRating());
+                feedback.setComment(feedbackDto.getComment());
+                feedback.setSubmittedAt(LocalDateTime.now());
 
-        // Save question answers
-        for (UserQuestionAnswer answer : userAnswers) {
-            answer.setResult(savedResult);
-            userQuestionAnswerRepository.save(answer);
+                // Set exercise if provided
+                if (feedbackDto.getExerciseId() != null) {
+                        Exercise exercise = exerciseRepository.findById(feedbackDto.getExerciseId())
+                                        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+                        feedback.setExercise(exercise);
+                }
+
+                // Save feedback
+                userFeedbackRepository.save(feedback);
+                System.out.println("FEEDBACK COMMENT RECEIVED: " + feedbackDto.getComment());
         }
 
-        // Return result DTO
-        return new ExerciseResultDto(
-                savedResult.getId(),
-                savedResult.getScore(),
-                savedResult.getAnswersCorrect(),
-                savedResult.getTotalQuestions(),
-                savedResult.getTimeTaken(),
-                savedResult.getCompletedAt(),
-                questionResults);
-    }
+        public List<ExerciseResultDto> getUserExerciseResults(Long userId, Long exerciseId) {
+                List<UserExerciseResult> results = userExerciseResultRepository.findByUserIdAndExerciseId(userId,
+                                exerciseId);
 
-    @Transactional
-    public void submitFeedback(Long userId, FeedbackDto feedbackDto) {
-        // Fetch necessary entities
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Lesson lesson = lessonRepository.findById(feedbackDto.getLessonId())
-                .orElseThrow(() -> new RuntimeException("Lesson not found"));
-
-        // Create feedback entity
-        UserFeedback feedback = new UserFeedback();
-        feedback.setUser(user);
-        feedback.setLesson(lesson);
-        feedback.setRating(feedbackDto.getRating());
-        feedback.setComment(feedbackDto.getComment());
-        feedback.setSubmittedAt(LocalDateTime.now());
-
-        // Set exercise if provided
-        if (feedbackDto.getExerciseId() != null) {
-            Exercise exercise = exerciseRepository.findById(feedbackDto.getExerciseId())
-                    .orElseThrow(() -> new RuntimeException("Exercise not found"));
-            feedback.setExercise(exercise);
+                return results.stream().map(this::convertToDto).collect(Collectors.toList());
         }
 
-        // Save feedback
-        userFeedbackRepository.save(feedback);
-    }
+        private ExerciseResultDto convertToDto(UserExerciseResult result) {
+                // Get question answers for this result
+                List<UserQuestionAnswer> answers = userQuestionAnswerRepository.findByResultId(result.getId());
 
-    public List<ExerciseResultDto> getUserExerciseResults(Long userId, Long exerciseId) {
-        List<UserExerciseResult> results = userExerciseResultRepository.findByUserIdAndExerciseId(userId, exerciseId);
+                // Convert to question result DTOs
+                List<ExerciseResultDto.QuestionResultDto> questionResults = answers.stream()
+                                .map(answer -> {
+                                        Question question = answer.getQuestion();
+                                        return new ExerciseResultDto.QuestionResultDto(
+                                                        question.getId(),
+                                                        answer.getSelectedAnswer(),
+                                                        question.getCorrectAnswer(),
+                                                        answer.getIsCorrect());
+                                })
+                                .collect(Collectors.toList());
 
-        return results.stream().map(this::convertToDto).collect(Collectors.toList());
-    }
+                // Create result DTO
+                return new ExerciseResultDto(
+                                result.getId(),
+                                result.getScore(),
+                                result.getAnswersCorrect(),
+                                result.getTotalQuestions(),
+                                result.getTimeTaken(),
+                                result.getCompletedAt(),
+                                questionResults);
+        }
 
-    private ExerciseResultDto convertToDto(UserExerciseResult result) {
-        // Get question answers for this result
-        List<UserQuestionAnswer> answers = userQuestionAnswerRepository.findByResultId(result.getId());
-
-        // Convert to question result DTOs
-        List<ExerciseResultDto.QuestionResultDto> questionResults = answers.stream()
-                .map(answer -> {
-                    Question question = answer.getQuestion();
-                    return new ExerciseResultDto.QuestionResultDto(
-                            question.getId(),
-                            answer.getSelectedAnswer(),
-                            question.getCorrectAnswer(),
-                            answer.getIsCorrect());
-                })
-                .collect(Collectors.toList());
-
-        // Create result DTO
-        return new ExerciseResultDto(
-                result.getId(),
-                result.getScore(),
-                result.getAnswersCorrect(),
-                result.getTotalQuestions(),
-                result.getTimeTaken(),
-                result.getCompletedAt(),
-                questionResults);
-    }
+        // Lấy feedback của user cho 1 exercise
+        public FeedbackDto getFeedbackByUserAndExercise(Long userId, Long exerciseId) {
+                List<UserFeedback> feedbackList = userFeedbackRepository.findByUserIdAndExerciseId(userId, exerciseId);
+                if (feedbackList == null || feedbackList.isEmpty()) {
+                        return null;
+                }
+                // Lấy feedback mới nhất (nếu có nhiều)
+                UserFeedback feedback = feedbackList.get(feedbackList.size() - 1);
+                FeedbackDto dto = new FeedbackDto();
+                dto.setLessonId(feedback.getLesson().getId());
+                dto.setExerciseId(feedback.getExercise() != null ? feedback.getExercise().getId() : null);
+                dto.setRating(feedback.getRating());
+                dto.setComment(feedback.getComment());
+                return dto;
+        }
 }

@@ -54,8 +54,9 @@ let refreshInterval: NodeJS.Timeout | null = null;
 
 export const setToken = (token: string): void => {
   try {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem("authToken", token); // For backward compatibility
+    localStorage.setItem('accessToken', token);
+localStorage.setItem('toeic_access_token', token);
+localStorage.setItem('authToken', token);
     console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken");
   } catch (error) {
     console.error("❌ Failed to store token in localStorage:", error);
@@ -72,11 +73,11 @@ export const setToken = (token: string): void => {
 };
 
 export const getToken = (): string | null => {
-  // Try new key first, then fallback to old keys
   const token =
     localStorage.getItem(TOKEN_KEY) ||
     localStorage.getItem("authToken") ||
-    localStorage.getItem("accessToken");
+    localStorage.getItem("accessToken") ||
+    null; // Thêm null fallback
 
   if (token) {
     console.log(
@@ -153,10 +154,10 @@ export const setCurrentUser = (user: User): void => {
 
 export const getCurrentUser = (): User | null => {
   try {
-    // Try new key first, then fallback to old key
     const userStr =
-      localStorage.getItem(USER_KEY) || localStorage.getItem("currentUser");
-
+      localStorage.getItem(USER_KEY) ||
+      localStorage.getItem("currentUser") ||
+      null;
     if (!userStr) return null;
 
     const user = JSON.parse(userStr);

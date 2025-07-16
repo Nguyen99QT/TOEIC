@@ -12,11 +12,10 @@
         "moduleResolution": "node"
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
-        "dist",
-        "src/main/**"
+        "dist"
     ]
 }

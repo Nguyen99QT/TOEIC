@@ -8,6 +8,7 @@
 
 import { Exercise, Lesson } from "../types";
 import api from "./api";
+import apiClient from "./apiClient";
 
 // ✅ Helper function to process media URLs
 const processLessonMediaUrls = (lesson: Lesson): Lesson => {
@@ -211,6 +212,21 @@ export const lessonService = {
       throw error;
     }
   },
+
+  /**
+   * Get user lesson progress
+   */
+  getUserLessonProgress: async (userId: number): Promise<LessonProgress[]> => {
+    const res = await apiClient.get(`/users/${userId}/lessons/progress`);
+    return res.data;
+  },
 };
 
 export default lessonService;
+
+export interface LessonProgress {
+  lessonId: number;
+  lessonTitle: string;
+  progress: number; // %
+  score?: number;
+}

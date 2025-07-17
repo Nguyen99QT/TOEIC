@@ -11,6 +11,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { exerciseService } from '../../services/exercises';
 import { questionService } from '../../services/questions';
+import progressService from '../../services/progressService';
+import { markExerciseCompletedInStorage } from '../../services/exerciseProgress';
 import { Exercise, Question } from '../../types';
 import api from '../../services/api';
 import FeedbackModal from '../../components/ui/FeedbackModal';
@@ -36,6 +38,14 @@ const ExerciseQuestionsPage: React.FC = () => {
     const { lessonId, exerciseId } = useParams<{ lessonId: string; exerciseId: string }>();
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+
+    // Debug auth state
+    useEffect(() => {
+        console.log('🔒 Auth state check:', {
+            currentUser: currentUser ? { id: currentUser.id, username: currentUser.username } : null,
+            token: localStorage.getItem('authToken') ? 'exists' : 'missing'
+        });
+    }, [currentUser]);
 
     // State management
     const [exercise, setExercise] = useState<Exercise | null>(null);
@@ -96,14 +106,16 @@ const ExerciseQuestionsPage: React.FC = () => {
         const fetchFeedback = async () => {
             if (!exerciseId || !currentUser?.id) return;
             try {
-                const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}&userId=${currentUser.id}`);
-                if (res.data && (res.data.comment || res.data.rating)) {
-                    setLastFeedbackComment(res.data.comment);
-                    setLastFeedbackRating(res.data.rating);
-                    setFeedbackSubmitted(true);
-                }
+                // TODO: Implement feedback API endpoint
+                // const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}&userId=${currentUser.id}`);
+                // if (res.data && (res.data.comment || res.data.rating)) {
+                //     setLastFeedbackComment(res.data.comment);
+                //     setLastFeedbackRating(res.data.rating);
+                //     setFeedbackSubmitted(true);
+                // }
+                console.log('📝 Feedback API not implemented yet, skipping fetch');
             } catch (err) {
-                // ignorex
+                // ignore
             }
         };
         if (isSubmitted) fetchFeedback();
@@ -159,6 +171,30 @@ const ExerciseQuestionsPage: React.FC = () => {
     const handleSubmit = async () => {
         if (isSubmitted) return;
 
+        // ✅ DETAILED AUTH DEBUG BEFORE SUBMIT
+        console.group('🔍 PRE-SUBMIT AUTH CHECK');
+        console.log('Current User from Context:', currentUser);
+
+        const token = localStorage.getItem('toeic_access_token') ||
+            localStorage.getItem('authToken') ||
+            localStorage.getItem('accessToken');
+
+        console.log('Token exists:', !!token);
+        if (token) {
+            console.log('Token preview:', token.substring(0, 30) + '...');
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const now = Math.floor(Date.now() / 1000);
+                console.log('Token expiry:', payload.exp);
+                console.log('Current time:', now);
+                console.log('Token expired:', payload.exp < now);
+                console.log('Time until expiry:', payload.exp - now, 'seconds');
+            } catch (e) {
+                console.error('Failed to parse token:', e);
+            }
+        }
+        console.groupEnd();
+
         // Validate all questions are answered
         const unansweredQuestions = questions.filter(q => !userAnswers[q.id]);
         if (unansweredQuestions.length > 0) {
@@ -172,23 +208,75 @@ const ExerciseQuestionsPage: React.FC = () => {
 
             // Submit to backend (if needed)
             try {
+                console.log('🚀 Attempting to submit exercise result...');
                 await exerciseService.submitExerciseResult({
                     exerciseId: parseInt(exerciseId!),
+                    lessonId: parseInt(lessonId!),
+                    timeTaken: 600, // Default 10 minutes in seconds
                     answers: Object.entries(userAnswers).map(([questionId, answer]) => ({
                         questionId: parseInt(questionId),
                         selectedAnswer: answer
-                    })),
-                    score: result.percentage,
-                    completedAt: new Date().toISOString()
+                    }))
                 });
                 console.log('✅ Exercise result submitted successfully');
-            } catch (submitError) {
+            } catch (submitError: any) {
                 console.warn('⚠️ Could not submit to backend:', submitError);
+                console.error('Submit error details:', {
+                    message: submitError.message,
+                    status: submitError.response?.status,
+                    statusText: submitError.response?.statusText,
+                    data: submitError.response?.data,
+                    config: submitError.config
+                });
                 // Continue with local results even if backend fails
             }
 
             setExerciseResult(result);
             setIsSubmitted(true);
+
+            // Mark exercise as completed in localStorage for immediate UI update
+            if (exerciseId) {
+                markExerciseCompletedInStorage(parseInt(exerciseId));
+                console.log('✅ Exercise marked as completed in localStorage');
+            }
+
+            // Mark lesson as completed automatically when exercise is finished
+            if (currentUser?.id && lessonId) {
+                try {
+                    console.log('🎯 Auto-marking lesson as completed after exercise...');
+                    console.log('User ID:', currentUser.id, 'Type:', typeof currentUser.id);
+                    console.log('Lesson ID:', lessonId, 'Parsed:', parseInt(lessonId));
+                    console.log('Auth token exists:', !!localStorage.getItem('authToken'));
+
+                    await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 5); // 5 minutes for exercise completion
+                    console.log('✅ Lesson automatically marked as completed');
+                } catch (error: any) {
+                    console.error('❌ Failed to auto-mark lesson as completed:', error);
+                    console.error('Error details:', {
+                        message: error.message,
+                        status: error.response?.status,
+                        statusText: error.response?.statusText,
+                        data: error.response?.data
+                    });
+
+                    // Show user-friendly error message
+                    if (error.message?.includes('expired') || error.message?.includes('Authentication')) {
+                        alert('⚠️ Your session has expired. Please log in again to save your progress.');
+                        setTimeout(() => {
+                            window.location.href = '/login';
+                        }, 2000);
+                    } else {
+                        console.warn('⚠️ Could not auto-mark lesson complete, but exercise results are saved locally');
+                        // Continue anyway - don't block the UI for progress marking failures
+                    }
+                }
+            } else {
+                console.warn('⚠️ Cannot mark lesson complete - missing user or lesson info:', {
+                    hasUser: !!currentUser,
+                    userId: currentUser?.id,
+                    lessonId
+                });
+            }
 
             // Phát âm thanh hoàn thành
             // const audio = new Audio(completeSound);
@@ -429,6 +517,12 @@ const ExerciseQuestionsPage: React.FC = () => {
                             className="px-6 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                         >
                             🔄 Back to Exercises
+                        </button>
+                        <button
+                            onClick={() => navigate('/lessons')}
+                            className="px-6 py-2 rounded-lg font-semibold bg-green-500 text-white hover:bg-green-600 transition"
+                        >
+                            📚 Go to Lessons
                         </button>
                         <button
                             onClick={() => setShowFeedbackModal(true)}

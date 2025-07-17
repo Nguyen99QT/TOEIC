@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Auth API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #ccc;
+      }
+      .success {
+        color: green;
+      }
+      .error {
+        color: red;
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+      }
+      input {
+        margin: 5px;
+        padding: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>TOEIC Authentication Test</h1>
+
+    <div class="section">
+      <h2>Test Registration</h2>
+      <input
+        type="text"
+        id="regUsername"
+        placeholder="Username"
+        value="testuser123"
+      />
+      <input
+        type="email"
+        id="regEmail"
+        placeholder="Email"
+        value="test@example.com"
+      />
+      <input
+        type="password"
+        id="regPassword"
+        placeholder="Password"
+        value="password123"
+      />
+      <input
+        type="text"
+        id="regFirstName"
+        placeholder="First Name"
+        value="Test"
+      />
+      <input
+        type="text"
+        id="regLastName"
+        placeholder="Last Name"
+        value="User"
+      />
+      <button onclick="testRegistration()">Register</button>
+      <div id="regResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Test Login</h2>
+      <input
+        type="text"
+        id="loginUsername"
+        placeholder="Username"
+        value="testuser123"
+      />
+      <input
+        type="password"
+        id="loginPassword"
+        placeholder="Password"
+        value="password123"
+      />
+      <button onclick="testLogin()">Login</button>
+      <div id="loginResult"></div>
+    </div>
+
+    <div class="section">
+      <h2>Test Existing User Login</h2>
+      <input
+        type="text"
+        id="existingUsername"
+        placeholder="Username"
+        value="huyplum"
+      />
+      <input
+        type="password"
+        id="existingPassword"
+        placeholder="Password"
+        value="password"
+      />
+      <button onclick="testExistingLogin()">Login with Existing User</button>
+      <div id="existingResult"></div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+
+      async function testRegistration() {
+        const resultDiv = document.getElementById("regResult");
+        try {
+          const response = await fetch(`${API_BASE}/auth/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: document.getElementById("regUsername").value,
+              email: document.getElementById("regEmail").value,
+              password: document.getElementById("regPassword").value,
+              firstName: document.getElementById("regFirstName").value,
+              lastName: document.getElementById("regLastName").value,
+              gender: "MALE",
+            }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">Registration successful: ${JSON.stringify(
+              data
+            )}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">Registration failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        }
+      }
+
+      async function testLogin() {
+        const resultDiv = document.getElementById("loginResult");
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: document.getElementById("loginUsername").value,
+              password: document.getElementById("loginPassword").value,
+            }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">Login successful: ${JSON.stringify(
+              data
+            )}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">Login failed: ${
+              data.error || data.message
+            }</div>`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        }
+      }
+
+      async function testExistingLogin() {
+        const resultDiv = document.getElementById("existingResult");
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: document.getElementById("existingUsername").value,
+              password: document.getElementById("existingPassword").value,
+            }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">Login successful: ${JSON.stringify(
+              data
+            )}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">Login failed: ${
+              data.error || data.message
+            }</div>`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        }
+      }
+    </script>
+  </body>
+</html>

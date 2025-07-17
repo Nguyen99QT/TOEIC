@@ -62,10 +62,13 @@ export const useBreadcrumb = (): BreadcrumbItem[] => {
     if (isId) {
       // Handle dynamic IDs
       const prevSegment = pathSegments[index - 1];
+
       if (prevSegment === "lessons") {
         label = `Lesson ${segment}`;
       } else if (prevSegment === "exercises") {
         label = `Exercise ${segment}`;
+      } else if (prevSegment === "questions") {
+        label = `Question ${segment}`;
       } else if (
         prevSegment === "flashcards" ||
         (prevSegment === "study" && pathSegments[index - 2] === "flashcards")

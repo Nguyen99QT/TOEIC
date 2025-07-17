@@ -54,9 +54,9 @@ let refreshInterval: NodeJS.Timeout | null = null;
 
 export const setToken = (token: string): void => {
   try {
-    localStorage.setItem('accessToken', token);
-localStorage.setItem('toeic_access_token', token);
-localStorage.setItem('authToken', token);
+    localStorage.setItem("accessToken", token);
+    localStorage.setItem("toeic_access_token", token);
+    localStorage.setItem("authToken", token);
     console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken");
   } catch (error) {
     console.error("❌ Failed to store token in localStorage:", error);
@@ -487,16 +487,50 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
   try {
     console.log("📝 Attempting registration for:", userData.username);
 
-    const response = await api.post("/auth/register", userData);
+    // First check if the server is available
+    const isServerUp = await checkServerStatus().catch(() => false);
+    if (!isServerUp) {
+      throw new Error("Server is not responding. Please try again later.");
+    }
+
+    // Use the correct endpoint /api/auth/register that matches the backend
+    const response = await api.post("/api/auth/register", userData);
     const registrationData = response.data;
 
     console.log("✅ Registration successful:", registrationData);
     return registrationData.user || registrationData;
   } catch (error: any) {
     console.error("❌ Registration failed:", error);
-    throw new Error(
-      error.response?.data?.message || error.message || "Registration failed"
-    );
+
+    // Add better error handling with detailed messages
+    if (error.response) {
+      console.error(
+        `Server responded with ${error.response.status}: ${JSON.stringify(
+          error.response.data
+        )}`
+      );
+
+      if (error.response.status === 400) {
+        throw new Error(
+          error.response.data?.message ||
+            "Invalid registration data. Please check your inputs."
+        );
+      } else if (error.response.status === 409) {
+        throw new Error(
+          "Username or email already exists. Please try different credentials."
+        );
+      }
+
+      throw new Error(
+        error.response.data?.message || `Server error ${error.response.status}`
+      );
+    } else if (error.request) {
+      throw new Error(
+        "Server not responding. Please check your connection or try again later."
+      );
+    } else {
+      throw new Error("Registration request failed: " + error.message);
+    }
   }
 };
 //handleLogout

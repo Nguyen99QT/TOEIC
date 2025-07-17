@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from '../types';
+import { clearCompletedExercises } from '../services/exerciseProgress';
 
 export interface AuthContextType {
     user: User | null;
@@ -54,6 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('🔍 AuthProvider: Checking existing auth...');
                 console.log('🔍 Token exists:', !!token);
                 console.log('🔍 User exists:', !!user);
+                console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'null');
+                console.log('🔍 User info:', user ? { id: user.id, username: user.username } : 'null');
 
                 if (token && user && checkAuth()) {
                     console.log('✅ Found valid auth for:', user.username);
@@ -62,6 +65,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     startAutoRefresh();
                 } else {
                     console.log('ℹ️ No valid authentication found - user is guest');
+                    console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
+
+                    // If checkAuth failed but we have token/user, it might be expired
+                    if (token && user && !checkAuth()) {
+                        console.warn('🚨 Token/user exists but authentication check failed - likely expired');
+                        // Clear potentially invalid data
+                        const { removeToken } = await import('../services/auth');
+                        removeToken();
+                    }
+
                     setCurrentUser(null);
                     setIsAuthenticated(false);
                 }
@@ -72,15 +85,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setIsAuthenticated(false);
             } finally {
                 // Ensure loading is always set to false
+                console.log('🔧 AuthProvider: Setting loading to false');
                 setLoading(false);
                 console.log('✅ Auth initialization completed');
             }
         };
 
-        // Initialize immediately, don't use timeout to delay
-        initAuth();
+        // Add timeout to ensure loading is cleared even if auth fails
+        const timeoutId = setTimeout(() => {
+            console.log('⏰ AuthProvider: Timeout reached, forcing loading to false');
+            setLoading(false);
+        }, 5000); // 5 second timeout
+
+        initAuth().finally(() => {
+            clearTimeout(timeoutId);
+        });
 
         return () => {
+            clearTimeout(timeoutId);
             // Cleanup on unmount
             import('../services/auth').then(({ stopAutoRefresh }) => {
                 stopAutoRefresh();
@@ -157,6 +179,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Fallback to manual cleanup
             const keys = ['toeic_current_user', 'toeic_access_token', 'toeic_refresh_token', 'currentUser', 'authToken'];
             keys.forEach(key => localStorage.removeItem(key));
+        }
+
+        // Clear exercise completion data from localStorage
+        try {
+            clearCompletedExercises();
+            console.log('✅ Exercise completion data cleared');
+        } catch (error) {
+            console.warn('⚠️ Could not clear exercise completion data:', error);
+            // Fallback to manual cleanup
+            localStorage.removeItem('completed_exercises');
+            localStorage.removeItem('completedExercises');
         }
 
         setCurrentUser(null);

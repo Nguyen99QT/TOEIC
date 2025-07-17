@@ -192,14 +192,21 @@ const handleAuthFailure = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("currentUser");
 
+  console.log("🧹 Cleared all authentication data from localStorage");
+
   // Set a flag to prevent immediate redirect loops
   sessionStorage.setItem("authFailed", "true");
+
+  // Show user-friendly message before redirect
+  const userMessage =
+    "Your session has expired. You will be redirected to login.";
+  console.log("🔄 " + userMessage);
 
   // Use setTimeout to allow current operations to complete
   setTimeout(() => {
     console.log("🔄 Redirecting to login due to authentication failure");
     window.location.href = "/login";
-  }, 100);
+  }, 1500); // Give user time to see any error messages
 };
 
 // ========== HELPER FUNCTIONS ==========

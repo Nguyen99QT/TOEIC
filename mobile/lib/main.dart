@@ -15,7 +15,7 @@ void main() async {
   await StorageService.instance.init();
 
   runApp(
-    ProviderScope(
+    const ProviderScope(
       child: MyApp(),
     ),
   );

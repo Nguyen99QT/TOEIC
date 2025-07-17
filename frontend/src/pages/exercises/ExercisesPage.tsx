@@ -23,6 +23,7 @@ import { Card, CardContent } from '../../components/ui/card';
 import { Skeleton } from '../../components/ui/skeleton';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import api from '../../services/api'; // Import your API client
+import { getCompletedExercises } from '../../services/exerciseProgress';
 
 interface Exercise {
   id: number;
@@ -41,11 +42,18 @@ const ExercisesPage: React.FC = () => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
         setLoading(true);
+
+        // Load completed exercises from API (with localStorage fallback)
+        const completed = await getCompletedExercises();
+        setCompletedExercises(completed);
+        console.log('🎯 Loaded completed exercises:', completed);
+
         // Use consistent URL format - note that api client might already prepend /api
         const apiUrl = `lessons/${lessonId}/exercises`;
         console.log(`Fetching exercises from: ${apiUrl}`);
@@ -88,6 +96,22 @@ const ExercisesPage: React.FC = () => {
       fetchExercises();
     }
   }, [lessonId]);
+
+  // Listen for storage changes to update completed exercises when user returns from exercise
+  useEffect(() => {
+    const handleExerciseCompleted = async () => {
+      const updated = await getCompletedExercises();
+      setCompletedExercises(updated);
+      console.log('🔄 Updated completed exercises:', updated);
+    };
+
+    // Listen for custom events when exercises are completed
+    window.addEventListener('exerciseCompleted', handleExerciseCompleted);
+
+    return () => {
+      window.removeEventListener('exerciseCompleted', handleExerciseCompleted);
+    };
+  }, []);
 
   return (
     <div className="exercises-page">
@@ -139,54 +163,58 @@ const ExercisesPage: React.FC = () => {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {exercises.map((exercise) => (
-            <Card key={exercise.id} className={`overflow-hidden ${exercise.isLocked ? 'opacity-75' : ''}`}>
-              <CardContent className="p-0">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-medium text-gray-900">{exercise.title}</h3>
-                    {exercise.isCompleted && (
-                      <Badge className="ml-2 bg-green-100 text-green-800">
-                        <CheckCircle2 className="mr-1 h-3 w-3" /> Completed
+          {exercises.map((exercise) => {
+            const isCompleted = completedExercises.has(exercise.id) || exercise.isCompleted;
+
+            return (
+              <Card key={exercise.id} className={`overflow-hidden ${exercise.isLocked ? 'opacity-75' : ''}`}>
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-gray-900">{exercise.title}</h3>
+                      {isCompleted && (
+                        <Badge className="ml-2 bg-green-100 text-green-800 border-green-200">
+                          <CheckCircle2 className="mr-1 h-3 w-3 text-green-600" /> Completed
+                        </Badge>
+                      )}
+                    </div>
+
+                    <p className="text-gray-600 text-sm mb-4">{exercise.description}</p>
+
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Badge className="flex items-center bg-gray-100 text-gray-800">
+                        <Clock className="mr-1 h-3 w-3" /> {exercise.duration} min
                       </Badge>
-                    )}
+                      <Badge className="flex items-center bg-gray-100 text-gray-800">
+                        <BookOpen className="mr-1 h-3 w-3" /> {exercise.questionsCount} questions
+                      </Badge>
+                      <Badge className="flex items-center bg-gray-100 text-gray-800">
+                        <Target className="mr-1 h-3 w-3" /> {exercise.points} points
+                      </Badge>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      variant={exercise.isLocked ? "outline" : "primary"}
+                      disabled={exercise.isLocked}
+                      onClick={() => navigate(`/lessons/${lessonId}/exercises/${exercise.id}/questions`)}
+                    >
+                      {exercise.isLocked ? (
+                        <>
+                          <Lock className="mr-2 h-4 w-4" /> Locked
+                        </>
+                      ) : (
+                        <>
+                          <Play className="mr-2 h-4 w-4" />
+                          {isCompleted ? 'Retry Exercise' : 'Start Exercise'}
+                        </>
+                      )}
+                    </Button>
                   </div>
-
-                  <p className="text-gray-600 text-sm mb-4">{exercise.description}</p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge className="flex items-center bg-gray-100 text-gray-800">
-                      <Clock className="mr-1 h-3 w-3" /> {exercise.duration} min
-                    </Badge>
-                    <Badge className="flex items-center bg-gray-100 text-gray-800">
-                      <BookOpen className="mr-1 h-3 w-3" /> {exercise.questionsCount} questions
-                    </Badge>
-                    <Badge className="flex items-center bg-gray-100 text-gray-800">
-                      <Target className="mr-1 h-3 w-3" /> {exercise.points} points
-                    </Badge>
-                  </div>
-
-                  <Button
-                    className="w-full"
-                    variant={exercise.isLocked ? "outline" : "primary"}
-                    disabled={exercise.isLocked}
-                    onClick={() => navigate(`/lessons/${lessonId}/exercises/${exercise.id}/questions`)}
-                  >
-                    {exercise.isLocked ? (
-                      <>
-                        <Lock className="mr-2 h-4 w-4" /> Locked
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-2 h-4 w-4" />
-                        {exercise.isCompleted ? 'Retry Exercise' : 'Start Exercise'}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

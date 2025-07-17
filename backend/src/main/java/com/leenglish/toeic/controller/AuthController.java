@@ -14,9 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 import com.leenglish.toeic.dto.JwtResponse;
 import com.leenglish.toeic.dto.LoginRequest;
+import com.leenglish.toeic.dto.RegisterRequest;
 import com.leenglish.toeic.security.UserDetailsImpl;
 import com.leenglish.toeic.service.TokenBlacklistService;
+import com.leenglish.toeic.service.UserService;
 import com.leenglish.toeic.utils.JwtUtils;
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.enums.Gender;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -39,6 +44,9 @@ public class AuthController {
 
     @Autowired
     private UserDetailsService userDetailsService;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -156,22 +164,92 @@ public class AuthController {
             String username = registerRequest.get("username");
             String email = registerRequest.get("email");
             String password = registerRequest.get("password");
+            String fullName = registerRequest.get("fullName");
+            String firstName = registerRequest.get("firstName");
+            String lastName = registerRequest.get("lastName");
+            String genderStr = registerRequest.get("gender");
+            String phoneNumber = registerRequest.get("phoneNumber");
 
             System.out.println("📝 Registration attempt for user: " + username);
 
-            // TODO: Implement user registration logic
-            // For now, return success message
+            // Validate required fields
+            if (username == null || username.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Username is required"));
+            }
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Email is required"));
+            }
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Password is required"));
+            }
+
+            // Check if user already exists
+            if (userService.isUsernameTaken(username)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Username is already taken"));
+            }
+            if (userService.isEmailTaken(email)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Email is already taken"));
+            }
+
+            // Create fullName from firstName and lastName if not provided
+            if (fullName == null || fullName.trim().isEmpty()) {
+                StringBuilder nameBuilder = new StringBuilder();
+                if (firstName != null && !firstName.trim().isEmpty()) {
+                    nameBuilder.append(firstName.trim());
+                }
+                if (lastName != null && !lastName.trim().isEmpty()) {
+                    if (nameBuilder.length() > 0) {
+                        nameBuilder.append(" ");
+                    }
+                    nameBuilder.append(lastName.trim());
+                }
+                fullName = nameBuilder.length() > 0 ? nameBuilder.toString() : username;
+            }
+
+            // Create new user
+            User newUser = userService.createUser(username, email, password, fullName, Role.USER);
+
+            // Update additional fields if provided
+            if (genderStr != null && !genderStr.trim().isEmpty()) {
+                try {
+                    Gender gender = Gender.valueOf(genderStr.toUpperCase());
+                    newUser.setGender(gender);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Invalid gender value: " + genderStr);
+                }
+            }
+
+            if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                newUser.setPhone(phoneNumber);
+            }
+
+            // Save updated user
+            User savedUser = userService.updateUser(newUser.getId(), newUser.getFullName(),
+                    newUser.getEmail(), newUser.getGender(),
+                    newUser.getPhone());
+
+            // Return success response
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Registration successful");
-            response.put("username", username);
-            response.put("email", email);
+            response.put("user", Map.of(
+                    "id", savedUser.getId(),
+                    "username", savedUser.getUsername(),
+                    "email", savedUser.getEmail(),
+                    "fullName", savedUser.getFullName(),
+                    "role", savedUser.getRole().toString()));
 
             System.out.println("✅ Registration successful for user: " + username);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             System.err.println("❌ Registration failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Registration failed: " + e.getMessage()));
         }
     }
@@ -264,4 +342,5 @@ public class AuthController {
                     .body(Map.of("message", "Password reset failed: " + e.getMessage()));
         }
     }
+    
 }

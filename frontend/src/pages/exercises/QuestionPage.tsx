@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { exerciseService } from '../../services/exercises';
 import feedbackService from '../../services/feedback';
+import progressService from '../../services/progressService';
 import { questionService } from '../../services/questions';
 import FeedbackModal from '../../components/ui/FeedbackModal';
 import { Exercise, Question, QuestionAnswerRequest } from '../../types';
@@ -126,7 +127,19 @@ const QuestionPage: React.FC = () => {
             // Show completion notification
             setShowCompletionModal(true);
 
-            // Update user progress (if API exists)
+            // Mark lesson as completed automatically when exercise is finished
+            if (currentUser?.id && lessonId) {
+                try {
+                    console.log('🎯 Auto-marking lesson as completed after exercise...');
+                    await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 5); // 5 minutes for exercise completion
+                    console.log('✅ Lesson automatically marked as completed');
+                } catch (error) {
+                    console.warn('⚠️ Failed to auto-mark lesson as completed:', error);
+                    // Continue anyway - don't block the UI
+                }
+            }
+
+            // Update user progress (if API exists) - Legacy code, can be removed later
             try {
                 await fetch(`/api/users/${currentUser?.id}/progress`, {
                     method: 'PUT',
@@ -156,6 +169,24 @@ const QuestionPage: React.FC = () => {
             setIsSubmitting(false);
         }
     }, [exercise, questions, answers, timeLeft, lessonId, navigate, calculateScore, currentUser]);
+
+    // Function to handle going back to lesson and mark it as completed if needed
+    const handleReturnToLesson = async () => {
+        if (currentUser?.id && lessonId) {
+            try {
+                // Mark lesson as completed
+                console.log('🎯 Marking lesson as completed...');
+                await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 30); // 30 minutes estimated time
+                console.log('✅ Lesson marked as completed');
+            } catch (error) {
+                console.warn('⚠️ Failed to mark lesson as completed:', error);
+                // Continue anyway - don't block navigation
+            }
+        }
+
+        setShowCompletionModal(false);
+        navigate(`/lessons/${lessonId}`);
+    };
 
     useEffect(() => {
         const fetchExerciseAndQuestions = async () => {
@@ -585,10 +616,7 @@ const QuestionPage: React.FC = () => {
                         )}
                         <div className="flex flex-wrap justify-center gap-2 mt-6">
                             <button
-                                onClick={() => {
-                                    setShowCompletionModal(false);
-                                    navigate(`/lessons/${lessonId}`);
-                                }}
+                                onClick={handleReturnToLesson}
                                 className="px-6 py-2 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition flex-1"
                             >
                                 Quay lại bài học

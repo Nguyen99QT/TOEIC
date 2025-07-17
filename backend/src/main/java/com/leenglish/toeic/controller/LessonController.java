@@ -2,11 +2,13 @@ package com.leenglish.toeic.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +25,10 @@ import com.leenglish.toeic.domain.Exercise;
 import com.leenglish.toeic.domain.Lesson;
 import com.leenglish.toeic.dto.ExerciseDto;
 import com.leenglish.toeic.dto.LessonDto;
+import com.leenglish.toeic.dto.UserProgressDto;
+import com.leenglish.toeic.security.UserDetailsImpl;
 import com.leenglish.toeic.service.LessonService;
+import com.leenglish.toeic.service.UserProgressService;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -32,6 +37,9 @@ public class LessonController {
 
     @Autowired
     private LessonService lessonService;
+
+    @Autowired
+    private UserProgressService userProgressService;
 
     @GetMapping("/{id}")
     public ResponseEntity<LessonDto> getLesson(@PathVariable Long id) {
@@ -206,6 +214,37 @@ public class LessonController {
         } catch (Exception e) {
             System.err.println("❌ Error getting all public lessons: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Mark lesson as completed for the authenticated user
+     */
+    @PostMapping("/{lessonId}/complete")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> markLessonCompleted(
+            @PathVariable Long lessonId,
+            @RequestParam(defaultValue = "0") Integer timeSpent,
+            Authentication authentication) {
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            Long userId = userDetails.getId();
+
+            System.out.println("🎯 Marking lesson " + lessonId + " as completed for user " + userId);
+
+            // Mark lesson as completed (100% progress)
+            UserProgressDto progressDto = userProgressService.markLessonCompleted(userId, lessonId, timeSpent);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lesson marked as completed successfully",
+                    "progress", progressDto));
+
+        } catch (Exception e) {
+            System.err.println("❌ Error marking lesson as completed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Failed to mark lesson as completed: " + e.getMessage()));
         }
     }
 }

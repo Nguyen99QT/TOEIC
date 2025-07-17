@@ -477,3 +477,31 @@ export interface PaginationOptions {
   page: number;
   size: number;
 }
+
+// ========== PROGRESS TRACKING ==========
+
+export interface UserProgressDto {
+  id: number;
+  userId: number;
+  lessonId: number;
+  lessonTitle: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  progressPercentage: number;
+  timeSpentMinutes: number;
+  startedAt: string;
+  completedAt?: string;
+  lastAccessedAt: string;
+}
+
+export interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  notStartedLessons: number;
+  overallProgress: number;
+  completionRate: number;
+  currentStreak: number;
+  averageStudyTimeMinutes: number;
+  totalTimeSpent: number;
+  lastActivity: string;
+}

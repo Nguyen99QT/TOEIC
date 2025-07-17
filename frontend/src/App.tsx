@@ -23,6 +23,7 @@ import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
 
 // Pages
 import HomePage from './pages/HomePage';
+import SimpleHomePage from './pages/SimpleHomePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
@@ -35,7 +36,6 @@ import FlashcardsPage from './pages/flashcards/FlashcardsPage';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';
 import LessonDetailPage from './pages/lessons/LessonDetailPage';
 import LessonsPage from './pages/lessons/LessonsPage';
-import NotFoundPage from './pages/NotFoundPage';
 import PricingPage from './pages/PricingPage';
 import UpgradePremiumPage from './pages/UpgradePremiumPage';
 import ProfilePage from './pages/user/ProfilePage';
@@ -114,7 +114,7 @@ const AppContent: React.FC = () => {
                 console.log('🏠 HomePage Route: isAuthenticated =', isAuthenticated, 'user =', currentUser?.username || 'guest');
                 return (
                   <Layout showNavigation={true} showFooter={true}>
-                    <HomePage />
+                    {isAuthenticated ? <HomePage /> : <SimpleHomePage />}
                   </Layout>
                 );
               })()
@@ -124,7 +124,9 @@ const AppContent: React.FC = () => {
             <Route
               path="/login"
               element={
-                isAuthenticated ? (
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
@@ -140,7 +142,9 @@ const AppContent: React.FC = () => {
             <Route
               path="/register"
               element={
-                isAuthenticated ? (
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
@@ -175,7 +179,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem dashboard"
+                  promptMessage="Bạn cần phải đăng nhập để xem dashboard cá nhân và theo dõi tiến trình học tập"
+                >
                   <Layout>
                     <DashboardPage />
                   </Layout>
@@ -187,7 +194,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem bài học"
+                  promptMessage="Bạn cần phải đăng nhập để xem danh sách bài học và bắt đầu học tập"
+                >
                   <Layout>
                     <LessonsPage />
                   </Layout>
@@ -197,7 +207,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons/:lessonId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem bài học chi tiết"
+                  promptMessage="Bạn cần phải đăng nhập để xem nội dung bài học chi tiết và thực hành"
+                >
                   <Layout>
                     <LessonDetailPage />
                   </Layout>
@@ -209,7 +222,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons/:lessonId/exercises"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để làm bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem và làm các bài tập trong bài học"
+                >
                   <Layout>
                     <ExercisesPage />
                   </Layout>
@@ -219,7 +235,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons/:lessonId/exercises/:exerciseId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để làm bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem chi tiết bài tập và bắt đầu làm bài"
+                >
                   <Layout>
                     <ExerciseDetailPage />
                   </Layout>
@@ -229,7 +248,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons/:lessonId/exercises/:exerciseId/questions"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để làm bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem và trả lời các câu hỏi trong bài tập"
+                >
                   <Layout>
                     <ExerciseDetailPage />
                   </Layout>
@@ -239,7 +261,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/lessons/:lessonId/exercises/:exerciseId/questions/:questionId"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để làm bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem và trả lời câu hỏi này"
+                >
                   <Layout>
                     <ExerciseQuestionsPage />
                   </Layout>
@@ -251,7 +276,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/flashcards"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để học flashcards"
+                  promptMessage="Bạn cần phải đăng nhập để xem và học các bộ flashcards"
+                >
                   <Layout>
                     <FlashcardsPage />
                   </Layout>
@@ -261,7 +289,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/flashcards/:setId/study"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để học flashcards"
+                  promptMessage="Bạn cần phải đăng nhập để bắt đầu học bộ flashcards này"
+                >
                   <Layout>
                     <FlashcardStudyPage />
                   </Layout>
@@ -273,7 +304,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/profile"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem profile"
+                  promptMessage="Bạn cần phải đăng nhập để xem và chỉnh sửa thông tin cá nhân"
+                >
                   <Layout>
                     <ProfilePage />
                   </Layout>
@@ -283,7 +317,10 @@ const AppContent: React.FC = () => {
             <Route
               path="/settings"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem cài đặt"
+                  promptMessage="Bạn cần phải đăng nhập để truy cập vào cài đặt tài khoản"
+                >
                   <Layout>
                     <div>Settings Page (Temporarily Disabled)</div>
                   </Layout>

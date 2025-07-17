@@ -18,7 +18,7 @@ const LoginPage: React.FC = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const { success, error } = useToast();
 
   // ❌ REMOVED: Redirect logic - handled by App.tsx route guard
@@ -146,6 +146,26 @@ const LoginPage: React.FC = () => {
                 'Sign in'
               )}
             </button>
+          </div>
+
+          {/* Test Accounts Section */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">Test Accounts:</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">huyplum</code></span>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, username: 'huyplum', password: 'password' })}
+                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                >
+                  Use Account
+                </button>
+              </div>
+              <div className="text-xs text-blue-600">
+                Password: <code className="bg-blue-100 px-1 rounded">password</code>
+              </div>
+            </div>
           </div>
         </form>
       </div>

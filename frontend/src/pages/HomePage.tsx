@@ -8,6 +8,8 @@ import { FlashcardSet, Lesson } from '../types';
 import EnhancedButton from '../components/ui/EnhancedButton';
 import GuestInteraction from '../components/auth/GuestInteraction';
 import StatsDynamic from '../components/ui/StatsDynamic';
+import AuthFixButton from '../components/debug/AuthFixButton';
+import AuthTestComponent from '../components/debug/AuthTestComponent';
 
 const HomePage: React.FC = () => {
   const { isAuthenticated, currentUser, loading: authLoading } = useAuth();
@@ -15,6 +17,14 @@ const HomePage: React.FC = () => {
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const fetchAttempted = useRef(false);
+
+  console.log('🏠 HomePage: Render state:', {
+    isAuthenticated,
+    currentUser: currentUser?.username || 'guest',
+    authLoading,
+    flashcardSetsCount: flashcardSets.length,
+    lessonsCount: lessons.length
+  });
 
   useEffect(() => {
     if (authLoading) {
@@ -81,6 +91,19 @@ const HomePage: React.FC = () => {
     fetchData();
   }, [authLoading, isAuthenticated]);
 
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải LeEnglish TOEIC Platform...</p>
+          <p className="mt-2 text-sm text-gray-500">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className="min-h-screen bg-gray-50"
@@ -88,6 +111,10 @@ const HomePage: React.FC = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
+      {/* Debug Components for Development */}
+      <AuthFixButton />
+      <AuthTestComponent />
+
       {/* Hero Section */}
       <motion.div
         className="bg-gradient-to-r from-blue-600 to-purple-700 text-white relative overflow-hidden"

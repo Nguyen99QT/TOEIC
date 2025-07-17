@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Login Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+      <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Test Login Flow</h1>
+
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <h2 class="font-semibold mb-2">Test Steps:</h2>
+            <ol class="list-decimal list-inside space-y-1 text-sm">
+              <li>Visit homepage as guest → See SimpleHomePage</li>
+              <li>Click "Sign In" → Go to login page</li>
+              <li>Login with test account → Should load full HomePage</li>
+              <li>Verify authenticated user features are visible</li>
+            </ol>
+          </div>
+
+          <div class="p-4 bg-green-50 rounded-lg">
+            <h2 class="font-semibold mb-2">Test Account:</h2>
+            <p class="text-sm">Username: <strong>testuser</strong></p>
+            <p class="text-sm">Password: <strong>testpass</strong></p>
+          </div>
+
+          <div class="space-y-2">
+            <button
+              onclick="window.open('http://localhost:3000', '_blank')"
+              class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              🏠 Open Homepage (Guest)
+            </button>
+
+            <button
+              onclick="window.open('http://localhost:3000/login', '_blank')"
+              class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+              🔑 Open Login Page
+            </button>
+
+            <button
+              onclick="window.open('http://localhost:3000/register', '_blank')"
+              class="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            >
+              📝 Open Register Page
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-bold mb-4">Expected Behavior:</h2>
+
+          <div class="space-y-4">
+            <div class="border-l-4 border-blue-500 pl-4">
+              <h3 class="font-semibold text-blue-700">
+                Guest User (Not Logged In):
+              </h3>
+              <p class="text-sm text-gray-600">
+                - Sees SimpleHomePage with marketing content<br />
+                - Has registration and login buttons<br />
+                - Can browse but cannot access protected features
+              </p>
+            </div>
+
+            <div class="border-l-4 border-green-500 pl-4">
+              <h3 class="font-semibold text-green-700">
+                Authenticated User (Logged In):
+              </h3>
+              <p class="text-sm text-gray-600">
+                - Sees full HomePage with dashboard features<br />
+                - Has access to lessons, flashcards, exercises<br />
+                - Can see personalized content and progress
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-yellow-50 rounded-lg">
+            <h3 class="font-semibold text-yellow-700 mb-2">
+              Current Implementation:
+            </h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li>✅ SimpleHomePage for guest users</li>
+              <li>✅ Full HomePage for authenticated users</li>
+              <li>✅ Automatic page reload on login for proper state</li>
+              <li>✅ Routing protection with ProtectedRoute</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

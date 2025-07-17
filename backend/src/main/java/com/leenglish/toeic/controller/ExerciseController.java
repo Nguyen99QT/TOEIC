@@ -167,10 +167,11 @@ public class ExerciseController {
 
     // Nhận kết quả làm bài tập (CHỈ DÙNG TEST, KHÔNG DÙNG PRODUCTION)
     // @PostMapping("/submit")
-    // public ResponseEntity<?> submitExerciseResult(@RequestBody ExerciseResultDto result) {
-    //     // Xử lý lưu kết quả vào DB
-    //     // ...
-    //     return ResponseEntity.ok("Exercise result submitted successfully");
+    // public ResponseEntity<?> submitExerciseResult(@RequestBody ExerciseResultDto
+    // result) {
+    // // Xử lý lưu kết quả vào DB
+    // // ...
+    // return ResponseEntity.ok("Exercise result submitted successfully");
     // }
 
     // Chuyển đổi entity sang dto
@@ -213,5 +214,37 @@ public class ExerciseController {
         }
 
         throw new UsernameNotFoundException("User not found: " + usernameOrEmail);
+    }
+
+    /**
+     * Get exercise completion status for current user
+     */
+    @GetMapping("/completion-status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Long>> getCompletedExercises(Authentication authentication) {
+        try {
+            User user = getUserFromAuthentication(authentication);
+            List<Long> completedExerciseIds = exerciseResultService.getCompletedExerciseIds(user.getId());
+            return ResponseEntity.ok(completedExerciseIds);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Check if specific exercise is completed by current user
+     */
+    @GetMapping("/{exerciseId}/completion-status")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> isExerciseCompleted(@PathVariable Long exerciseId, Authentication authentication) {
+        try {
+            User user = getUserFromAuthentication(authentication);
+            boolean isCompleted = exerciseResultService.isExerciseCompleted(user.getId(), exerciseId);
+            return ResponseEntity.ok(isCompleted);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

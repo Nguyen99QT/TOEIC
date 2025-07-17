@@ -12,7 +12,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { lessonService } from '../../services/lessons';
-import { Lesson } from '../../types';
+import progressService from '../../services/progressService';
+import { Lesson, UserProgressDto } from '../../types';
 
 const LessonsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const LessonsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | 'FREE' | 'PREMIUM'>('ALL');
   const [levelFilter, setLevelFilter] = useState<'ALL' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('ALL');
+  const [userProgress, setUserProgress] = useState<UserProgressDto[]>([]);
+  const [progressMap, setProgressMap] = useState<Map<number, number>>(new Map());
 
   // Utility functions
   // Chỉ coi B2, C1, C2 là premium
@@ -84,12 +87,79 @@ const LessonsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    setLoading(true);
-    lessonService.getAllLessons()
-      .then(data => setLessons(data))
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [isAuthenticated]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch lessons
+        const lessonsData = await lessonService.getAllLessons();
+
+        // Fetch user progress if authenticated
+        let enhancedLessons = lessonsData;
+        if (isAuthenticated && currentUser?.id) {
+          try {
+            const progressData = await progressService.getUserProgress(currentUser.id);
+            setUserProgress(progressData);
+
+            // Create progress map for easy lookup
+            const newProgressMap = progressService.createLessonProgressMap(progressData);
+            setProgressMap(newProgressMap);
+
+            // Enhance lessons with progress data
+            enhancedLessons = lessonsData.map(lesson => ({
+              ...lesson,
+              progress: newProgressMap.get(lesson.id) || 0
+            }));
+
+            console.log('📊 Progress data loaded:', progressData.length, 'entries');
+          } catch (progressError) {
+            console.warn('⚠️ Failed to load progress data:', progressError);
+            // Don't throw - continue without progress data
+          }
+        }
+
+        setLessons(enhancedLessons);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated, currentUser?.id]);
+
+  // Refresh data when page becomes visible (user returns from exercise)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && currentUser?.id) {
+        console.log('🔄 Page became visible, refreshing progress data...');
+        // Refresh only progress data without showing loading
+        progressService.getUserProgress(currentUser.id)
+          .then(progressData => {
+            setUserProgress(progressData);
+            const newProgressMap = progressService.createLessonProgressMap(progressData);
+            setProgressMap(newProgressMap);
+
+            // Update lessons with new progress data
+            setLessons(prevLessons =>
+              prevLessons.map(lesson => ({
+                ...lesson,
+                progress: newProgressMap.get(lesson.id) || 0
+              }))
+            );
+            console.log('✅ Progress data refreshed');
+          })
+          .catch(error => {
+            console.warn('⚠️ Failed to refresh progress data:', error);
+          });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, currentUser?.id]);
 
   // Filter lessons
   const filteredLessons = lessons.filter(lesson => {
@@ -305,16 +375,31 @@ const LessonsPage: React.FC = () => {
               const hasAccess = canAccessLesson(lesson);
               const restrictionMessage = getLessonRestrictionMessage(lesson);
 
+              // Get progress from progress map
+              const progressPercentage = progressMap.get(lesson.id) || 0;
+              const isCompleted = progressPercentage >= 100;
+
               return (
                 <article
                   key={lesson.id}
                   className={`card transition-all duration-200 ${hasAccess
                     ? 'hover:shadow-lg cursor-pointer'
                     : 'opacity-75 cursor-not-allowed'
-                    }`}
+                    } relative`}
                   onClick={() => handleLessonClick(lesson)}
                 >
                   <div className="card-body">
+                    {/* Completion Badge */}
+                    {isCompleted && (
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="bg-green-500 text-white rounded-full p-2 shadow-lg">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Header with title and badges */}
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="card-title text-lg">
@@ -362,16 +447,16 @@ const LessonsPage: React.FC = () => {
                         <span className="font-medium">#{lesson.orderIndex}</span>
                       </div>
 
-                      {lesson.progress !== undefined && hasAccess && (
+                      {progressPercentage > 0 && hasAccess && (
                         <div>
                           <div className="flex justify-between mb-1">
                             <span>Progress:</span>
-                            <span className="font-medium">{lesson.progress}%</span>
+                            <span className="font-medium">{Math.round(progressPercentage)}%</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-1">
                             <div
-                              className="bg-blue-600 h-1 rounded-full"
-                              style={{ width: `${lesson.progress}%` }}
+                              className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                              style={{ width: `${progressPercentage}%` }}
                             ></div>
                           </div>
                         </div>

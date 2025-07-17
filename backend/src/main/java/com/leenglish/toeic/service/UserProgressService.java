@@ -99,6 +99,13 @@ public class UserProgressService {
     }
 
     /**
+     * Mark lesson as completed (100% progress)
+     */
+    public UserProgressDto markLessonCompleted(Long userId, Long lessonId, Integer timeSpent) {
+        return updateProgress(userId, lessonId, 100, timeSpent);
+    }
+
+    /**
      * Get daily activity for specified number of days
      */
     public Map<String, Object> getDailyActivity(Long userId, Integer days) {

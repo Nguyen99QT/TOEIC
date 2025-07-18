@@ -121,12 +121,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('🔍 AuthContext: Login response received:', response);
 
             if (response && (response.token || response.accessToken)) {
+                // Handle both role (string) and roles (array) from backend
+                let userRole: "ADMIN" | "USER" | "COLLABORATOR" = 'USER';
+                
+                if (response.role) {
+                    userRole = response.role as "ADMIN" | "USER" | "COLLABORATOR";
+                } else if (response.roles && Array.isArray(response.roles) && response.roles.length > 0) {
+                    // Get the first role from the array
+                    const firstRole = response.roles[0];
+                    if (firstRole === 'ADMIN' || firstRole === 'USER' || firstRole === 'COLLABORATOR') {
+                        userRole = firstRole;
+                    }
+                }
+                
                 const user: User = {
                     id: response.id || 0,
                     username: response.username || '',
                     email: response.email || '',
                     fullName: response.username || '',
-                    role: (response.role as "ADMIN" | "USER" | "COLLABORATOR") || 'USER',
+                    role: userRole,
                     membershipType: "FREE"
                 };
 

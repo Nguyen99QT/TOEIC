@@ -27,6 +27,7 @@ import SimpleHomePage from './pages/SimpleHomePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
+import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
@@ -42,8 +43,8 @@ import ProfilePage from './pages/user/ProfilePage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
-import AdminUsersPage from './pages/admin/AdminUsersPage'; // Added import
-import AdminContentPage from './pages/admin/AdminContentPage'; // Added import
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminRoute from './components/auth/AdminRoute';
 
 // Enhanced UI Components
 import { ToastProvider } from './components/ui/SimpleToast';
@@ -161,6 +162,16 @@ const AppContent: React.FC = () => {
               element={
                 <Layout showNavigation={false} showFooter={false}>
                   <LogoutPage />
+                </Layout>
+              }
+            />
+
+            {/* Email Verification Route */}
+            <Route
+              path="/verify-email"
+              element={
+                <Layout showNavigation={false} showFooter={false}>
+                  <EmailVerificationPage />
                 </Layout>
               }
             />
@@ -328,25 +339,95 @@ const AppContent: React.FC = () => {
               }
             />
 
-            {/* Admin Routes */}
+
             <Route
               path="/admin/users"
               element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdminUsersPage />
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">User Management</h1>
+                        <p className="text-gray-600">Admin user management page - Coming soon</p>
+                      </div>
+                    </div>
                   </Layout>
-                </ProtectedRoute>
+                </AdminRoute>
               }
             />
             <Route
               path="/admin/content"
               element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdminContentPage />
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Content Management</h1>
+                        <p className="text-gray-600">Admin content management page - Coming soon</p>
+                      </div>
+                    </div>
                   </Layout>
-                </ProtectedRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/courses"
+              element={
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Course Management</h1>
+                        <p className="text-gray-600">Admin course management page - Coming soon</p>
+                      </div>
+                    </div>
+                  </Layout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
+                        <p className="text-gray-600">Admin analytics page - Coming soon</p>
+                      </div>
+                    </div>
+                  </Layout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/comments"
+              element={
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Comments Management</h1>
+                        <p className="text-gray-600">Admin comments management page - Coming soon</p>
+                      </div>
+                    </div>
+                  </Layout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Admin Settings</h1>
+                        <p className="text-gray-600">Admin settings page - Coming soon</p>
+                      </div>
+                    </div>
+                  </Layout>
+                </AdminRoute>
               }
             />
 

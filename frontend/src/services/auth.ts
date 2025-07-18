@@ -6,7 +6,7 @@
  * Integrates with Spring Boot backend auth endpoints
  */
 
-import { LoginRequest, RegisterRequest, User } from "../types";
+import { LoginRequest, RegisterRequest, RegistrationResponse, User } from "../types";
 import { api } from "./api";
 import apiClient from "./apiRequest";
 
@@ -90,19 +90,8 @@ export const getToken = (): string | null => {
       return null; // Return null for invalid token format
     }
 
-    // Check for token expiration
-    try {
-      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-      const currentTime = Date.now() / 1000;
-
-      if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-        console.warn("⚠️ Token has expired, returning null");
-        return null;
-      }
-    } catch (e) {
-      console.warn("⚠️ Could not parse token payload:", e);
-      // Continue and return token anyway, let the API handle invalid tokens
-    }
+    // Don't check expiration here - let the API interceptor handle it
+    // This prevents premature logout when token is still valid for refresh
   } else {
     console.log(
       "⚠️ No token found in localStorage with keys:",
@@ -201,40 +190,13 @@ export const isAuthenticated = (): boolean => {
     return false;
   }
 
-  // Check if token is expired (basic check)
-  try {
-    // Use the debug function for detailed token info in development
-    if (process.env.NODE_ENV !== "production") {
-      debugJwtToken(token);
-    }
-
-    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-    const currentTime = Date.now() / 1000;
-
-    if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-      console.warn("🔑 Token expired, removing authentication");
-      removeToken();
-      return false;
-    }
-
-    console.log(
-      "✅ Authentication check passed: User is authenticated as",
-      user.username || user.email
-    );
-    return true;
-  } catch (error) {
-    console.error("🔑 Error checking token validity:", error);
-
-    // Don't clear token on parse error, just return true if we have token and user
-    // But log it clearly for debugging
-    console.log(
-      `Token parse failed, but token exists. Token starts with: ${token.substring(
-        0,
-        15
-      )}...`
-    );
-    return !!(token && user);
-  }
+  // Don't check token expiration here - let the API interceptor handle refresh
+  // This prevents premature logout when token can still be refreshed
+  console.log(
+    "✅ Authentication check passed: User is authenticated as",
+    user.username || user.email
+  );
+  return true;
 };
 
 export const isTokenExpiringSoon = (): boolean => {
@@ -483,7 +445,7 @@ export const login = async (
   }
 };
 
-export const register = async (userData: RegisterRequest): Promise<User> => {
+export const register = async (userData: RegisterRequest): Promise<RegistrationResponse> => {
   try {
     console.log("📝 Attempting registration for:", userData.username);
 
@@ -498,7 +460,7 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
     const registrationData = response.data;
 
     console.log("✅ Registration successful:", registrationData);
-    return registrationData.user || registrationData;
+    return registrationData;
   } catch (error: any) {
     console.error("❌ Registration failed:", error);
 
@@ -669,6 +631,35 @@ export const resetPassword = async (
   } catch (error: any) {
     console.error("❌ Password reset failed:", error);
     throw new Error(error.response?.data?.message || "Password reset failed");
+  }
+};
+
+// ================================================================
+// EMAIL VERIFICATION FUNCTIONS
+// ================================================================
+
+export const resendVerificationEmail = async (email: string): Promise<void> => {
+  try {
+    await api.post("/api/auth/resend-verification", { email });
+    console.log("✅ Verification email resent successfully");
+  } catch (error: any) {
+    console.error("❌ Failed to resend verification email:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to resend verification email"
+    );
+  }
+};
+
+export const verifyEmail = async (token: string): Promise<boolean> => {
+  try {
+    const response = await api.get(`/api/auth/verify-email?token=${token}`);
+    console.log("✅ Email verified successfully");
+    return response.data.verified || false;
+  } catch (error: any) {
+    console.error("❌ Email verification failed:", error);
+    throw new Error(
+      error.response?.data?.message || "Email verification failed"
+    );
   }
 };
 

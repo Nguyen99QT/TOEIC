@@ -9,7 +9,7 @@ import { useToast } from '../../components/ui/SimpleToast';
 import { Link, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { register } from '../../services/auth';
-import { Gender } from '../../types';
+import { Gender, RegistrationResponse } from '../../types';
 
 const RegisterPage: React.FC = () => {
   const { success, error } = useToast();
@@ -41,7 +41,8 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    setIsLoading(true); try {
+    setIsLoading(true); 
+    try {
       // Prepare registration data with fullName constructed from firstName + lastName
       // This maintains compatibility with the backend User entity structure
       const registerData = {
@@ -53,17 +54,23 @@ const RegisterPage: React.FC = () => {
         lastName: formData.lastName,
         gender: formData.gender as Gender,
         phoneNumber: formData.phoneNumber || undefined,
-      }; await register(registerData);
-      success('Registration successful!');
-      // FIX: Redirect to home page instead of dashboard after successful registration
-      // This provides consistent user experience with login flow
-      navigate('/');
+      }; 
+      
+      const registrationResponse: RegistrationResponse = await register(registerData);
+      
+      // Show success message with email verification info
+      success(registrationResponse.message);
+      
+      // Redirect to email verification page with email parameter
+      navigate(`/email-verification?email=${encodeURIComponent(formData.email)}&status=registered`);
     } catch (registerError: any) {
       error(registerError.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

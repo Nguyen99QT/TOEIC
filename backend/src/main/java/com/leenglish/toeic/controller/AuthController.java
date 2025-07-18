@@ -10,11 +10,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.leenglish.toeic.dto.JwtResponse;
 import com.leenglish.toeic.dto.LoginRequest;
 import com.leenglish.toeic.dto.RegisterRequest;
+import com.leenglish.toeic.dto.RegistrationResponse;
+import com.leenglish.toeic.service.EmailVerificationService;
 import com.leenglish.toeic.security.UserDetailsImpl;
 import com.leenglish.toeic.service.TokenBlacklistService;
 import com.leenglish.toeic.service.UserService;
@@ -22,11 +25,13 @@ import com.leenglish.toeic.utils.JwtUtils;
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.enums.Gender;
-
+import com.leenglish.toeic.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,6 +53,12 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private EmailVerificationService emailVerificationService;
+
+    @Autowired
+    private EmailService emailService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
@@ -60,14 +71,31 @@ public class AuthController {
                             loginRequest.getUsername(),
                             loginRequest.getPassword()));
 
+            // Lấy thông tin người dùng
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            // Kiểm tra email verification
+            Optional<User> userOpt = userService.findByUsername(loginRequest.getUsername());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                if (!user.getIsEmailVerified()) {
+                    System.out.println("❌ Login failed: Email not verified for user: " + loginRequest.getUsername());
+                    return ResponseEntity
+                            .status(HttpStatus.FORBIDDEN)
+                            .body(Map.of(
+                                "error", "Email not verified",
+                                "message", "Please verify your email before logging in. Check your inbox or request a new verification email.",
+                                "email", user.getEmail(),
+                                "needsVerification", true
+                            ));
+                }
+            }
+
             // Thiết lập Security Context
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Tạo JWT token
             String jwt = jwtUtils.generateToken(authentication);
-
-            // Lấy thông tin người dùng
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
             // Lấy danh sách các quyền (roles)
             List<String> roles = userDetails.getAuthorities().stream()
@@ -211,8 +239,8 @@ public class AuthController {
                 fullName = nameBuilder.length() > 0 ? nameBuilder.toString() : username;
             }
 
-            // Create new user
-            User newUser = userService.createUser(username, email, password, fullName, Role.USER);
+            // Create new user with email verification
+            User newUser = userService.createUserWithEmailVerification(username, email, password, fullName, Role.USER);
 
             // Update additional fields if provided
             if (genderStr != null && !genderStr.trim().isEmpty()) {
@@ -233,15 +261,21 @@ public class AuthController {
                     newUser.getEmail(), newUser.getGender(),
                     newUser.getPhone());
 
-            // Return success response
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Registration successful");
-            response.put("user", Map.of(
-                    "id", savedUser.getId(),
-                    "username", savedUser.getUsername(),
-                    "email", savedUser.getEmail(),
-                    "fullName", savedUser.getFullName(),
-                    "role", savedUser.getRole().toString()));
+            // Return success response using DTO
+            RegistrationResponse.UserInfo userInfo = new RegistrationResponse.UserInfo(
+                    savedUser.getId(),
+                    savedUser.getUsername(),
+                    savedUser.getEmail(),
+                    savedUser.getFullName(),
+                    savedUser.getRole().toString(),
+                    savedUser.getIsEmailVerified()
+            );
+
+            RegistrationResponse response = new RegistrationResponse(
+                    "Registration successful! Please check your email to verify your account.",
+                    userInfo,
+                    true
+            );
 
             System.out.println("✅ Registration successful for user: " + username);
             return ResponseEntity.ok(response);
@@ -267,16 +301,66 @@ public class AuthController {
                         .body(Map.of("message", "Refresh token is required"));
             }
 
-            // TODO: Implement token refresh logic
-            // For now, return the same token (this should be improved)
-            Map<String, Object> response = new HashMap<>();
-            response.put("accessToken", refreshToken);
-            response.put("message", "Token refreshed successfully");
+            // Validate refresh token
+            try {
+                String username = jwtUtils.extractUsername(refreshToken);
+                
+                if (username == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "Invalid refresh token"));
+                }
 
-            return ResponseEntity.ok(response);
+                // Check if token is expired
+                if (jwtUtils.isTokenExpired(refreshToken)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "Refresh token has expired"));
+                }
+
+                // Check if token is blacklisted
+                if (tokenBlacklistService.isTokenBlacklisted(refreshToken)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "Refresh token has been revoked"));
+                }
+
+                // Load user details
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                
+                if (userDetails == null) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("message", "User not found"));
+                }
+
+                // Generate new access token
+                String newAccessToken = jwtUtils.generateToken(userDetails);
+
+                // Get user roles
+                List<String> roles = userDetails.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList());
+
+                // Create response
+                Map<String, Object> response = new HashMap<>();
+                response.put("accessToken", newAccessToken);
+                response.put("token", newAccessToken); // For compatibility
+                response.put("type", "Bearer");
+                response.put("id", ((UserDetailsImpl) userDetails).getId());
+                response.put("username", userDetails.getUsername());
+                response.put("email", ((UserDetailsImpl) userDetails).getEmail());
+                response.put("roles", roles);
+
+                System.out.println("✅ Token refreshed successfully for user: " + username);
+
+                return ResponseEntity.ok(response);
+
+            } catch (Exception e) {
+                System.out.println("❌ Token refresh validation failed: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Invalid refresh token"));
+            }
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            System.out.println("❌ Token refresh error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Token refresh failed: " + e.getMessage()));
         }
     }
@@ -303,26 +387,6 @@ public class AuthController {
     }
 
     /**
-     * Forgot password endpoint
-     */
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> forgotRequest) {
-        try {
-            String email = forgotRequest.get("email");
-
-            // TODO: Implement forgot password logic
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Password reset email sent to " + email);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "Password reset request failed: " + e.getMessage()));
-        }
-    }
-
-    /**
      * Reset password endpoint
      */
     @PostMapping("/reset-password")
@@ -331,7 +395,29 @@ public class AuthController {
             String token = resetRequest.get("token");
             String newPassword = resetRequest.get("newPassword");
 
-            // TODO: Implement password reset logic
+            if (token == null || token.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Token is required"));
+            }
+
+            if (newPassword == null || newPassword.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "New password is required"));
+            }
+
+            // Verify password reset token
+            Optional<User> userOpt = emailVerificationService.verifyPasswordResetToken(token);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Invalid or expired token"));
+            }
+
+            User user = userOpt.get();
+            
+            // Update password
+            userService.changePassword(user.getId(), newPassword);
+            
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Password reset successfully");
 
@@ -342,5 +428,170 @@ public class AuthController {
                     .body(Map.of("message", "Password reset failed: " + e.getMessage()));
         }
     }
+
+    /**
+     * Verify email endpoint
+     */
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token, HttpServletResponse response) {
+        try {
+            if (token == null || token.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Token is required"));
+            }
+
+            boolean isVerified = emailVerificationService.verifyEmailToken(token);
+            
+            if (isVerified) {
+                // Redirect to frontend with success message
+                String redirectUrl = "http://localhost:3000/verify-email?status=success&message=Email verified successfully! You can now log in to your account.";
+                response.sendRedirect(redirectUrl);
+                return null; // Response already sent
+            } else {
+                // Redirect to frontend with error message
+                String redirectUrl = "http://localhost:3000/verify-email?status=error&message=Invalid or expired verification token.";
+                response.sendRedirect(redirectUrl);
+                return null; // Response already sent
+            }
+
+        } catch (Exception e) {
+            try {
+                // Redirect to frontend with error message
+                String redirectUrl = "http://localhost:3000/verify-email?status=error&message=Email verification failed: " + e.getMessage();
+                response.sendRedirect(redirectUrl);
+                return null; // Response already sent
+            } catch (Exception redirectException) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("message", "Email verification failed: " + e.getMessage()));
+            }
+        }
+    }
+
+    /**
+     * Resend verification email endpoint
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerificationEmail(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Email is required"));
+            }
+
+            boolean isSent = emailVerificationService.resendVerificationEmail(email);
+            
+            if (isSent) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Verification email sent successfully. Please check your inbox.");
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Failed to send verification email. Please check your email address."));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to resend verification email: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Forgot password endpoint - updated to use email verification
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> forgotRequest) {
+        try {
+            String email = forgotRequest.get("email");
+
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Email is required"));
+            }
+
+            // Find user by email
+            Optional<User> userOpt = userService.findByEmail(email);
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "No account found with this email address"));
+            }
+
+            User user = userOpt.get();
+            
+            // Create and send password reset token
+            emailVerificationService.createPasswordResetToken(user);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Password reset email sent to " + email);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Password reset request failed: " + e.getMessage()));
+        }
+    }
     
+    /**
+     * Test email sending functionality
+     */
+    @PostMapping("/test-email")
+    public ResponseEntity<?> testEmail(@RequestBody Map<String, String> request) {
+        try {
+            String testEmail = request.get("email");
+            if (testEmail == null || testEmail.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+            }
+
+            // Create a test user
+            User testUser = new User();
+            testUser.setEmail(testEmail);
+            testUser.setUsername("testuser");
+            testUser.setFullName("Test User");
+
+            // Send test email
+            emailService.sendVerificationEmail(testUser, "test-token-123");
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Test email sent successfully",
+                "email", testEmail
+            ));
+        } catch (Exception e) {
+            System.err.println("❌ Test email failed: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Failed to send test email: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get current user information
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        try {
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Not authenticated"));
+            }
+
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", userDetails.getId());
+            response.put("username", userDetails.getUsername());
+            response.put("email", userDetails.getEmail());
+            response.put("roles", userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList()));
+            response.put("isActive", userDetails.isEnabled());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to get current user: " + e.getMessage()));
+        }
+    }
 }

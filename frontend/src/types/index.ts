@@ -126,6 +126,7 @@ export interface User {
   isPremium?: boolean;
   premiumExpiresAt?: string;
   redirectUrl?: string;
+  isEmailVerified?: boolean; // Added for email verification
 }
 export interface DifficultyLevel {
   id: number;
@@ -347,6 +348,20 @@ export interface RegisterRequest {
   gender?: Gender;
   birthDate?: string;
   phoneNumber?: string;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    fullName: string;
+    role: string;
+    emailVerified: boolean;
+  };
+  emailSent: boolean;
+  registeredAt: string;
 }
 
 export interface AuthResponse {

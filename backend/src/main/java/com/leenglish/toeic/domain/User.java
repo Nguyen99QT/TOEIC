@@ -93,6 +93,9 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_email_verified", nullable = false)
+    private Boolean isEmailVerified = false;
+
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Gender gender;
@@ -342,6 +345,14 @@ public class User {
 
     public void setMembershipType(MembershipType membershipType) {
         this.membershipType = membershipType;
+    }
+
+    public Boolean getIsEmailVerified() {
+        return isEmailVerified;
+    }
+
+    public void setIsEmailVerified(Boolean isEmailVerified) {
+        this.isEmailVerified = isEmailVerified;
     }
 
     // ========== BUSINESS LOGIC METHODS ==========

@@ -132,6 +132,16 @@ const Navigation: React.FC = () => {
                                                 <span>⚙️</span>
                                                 <span>Settings</span>
                                             </Link>
+                                            {currentUser.role === 'ADMIN' && (
+                                                <Link
+                                                    to="/admin/dashboard"
+                                                    className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    <span>👑</span>
+                                                    <span>Admin Panel</span>
+                                                </Link>
+                                            )}
                                             <hr className="my-2" />
                                             <Link
                                                 to="/logout"

@@ -37,6 +37,9 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailVerificationService emailVerificationService;
+
     // ========== USER RETRIEVAL METHODS ==========
 
     /**
@@ -101,7 +104,21 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setIsActive(true); // Đảm bảo user luôn active khi tạo mới
+        user.setIsEmailVerified(false); // Email chưa được xác thực
         return userRepository.save(user);
+    }
+
+    /**
+     * Create new user with email verification
+     */
+    public User createUserWithEmailVerification(String username, String email, String password,
+            String fullName, Role role) {
+        User user = createUser(username, email, password, fullName, role);
+        
+        // Create and send verification email
+        emailVerificationService.createVerificationToken(user);
+        
+        return user;
     }
 
     /**

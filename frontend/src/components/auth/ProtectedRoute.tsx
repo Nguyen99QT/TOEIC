@@ -30,6 +30,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       currentPath: location.pathname,
       currentUser: currentUser?.username || 'none'
     });
+
+    // Debug localStorage authentication data
+    console.log('🔍 Debug localStorage auth data:', {
+      token: localStorage.getItem('toeic_access_token') ? 'EXISTS' : 'MISSING',
+      refreshToken: localStorage.getItem('toeic_refresh_token') ? 'EXISTS' : 'MISSING',
+      user: localStorage.getItem('toeic_current_user') ? 'EXISTS' : 'MISSING',
+      legacyToken: localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
+      legacyUser: localStorage.getItem('currentUser') ? 'EXISTS' : 'MISSING'
+    });
   }, [isAuthenticated, loading, requireAuth, location.pathname, currentUser]);
 
   // Show loading while auth is being determined
@@ -38,6 +47,84 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  // TEMPORARY DEBUG: Show authentication bypass button in development
+  if (process.env.NODE_ENV === 'development' && requireAuth && !isAuthenticated) {
+    console.log('🔧 Development mode: Showing auth bypass option');
+
+    const handleBypassAuth = () => {
+      console.log('🔧 Bypassing authentication for development');
+      // Create a temporary test user
+      const testUser = {
+        id: 999,
+        username: 'testuser',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        membershipType: 'FREE',
+        role: 'USER',
+        isPremium: false,
+        isActive: true
+      };
+
+      // Create a proper JWT-like token for development
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+      const payload = btoa(JSON.stringify({
+        sub: testUser.username,
+        userId: testUser.id,
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours from now
+        iat: Math.floor(Date.now() / 1000),
+        dev: true
+      }));
+      const signature = btoa('dev-signature-not-verified');
+      const testToken = `${header}.${payload}.${signature}`;
+
+      // Store in localStorage
+      localStorage.setItem('toeic_current_user', JSON.stringify(testUser));
+      localStorage.setItem('toeic_access_token', testToken);
+      localStorage.setItem('toeic_refresh_token', `${header}.${payload}.refresh-signature`);
+
+      console.log('🔧 Created development token:', testToken.substring(0, 50) + '...');
+
+      // Reload page to trigger auth check
+      window.location.reload();
+    };
+
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold text-center text-gray-800 mb-4">
+            🔧 Development Mode
+          </h2>
+          <p className="text-gray-600 text-center mb-6">
+            Authentication required to access this page
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={handleBypassAuth}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              🔧 Bypass Auth (Dev Only)
+            </button>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              🔐 Go to Login
+            </button>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            >
+              🗑️ Clear Storage & Reload
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

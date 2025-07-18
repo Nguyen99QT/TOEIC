@@ -216,18 +216,4 @@ public class ExerciseResultService {
                 dto.setComment(feedback.getComment());
                 return dto;
         }
-
-        /**
-         * Check if user has completed an exercise
-         */
-        public boolean isExerciseCompleted(Long userId, Long exerciseId) {
-                return userExerciseResultRepository.existsByUserIdAndExerciseId(userId, exerciseId);
-        }
-
-        /**
-         * Get all completed exercise IDs for a user
-         */
-        public List<Long> getCompletedExerciseIds(Long userId) {
-                return userExerciseResultRepository.findCompletedExerciseIdsByUserId(userId);
-        }
 }

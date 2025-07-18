@@ -20,6 +20,7 @@ import Navigation from './components/ui/Navigation';
 import Footer from './components/ui/Footer';
 import FloatingActionButton from './components/ui/FloatingActionButton';
 import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
+import AuthDebug from './components/debug/AuthDebug';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -30,7 +31,7 @@ import LogoutPage from './pages/auth/LogoutPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
-import ExercisesPage from './pages/exercises/ExercisesPage';
+import ExercisesPageClean from './pages/exercises/ExercisesPageClean';
 // import QuestionPage from './pages/exercises/QuestionPage';
 import FlashcardsPage from './pages/flashcards/FlashcardsPage';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';
@@ -47,6 +48,9 @@ import AdminContentPage from './pages/admin/AdminContentPage'; // Added import
 
 // Enhanced UI Components
 import { ToastProvider } from './components/ui/SimpleToast';
+
+// Development utilities
+import './utils/devUtils';
 
 // ========== MAIN APP COMPONENT ==========
 
@@ -227,7 +231,7 @@ const AppContent: React.FC = () => {
                   promptMessage="Bạn cần phải đăng nhập để xem và làm các bài tập trong bài học"
                 >
                   <Layout>
-                    <ExercisesPage />
+                    <ExercisesPageClean />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -356,6 +360,7 @@ const AppContent: React.FC = () => {
         </Suspense>
 
         <TokenRefreshIndicator />
+        <AuthDebug />
       </div>
     </Router>
   );

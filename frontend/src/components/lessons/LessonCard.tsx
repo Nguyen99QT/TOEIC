@@ -48,6 +48,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onClick }) => {
 
     // Xử lý image URL - sử dụng MediaService
     const getImageUrl = () => {
+        if (!lesson.imageUrl) return null;
         const processedUrl = MediaService.processImageUrl(lesson.imageUrl);
         if (processedUrl) {
             // Test URL accessibility in development
@@ -62,10 +63,7 @@ const LessonCard: React.FC<LessonCardProps> = ({ lesson, onClick }) => {
 
     // Xử lý audio URL - sử dụng MediaService
     const getAudioUrl = () => {
-        if (!lesson.audioUrl) {
-            return null;
-        }
-
+        if (!lesson.audioUrl) return null;
         const processedUrl = MediaService.processAudioUrl(lesson.audioUrl);
         if (processedUrl) {
             // Test URL accessibility in development

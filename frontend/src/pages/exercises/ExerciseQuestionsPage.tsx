@@ -11,11 +11,10 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { exerciseService } from '../../services/exercises';
 import { questionService } from '../../services/questions';
-import progressService from '../../services/progressService';
-import { markExerciseCompletedInStorage } from '../../services/exerciseProgress';
 import { Exercise, Question } from '../../types';
 import api from '../../services/api';
 import FeedbackModal from '../../components/ui/FeedbackModal';
+import { markExerciseCompletedImmediate } from '../../services/exerciseProgress';
 // import completeSound from '../../assets/sounds/complete.mp3'; // Đặt file vào đúng thư mục
 
 interface UserAnswer {
@@ -37,15 +36,7 @@ interface ExerciseResult {
 const ExerciseQuestionsPage: React.FC = () => {
     const { lessonId, exerciseId } = useParams<{ lessonId: string; exerciseId: string }>();
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
-
-    // Debug auth state
-    useEffect(() => {
-        console.log('🔒 Auth state check:', {
-            currentUser: currentUser ? { id: currentUser.id, username: currentUser.username } : null,
-            token: localStorage.getItem('authToken') ? 'exists' : 'missing'
-        });
-    }, [currentUser]);
+    const { currentUser, isAuthenticated, loading: authLoading } = useAuth();
 
     // State management
     const [exercise, setExercise] = useState<Exercise | null>(null);
@@ -57,6 +48,17 @@ const ExerciseQuestionsPage: React.FC = () => {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [exerciseResult, setExerciseResult] = useState<ExerciseResult | null>(null);
     const [showDetailedResults, setShowDetailedResults] = useState(false);
+
+    // Authentication check
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            console.log('❌ User not authenticated, redirecting to login...');
+            navigate('/login', {
+                state: { from: `/lessons/${lessonId}/exercises/${exerciseId}/questions` }
+            });
+            return;
+        }
+    }, [authLoading, isAuthenticated, navigate, lessonId, exerciseId]);
 
 
     // FEEDBACK MODAL STATE
@@ -75,9 +77,15 @@ const ExerciseQuestionsPage: React.FC = () => {
                 return;
             }
 
+            // Don't fetch if not authenticated
+            if (!isAuthenticated || !currentUser) {
+                console.log('⚠️ Not authenticated, skipping exercise fetch');
+                return;
+            }
+
             try {
                 setLoading(true);
-                console.log(`🔍 Fetching exercise ${exerciseId} and questions...`);
+                console.log(`🔍 Fetching exercise ${exerciseId} and questions for user: ${currentUser.username}`);
 
                 // Fetch exercise details
                 const exerciseData = await exerciseService.getExerciseById(parseInt(exerciseId));
@@ -92,30 +100,40 @@ const ExerciseQuestionsPage: React.FC = () => {
                 setError(null);
             } catch (err: any) {
                 console.error('❌ Error fetching exercise/questions:', err);
+
+                // Handle auth errors
+                if (err.response?.status === 401 || err.response?.status === 403) {
+                    console.log('❌ Authentication error, redirecting to login...');
+                    navigate('/login', {
+                        state: { from: `/lessons/${lessonId}/exercises/${exerciseId}/questions` }
+                    });
+                    return;
+                }
+
                 setError(err.message || 'Failed to load exercise');
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchData();
-    }, [lessonId, exerciseId]);
+        if (isAuthenticated && currentUser) {
+            fetchData();
+        }
+    }, [lessonId, exerciseId, isAuthenticated, currentUser, navigate]);
 
     // Fetch feedback from backend after submit
     useEffect(() => {
         const fetchFeedback = async () => {
             if (!exerciseId || !currentUser?.id) return;
             try {
-                // TODO: Implement feedback API endpoint
-                // const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}&userId=${currentUser.id}`);
-                // if (res.data && (res.data.comment || res.data.rating)) {
-                //     setLastFeedbackComment(res.data.comment);
-                //     setLastFeedbackRating(res.data.rating);
-                //     setFeedbackSubmitted(true);
-                // }
-                console.log('📝 Feedback API not implemented yet, skipping fetch');
+                const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}&userId=${currentUser.id}`);
+                if (res.data && (res.data.comment || res.data.rating)) {
+                    setLastFeedbackComment(res.data.comment);
+                    setLastFeedbackRating(res.data.rating);
+                    setFeedbackSubmitted(true);
+                }
             } catch (err) {
-                // ignore
+                // ignorex
             }
         };
         if (isSubmitted) fetchFeedback();
@@ -171,30 +189,6 @@ const ExerciseQuestionsPage: React.FC = () => {
     const handleSubmit = async () => {
         if (isSubmitted) return;
 
-        // ✅ DETAILED AUTH DEBUG BEFORE SUBMIT
-        console.group('🔍 PRE-SUBMIT AUTH CHECK');
-        console.log('Current User from Context:', currentUser);
-
-        const token = localStorage.getItem('toeic_access_token') ||
-            localStorage.getItem('authToken') ||
-            localStorage.getItem('accessToken');
-
-        console.log('Token exists:', !!token);
-        if (token) {
-            console.log('Token preview:', token.substring(0, 30) + '...');
-            try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                const now = Math.floor(Date.now() / 1000);
-                console.log('Token expiry:', payload.exp);
-                console.log('Current time:', now);
-                console.log('Token expired:', payload.exp < now);
-                console.log('Time until expiry:', payload.exp - now, 'seconds');
-            } catch (e) {
-                console.error('Failed to parse token:', e);
-            }
-        }
-        console.groupEnd();
-
         // Validate all questions are answered
         const unansweredQuestions = questions.filter(q => !userAnswers[q.id]);
         if (unansweredQuestions.length > 0) {
@@ -208,7 +202,6 @@ const ExerciseQuestionsPage: React.FC = () => {
 
             // Submit to backend (if needed)
             try {
-                console.log('🚀 Attempting to submit exercise result...');
                 await exerciseService.submitExerciseResult({
                     exerciseId: parseInt(exerciseId!),
                     lessonId: parseInt(lessonId!),
@@ -219,64 +212,18 @@ const ExerciseQuestionsPage: React.FC = () => {
                     }))
                 });
                 console.log('✅ Exercise result submitted successfully');
-            } catch (submitError: any) {
+
+                // 🔄 AUTO-UPDATE: Mark exercise as completed immediately
+                console.log('🔄 Marking exercise as completed immediately...');
+                await markExerciseCompletedImmediate(parseInt(exerciseId!));
+
+            } catch (submitError) {
                 console.warn('⚠️ Could not submit to backend:', submitError);
-                console.error('Submit error details:', {
-                    message: submitError.message,
-                    status: submitError.response?.status,
-                    statusText: submitError.response?.statusText,
-                    data: submitError.response?.data,
-                    config: submitError.config
-                });
                 // Continue with local results even if backend fails
             }
 
             setExerciseResult(result);
             setIsSubmitted(true);
-
-            // Mark exercise as completed in localStorage for immediate UI update
-            if (exerciseId) {
-                markExerciseCompletedInStorage(parseInt(exerciseId));
-                console.log('✅ Exercise marked as completed in localStorage');
-            }
-
-            // Mark lesson as completed automatically when exercise is finished
-            if (currentUser?.id && lessonId) {
-                try {
-                    console.log('🎯 Auto-marking lesson as completed after exercise...');
-                    console.log('User ID:', currentUser.id, 'Type:', typeof currentUser.id);
-                    console.log('Lesson ID:', lessonId, 'Parsed:', parseInt(lessonId));
-                    console.log('Auth token exists:', !!localStorage.getItem('authToken'));
-
-                    await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 5); // 5 minutes for exercise completion
-                    console.log('✅ Lesson automatically marked as completed');
-                } catch (error: any) {
-                    console.error('❌ Failed to auto-mark lesson as completed:', error);
-                    console.error('Error details:', {
-                        message: error.message,
-                        status: error.response?.status,
-                        statusText: error.response?.statusText,
-                        data: error.response?.data
-                    });
-
-                    // Show user-friendly error message
-                    if (error.message?.includes('expired') || error.message?.includes('Authentication')) {
-                        alert('⚠️ Your session has expired. Please log in again to save your progress.');
-                        setTimeout(() => {
-                            window.location.href = '/login';
-                        }, 2000);
-                    } else {
-                        console.warn('⚠️ Could not auto-mark lesson complete, but exercise results are saved locally');
-                        // Continue anyway - don't block the UI for progress marking failures
-                    }
-                }
-            } else {
-                console.warn('⚠️ Cannot mark lesson complete - missing user or lesson info:', {
-                    hasUser: !!currentUser,
-                    userId: currentUser?.id,
-                    lessonId
-                });
-            }
 
             // Phát âm thanh hoàn thành
             // const audio = new Audio(completeSound);
@@ -358,6 +305,35 @@ const ExerciseQuestionsPage: React.FC = () => {
             setFeedbackSubmitting(false);
         }
     };
+
+    // Authentication loading state
+    if (authLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-64">
+                <LoadingSpinner size="lg" />
+                <span className="ml-2">Checking authentication...</span>
+            </div>
+        );
+    }
+
+    // Not authenticated state  
+    if (!isAuthenticated || !currentUser) {
+        return (
+            <div className="flex justify-center items-center min-h-64">
+                <div className="text-center">
+                    <p className="text-gray-600">Please log in to access exercises</p>
+                    <button
+                        onClick={() => navigate('/login', {
+                            state: { from: `/lessons/${lessonId}/exercises/${exerciseId}/questions` }
+                        })}
+                        className="mt-4 btn btn-primary"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // Loading state
     if (loading && !isSubmitted) {
@@ -513,16 +489,16 @@ const ExerciseQuestionsPage: React.FC = () => {
                             📖 Review Lesson
                         </button>
                         <button
-                            onClick={() => navigate(`/lessons/${lessonId}/exercises`)}
+                            onClick={() => navigate(`/lessons/${lessonId}/exercises`, {
+                                state: {
+                                    refreshCompleted: true,
+                                    completedExerciseId: parseInt(exerciseId!),
+                                    score: exerciseResult.earnedPoints
+                                }
+                            })}
                             className="px-6 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
                         >
                             🔄 Back to Exercises
-                        </button>
-                        <button
-                            onClick={() => navigate('/lessons')}
-                            className="px-6 py-2 rounded-lg font-semibold bg-green-500 text-white hover:bg-green-600 transition"
-                        >
-                            📚 Go to Lessons
                         </button>
                         <button
                             onClick={() => setShowFeedbackModal(true)}

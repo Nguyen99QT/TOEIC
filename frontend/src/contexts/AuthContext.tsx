@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from '../types';
-import { clearCompletedExercises } from '../services/exerciseProgress';
 
 export interface AuthContextType {
     user: User | null;
@@ -55,26 +54,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('🔍 AuthProvider: Checking existing auth...');
                 console.log('🔍 Token exists:', !!token);
                 console.log('🔍 User exists:', !!user);
-                console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'null');
-                console.log('🔍 User info:', user ? { id: user.id, username: user.username } : 'null');
+                console.log('🔍 Token preview:', token ? token.substring(0, 30) + '...' : 'null');
+                console.log('🔍 User preview:', user ? user.username : 'null');
 
                 if (token && user && checkAuth()) {
                     console.log('✅ Found valid auth for:', user.username);
                     setCurrentUser(user);
                     setIsAuthenticated(true);
                     startAutoRefresh();
+
+                    // Store timestamp for debugging
+                    localStorage.setItem('auth_last_verified', new Date().toISOString());
                 } else {
                     console.log('ℹ️ No valid authentication found - user is guest');
-                    console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
-
-                    // If checkAuth failed but we have token/user, it might be expired
-                    if (token && user && !checkAuth()) {
-                        console.warn('🚨 Token/user exists but authentication check failed - likely expired');
-                        // Clear potentially invalid data
-                        const { removeToken } = await import('../services/auth');
-                        removeToken();
-                    }
-
                     setCurrentUser(null);
                     setIsAuthenticated(false);
                 }
@@ -181,16 +173,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             keys.forEach(key => localStorage.removeItem(key));
         }
 
-        // Clear exercise completion data from localStorage
-        try {
-            clearCompletedExercises();
-            console.log('✅ Exercise completion data cleared');
-        } catch (error) {
-            console.warn('⚠️ Could not clear exercise completion data:', error);
-            // Fallback to manual cleanup
-            localStorage.removeItem('completed_exercises');
-            localStorage.removeItem('completedExercises');
-        }
+        // Clear exercise completion data for user separation
+        const { clearCompletedExercises } = await import('../services/exerciseProgress');
+        clearCompletedExercises();
 
         setCurrentUser(null);
         setIsAuthenticated(false);

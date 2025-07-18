@@ -8,8 +8,6 @@ import { FlashcardSet, Lesson } from '../types';
 import EnhancedButton from '../components/ui/EnhancedButton';
 import GuestInteraction from '../components/auth/GuestInteraction';
 import StatsDynamic from '../components/ui/StatsDynamic';
-import AuthFixButton from '../components/debug/AuthFixButton';
-import AuthTestComponent from '../components/debug/AuthTestComponent';
 
 const HomePage: React.FC = () => {
   const { isAuthenticated, currentUser, loading: authLoading } = useAuth();
@@ -111,10 +109,6 @@ const HomePage: React.FC = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Debug Components for Development */}
-      <AuthFixButton />
-      <AuthTestComponent />
-
       {/* Hero Section */}
       <motion.div
         className="bg-gradient-to-r from-blue-600 to-purple-700 text-white relative overflow-hidden"

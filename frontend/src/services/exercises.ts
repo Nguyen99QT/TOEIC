@@ -23,6 +23,28 @@ export interface ExerciseSubmissionData {
 
 export const exerciseService = {
   /**
+   * Lấy danh sách exercises của một lesson
+   */
+  getExercisesByLessonId: async (lessonId: number): Promise<Exercise[]> => {
+    console.log(`🔄 Fetching exercises for lesson ${lessonId}...`);
+
+    try {
+      const response = await api.get(`/lessons/${lessonId}/exercises`);
+      console.log(
+        `✅ Exercises fetched for lesson ${lessonId}:`,
+        response.data.length
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        `❌ Error fetching exercises for lesson ${lessonId}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
    * Lấy thông tin chi tiết của một exercise
    */
   getExerciseById: async (exerciseId: number): Promise<Exercise> => {
@@ -79,17 +101,33 @@ export const exerciseService = {
   },
 
   /**
-   * Lấy danh sách exercises theo lesson ID
+   * Lấy kết quả exercises đã hoàn thành của user hiện tại
    */
-  getExercisesByLessonId: async (lessonId: number): Promise<Exercise[]> => {
-    console.log(`🔍 Fetching exercises for lesson ${lessonId}...`);
+  getUserExerciseResults: async (): Promise<any[]> => {
+    console.log(`📊 Fetching user exercise results...`);
 
     try {
-      const response = await api.get(`/lessons/${lessonId}/exercises`);
-      console.log("✅ Exercises loaded:", response.data);
+      const response = await api.get("/user/exercise-results");
+      console.log("✅ User exercise results loaded:", response.data);
       return response.data;
     } catch (error) {
-      console.error("❌ Error fetching exercises:", error);
+      console.error("❌ Error fetching user exercise results:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lấy kết quả chi tiết của một exercise cụ thể
+   */
+  getExerciseResult: async (exerciseId: number): Promise<any> => {
+    console.log(`📊 Fetching exercise result for exercise ${exerciseId}...`);
+
+    try {
+      const response = await api.get(`/exercises/${exerciseId}/result`);
+      console.log("✅ Exercise result loaded:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error fetching exercise result:", error);
       throw error;
     }
   },

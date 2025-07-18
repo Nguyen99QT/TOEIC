@@ -1,182 +1,132 @@
-import api from "./api";
-
-interface ExerciseProgress {
-  exerciseId: number;
-  isCompleted: boolean;
-  score?: number;
-  completedAt?: string;
-  attempts?: number;
-}
-
-interface UserProgress {
-  userId: number;
-  lessonId: number;
-  exercises: ExerciseProgress[];
-}
-
 /**
- * Get user's progress for all exercises in a lesson
+ * ================================================================
+ * EXERCISE PROGRESS SERVICE
+ * ================================================================
+ * Service để quản lý progress của exercises cho từng user riêng biệt
  */
-export const getLessonExerciseProgress = async (
-  lessonId: number
-): Promise<UserProgress | null> => {
-  try {
-    console.log(`🔍 Fetching exercise progress for lesson ${lessonId}`);
 
-    const response = await api.get(`/api/lessons/${lessonId}/progress`);
-
-    console.log(`✅ Exercise progress loaded:`, response.data);
-    return response.data;
-  } catch (error: any) {
-    console.warn(
-      `⚠️ Could not fetch exercise progress for lesson ${lessonId}:`,
-      error.response?.status || error.message
-    );
-
-    // Return null instead of throwing, so UI can still work without progress data
-    return null;
-  }
-};
+import { exerciseService } from "./exercises";
 
 /**
- * Get user's progress for a specific exercise
- */
-export const getExerciseProgress = async (
-  exerciseId: number
-): Promise<ExerciseProgress | null> => {
-  try {
-    console.log(`🔍 Fetching progress for exercise ${exerciseId}`);
-
-    const response = await api.get(`/api/exercises/${exerciseId}/progress`);
-
-    console.log(`✅ Exercise progress loaded:`, response.data);
-    return response.data;
-  } catch (error: any) {
-    console.warn(
-      `⚠️ Could not fetch progress for exercise ${exerciseId}:`,
-      error.response?.status || error.message
-    );
-    return null;
-  }
-};
-
-/**
- * Check if user has completed any exercises based on localStorage results
- */
-export const getCompletedExercisesFromStorage = (): Set<number> => {
-  try {
-    const completedExercises = localStorage.getItem("completed_exercises");
-    if (completedExercises) {
-      const parsed = JSON.parse(completedExercises);
-      return new Set(parsed);
-    }
-  } catch (error) {
-    console.warn(
-      "Could not parse completed exercises from localStorage:",
-      error
-    );
-  }
-
-  return new Set();
-};
-
-/**
- * Mark exercise as completed in localStorage (backup method)
- */
-export const markExerciseCompletedInStorage = (exerciseId: number): void => {
-  try {
-    const completed = getCompletedExercisesFromStorage();
-    completed.add(exerciseId);
-    localStorage.setItem(
-      "completed_exercises",
-      JSON.stringify(Array.from(completed))
-    );
-    console.log(
-      `✅ Exercise ${exerciseId} marked as completed in localStorage`
-    );
-
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(
-      new CustomEvent("exerciseCompleted", {
-        detail: { exerciseId },
-      })
-    );
-  } catch (error) {
-    console.warn("Could not save completed exercise to localStorage:", error);
-  }
-};
-
-/**
- * Get completed exercise IDs from API
+ * Get completed exercises from API for current user
  */
 export const getCompletedExercisesFromAPI = async (): Promise<Set<number>> => {
   try {
-    const response = await api.get("/exercises/completion-status");
-    const completedIds: number[] = response.data;
-    return new Set(completedIds);
-  } catch (error: any) {
-    console.warn(
-      "Could not fetch completed exercises from API:",
-      error.response?.status || error.message
-    );
+    console.log("🔄 Fetching completed exercises from API for current user...");
+    const results = await exerciseService.getUserExerciseResults();
+    const completedIds = new Set(results.map((result) => result.exerciseId));
+    console.log("✅ User completed exercises:", completedIds);
+    return completedIds;
+  } catch (error) {
+    console.error("❌ Error getting completed exercises from API:", error);
     return new Set();
   }
 };
 
 /**
- * Check if specific exercise is completed via API
+ * Get all completed exercises for current user
  */
-export const isExerciseCompletedAPI = async (
+export const getCompletedExercises = async (): Promise<Set<number>> => {
+  try {
+    // Only use API - no localStorage for user-specific data
+    const apiResults = await getCompletedExercisesFromAPI();
+    return apiResults;
+  } catch (error) {
+    console.error("❌ Error getting completed exercises:", error);
+    return new Set();
+  }
+};
+
+/**
+ * Mark exercise as completed immediately (API only)
+ */
+export const markExerciseCompletedImmediate = async (
+  exerciseId: number
+): Promise<void> => {
+  try {
+    console.log(
+      `🔄 Marking exercise ${exerciseId} as completed for current user...`
+    );
+
+    // Dispatch event for cross-component updates
+    window.dispatchEvent(
+      new CustomEvent("exerciseCompletionUpdated", {
+        detail: { exerciseId, isCompleted: true },
+      })
+    );
+
+    console.log(`✅ Exercise ${exerciseId} completion event dispatched`);
+  } catch (error) {
+    console.error(
+      `❌ Error marking exercise ${exerciseId} as completed:`,
+      error
+    );
+  }
+};
+
+/**
+ * Force refresh completion status for current user
+ */
+export const forceRefreshCompletionStatus = async (): Promise<Set<number>> => {
+  try {
+    console.log("🔄 Force refreshing completion status for current user...");
+
+    // Fetch fresh data from API
+    const apiResults = await getCompletedExercisesFromAPI();
+
+    return apiResults;
+  } catch (error) {
+    console.error("❌ Error force refreshing:", error);
+    return new Set();
+  }
+};
+
+/**
+ * Clear completed exercises (used in logout) - no localStorage to clear
+ */
+export const clearCompletedExercises = (): void => {
+  try {
+    console.log(
+      "✅ User logout - completion data will be fetched fresh on next login"
+    );
+
+    // Dispatch event to clear in-memory data
+    window.dispatchEvent(
+      new CustomEvent("userLoggedOut", {
+        detail: { clearCompletionData: true },
+      })
+    );
+  } catch (error) {
+    console.error("❌ Error clearing completed exercises:", error);
+  }
+};
+
+/**
+ * Check if exercise is completed by current user
+ */
+export const isExerciseCompleted = async (
   exerciseId: number
 ): Promise<boolean> => {
   try {
-    const response = await api.get(
-      `/exercises/${exerciseId}/completion-status`
-    );
-    return response.data;
-  } catch (error: any) {
-    console.warn(
-      `Could not check exercise ${exerciseId} completion:`,
-      error.response?.status || error.message
-    );
+    const completedExercises = await getCompletedExercises();
+    return completedExercises.has(exerciseId);
+  } catch (error) {
+    console.error("❌ Error checking exercise completion:", error);
     return false;
   }
 };
 
 /**
- * Get completed exercises (try API first, fallback to localStorage)
+ * Get exercise result for current user
  */
-export const getCompletedExercises = async (): Promise<Set<number>> => {
+export const getExerciseResult = async (exerciseId: number): Promise<any> => {
   try {
-    // Try API first
-    const apiResults = await getCompletedExercisesFromAPI();
-
-    // If we have API results, return them
-    if (apiResults.size > 0) {
-      return apiResults;
-    }
-
-    // Fallback to localStorage for immediate UI response
-    return getCompletedExercisesFromStorage();
+    console.log(`🔄 Fetching exercise result for exercise ${exerciseId}...`);
+    const results = await exerciseService.getUserExerciseResults();
+    const result = results.find((r) => r.exerciseId === exerciseId);
+    return result || null;
   } catch (error) {
-    console.error("Error getting completed exercises:", error);
-    // Fallback to localStorage
-    return getCompletedExercisesFromStorage();
-  }
-};
-
-/**
- * Clear all exercise completion data from localStorage
- * Used when user logs out to prevent cross-user contamination
- */
-export const clearCompletedExercises = (): void => {
-  try {
-    console.log("🧹 Clearing exercise completion data from localStorage");
-    localStorage.removeItem("completed_exercises"); // ✅ Correct key with underscore
-    localStorage.removeItem("completedExercises"); // Also remove this variant
-    localStorage.removeItem("exerciseProgress");
-    console.log("✅ Exercise completion data cleared");
-  } catch (error) {
-    console.error("❌ Error clearing exercise completion data:", error);
+    console.error("❌ Error getting exercise result:", error);
+    return null;
   }
 };

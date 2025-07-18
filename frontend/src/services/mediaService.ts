@@ -38,8 +38,8 @@ export class MediaService {
   /**
    * Xử lý và validate audio URL
    */
-  static processAudioUrl(audioUrl: string): string {
-    if (!audioUrl) return "";
+  static processAudioUrl(audioUrl?: string): string | null {
+    if (!audioUrl) return null;
 
     // Convert to absolute URL if relative
     let processedUrl = audioUrl.startsWith("http")

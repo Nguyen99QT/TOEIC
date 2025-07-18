@@ -1,0 +1,20 @@
+.auth-debug {
+  position: fixed;
+  top: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  font-size: 12px;
+  z-index: 9999;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auth-debug h4 {
+  margin: 0 0 8px 0;
+}
+
+.auth-debug div {
+  margin: 2px 0;
+}

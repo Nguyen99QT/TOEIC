@@ -34,6 +34,35 @@ apiClient.interceptors.request.use(
 
     // Always add token if available
     if (token) {
+      // In development, check if it's a test token and skip sending it to backend
+      if (process.env.NODE_ENV === "development") {
+        try {
+          // Check if it's a development test token
+          const tokenParts = token.split(".");
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(atob(tokenParts[1]));
+            if (payload.dev === true) {
+              console.log(
+                "🔧 Development mode: Skipping test token for API request"
+              );
+              // Don't send the test token to the backend
+              return config;
+            }
+          }
+        } catch (error) {
+          // If token parsing fails, check for legacy test tokens
+          if (
+            token.includes("test_token_for_development_only") ||
+            token.includes("dev-signature")
+          ) {
+            console.log(
+              "🔧 Development mode: Skipping legacy test token for API request"
+            );
+            return config;
+          }
+        }
+      }
+
       config.headers.Authorization = `Bearer ${token}`;
       console.log("🔒 Added token to request headers");
     } else {
@@ -192,21 +221,14 @@ const handleAuthFailure = () => {
   localStorage.removeItem("user");
   localStorage.removeItem("currentUser");
 
-  console.log("🧹 Cleared all authentication data from localStorage");
-
   // Set a flag to prevent immediate redirect loops
   sessionStorage.setItem("authFailed", "true");
-
-  // Show user-friendly message before redirect
-  const userMessage =
-    "Your session has expired. You will be redirected to login.";
-  console.log("🔄 " + userMessage);
 
   // Use setTimeout to allow current operations to complete
   setTimeout(() => {
     console.log("🔄 Redirecting to login due to authentication failure");
     window.location.href = "/login";
-  }, 1500); // Give user time to see any error messages
+  }, 100);
 };
 
 // ========== HELPER FUNCTIONS ==========

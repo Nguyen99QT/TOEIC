@@ -201,6 +201,26 @@ export const isAuthenticated = (): boolean => {
     return false;
   }
 
+  // Special handling for development test token
+  if (process.env.NODE_ENV === "development") {
+    try {
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+      if (tokenPayload.dev === true) {
+        console.log("🔧 Development mode: Using development test token");
+        return true;
+      }
+    } catch (error) {
+      // If it's the old test token format, still allow it
+      if (
+        token.includes("test_token_for_development_only") ||
+        token.includes("dev-signature")
+      ) {
+        console.log("🔧 Development mode: Using legacy test token");
+        return true;
+      }
+    }
+  }
+
   // Check if token is expired (basic check)
   try {
     // Use the debug function for detailed token info in development
@@ -744,7 +764,6 @@ export const debugJwtToken = (token: string | null): void => {
   }
 };
 
-// Add this to your utility functions section
 export const diagnosePossibleAuthIssues = (): void => {
   console.group("🔍 Authentication Diagnostic Check");
 

@@ -12,8 +12,6 @@ import { questionService } from '../../services/questions';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import EnhancedButton from '../../components/ui/EnhancedButton';
-import AuthDebugChecker from '../../components/debug/AuthDebugChecker';
-import AuthTestComponent from '../../components/debug/AuthTestComponent';
 
 const ExerciseDetailPage: React.FC = () => {
   const breadcrumbItems = useBreadcrumb();
@@ -139,10 +137,6 @@ const ExerciseDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 animate-fade-in">
-      {/* Auth Debug Component for Development */}
-      <AuthDebugChecker />
-      <AuthTestComponent />
-
       {/* Breadcrumb Navigation */}
       <Breadcrumb items={breadcrumbItems} />
 

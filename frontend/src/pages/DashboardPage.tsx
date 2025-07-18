@@ -19,7 +19,6 @@ import React, { useEffect, useState } from 'react';
 import Breadcrumb from '../components/ui/Breadcrumb';
 import { useAuth } from '../contexts/AuthContext';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
-import apiClient from '../services/apiClient';
 import dashboardService, { DashboardStats, RecentActivity } from '../services/dashboard';
 import lessonService, { LessonProgress } from '../services/lessons'; // Bạn cần tạo service này nếu chưa có
 

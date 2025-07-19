@@ -29,6 +29,7 @@ import com.leenglish.toeic.dto.UserProgressDto;
 import com.leenglish.toeic.security.UserDetailsImpl;
 import com.leenglish.toeic.service.LessonService;
 import com.leenglish.toeic.service.UserProgressService;
+import com.leenglish.toeic.service.ExerciseResultService;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -40,6 +41,9 @@ public class LessonController {
 
     @Autowired
     private UserProgressService userProgressService;
+
+    @Autowired
+    private ExerciseResultService exerciseResultService;
 
     @GetMapping("/{id}")
     public ResponseEntity<LessonDto> getLesson(@PathVariable Long id) {
@@ -143,6 +147,53 @@ public class LessonController {
                 .map(this::convertExerciseToDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(exerciseDtos);
+    }
+
+    @GetMapping("/{lessonId}/completed-exercises")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Map<String, Object>>> getCompletedExercisesByLessonId(
+            @PathVariable Long lessonId,
+            Authentication authentication) {
+        try {
+            // Check if user is authenticated
+            if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("❌ No authentication found for completed exercises request");
+                return ResponseEntity.ok(new ArrayList<>()); // Return empty list instead of 401
+            }
+
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            Long userId = userDetails.getId();
+
+            System.out.println("🎯 Getting completed exercises for lesson " + lessonId + " and user " + userId);
+
+            // Get all exercises for this lesson
+            List<Exercise> exercises = lessonService.getExercisesByLessonId(lessonId);
+            List<Map<String, Object>> completedExercises = new ArrayList<>();
+
+            // Check each exercise for completion
+            for (Exercise exercise : exercises) {
+                var results = exerciseResultService.getUserExerciseResults(userId, exercise.getId());
+                if (results != null && !results.isEmpty()) {
+                    // Exercise has been completed - get best score
+                    int bestScore = results.stream().mapToInt(r -> r.getScore() != null ? r.getScore() : 0).max()
+                            .orElse(0);
+
+                    Map<String, Object> completedExercise = Map.of(
+                            "exerciseId", exercise.getId(),
+                            "score", bestScore,
+                            "completedAt", results.get(0).getCompletedAt() // Most recent submission
+                    );
+                    completedExercises.add(completedExercise);
+                }
+            }
+
+            System.out.println("✅ Found " + completedExercises.size() + " completed exercises for lesson " + lessonId);
+            return ResponseEntity.ok(completedExercises);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error getting completed exercises: " + e.getMessage());
+            return ResponseEntity.ok(new ArrayList<>()); // Return empty list on error
+        }
     }
 
     @GetMapping("/{lessonId}/exercises/{exerciseId}")

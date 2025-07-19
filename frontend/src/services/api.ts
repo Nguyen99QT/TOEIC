@@ -131,6 +131,24 @@ apiClient.interceptors.response.use(
 
     // Handle JWT token refresh on 401 errors
     if (error.response?.status === 401 && original && !original._retry) {
+      // Check if this is a public endpoint that shouldn't require auth
+      const publicEndpoints = [
+        "/api/flashcard-sets/public",
+        "/api/lessons/public",
+        "/api/health",
+      ];
+
+      const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+        original.url?.includes(endpoint)
+      );
+
+      if (isPublicEndpoint) {
+        console.log(
+          `⚠️ Public endpoint ${original.url} returned 401 - allowing graceful failure`
+        );
+        return Promise.reject(error);
+      }
+
       original._retry = true;
 
       const refreshToken =

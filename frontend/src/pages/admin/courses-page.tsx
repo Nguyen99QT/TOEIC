@@ -73,8 +73,8 @@ export function CoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý khóa học</h1>
-          <p className="text-muted-foreground">Quản lý tất cả khóa học trên Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý khóa học</h1>
+          <p className="text-black">Quản lý tất cả khóa học trên Toeic.com</p>
         </div>
       </div>
 

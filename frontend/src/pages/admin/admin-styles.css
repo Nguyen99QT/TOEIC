@@ -1,5 +1,38 @@
 /* Admin Panel Custom Styles */
 
+/* Force black text for admin headers and content */
+.admin-title {
+  color: #000000 !important;
+}
+
+.admin-subtitle {
+  color: #000000 !important;
+}
+
+/* Override any text-white in admin area */
+[class*="admin"] h1,
+[class*="admin"] p.subtitle,
+.admin-content h1,
+.admin-content p {
+  color: #000000 !important;
+}
+
+/* Stronger override for any text color conflicts */
+body .admin-content h1,
+body .admin-content p,
+body .admin-title,
+body .admin-subtitle,
+html body .text-black {
+  color: #000000 !important;
+}
+
+/* Override dark mode text-white specifically for light mode */
+html:not(.dark) .admin-content *,
+html:not(.dark) .admin-title,
+html:not(.dark) .admin-subtitle {
+  color: #000000 !important;
+}
+
 /* Smooth transitions for all elements */
 * {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;

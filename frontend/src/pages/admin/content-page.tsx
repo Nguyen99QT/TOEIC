@@ -8,8 +8,8 @@ export function ContentPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý nội dung</h1>
-          <p className="text-muted-foreground">Quản lý tất cả nội dung học tập trên Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý nội dung</h1>
+          <p className="text-black">Quản lý tất cả nội dung học tập trên Toeic.com</p>
         </div>
         <Button className="bg-study-600 hover:bg-study-700">
           <Plus className="mr-2 h-4 w-4" />

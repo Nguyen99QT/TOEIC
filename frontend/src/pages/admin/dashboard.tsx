@@ -7,9 +7,9 @@ import { Users, BookOpen, DollarSign, Eye, MessageSquare, Star } from "lucide-re
 export function Dashboard() {
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Tổng quan về hoạt động của Toeic.com</p>
+        <p className="text-black">Tổng quan về hoạt động của Toeic.com</p>
       </div>
 
       {/* Stats Cards */}

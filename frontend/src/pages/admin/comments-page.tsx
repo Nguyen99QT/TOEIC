@@ -187,9 +187,9 @@ export function CommentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý bình luận</h1>
-          <p className="text-muted-foreground">
-            Quản lý và kiểm duyệt bình luận từ người dùng
+          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý bình luận</h1>
+          <p className="text-black">
+            Theo dõi và kiểm duyệt tất cả bình luận trên Toeic.com
           </p>
         </div>
         <div className="flex items-center gap-2">

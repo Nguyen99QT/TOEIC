@@ -5,9 +5,11 @@ import { TrendingUp, Users, Eye, Clock, BookOpen, DollarSign, Star, MessageSquar
 export function AnalyticsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Thống kê & Phân tích</h1>
-        <p className="text-muted-foreground">Theo dõi hiệu suất và xu hướng của Toeic.com</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Thống kê & Phân tích</h1>
+          <p className="text-black">Theo dõi hiệu suất và xu hướng của Toeic.com</p>
+        </div>
       </div>
 
       {/* Key Metrics */}

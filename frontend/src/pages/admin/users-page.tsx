@@ -111,8 +111,8 @@ export function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quản lý người dùng</h1>
-          <p className="text-muted-foreground">Quản lý học viên và giảng viên trên Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý người dùng</h1>
+          <p className="text-black">Quản lý học viên và giảng viên trên Toeic.com</p>
         </div>
         <div className="flex items-center space-x-2">
           <Button 

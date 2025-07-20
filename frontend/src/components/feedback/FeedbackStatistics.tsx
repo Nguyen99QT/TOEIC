@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { feedbackService, FeedbackStatistics, FeedbackDto } from '../../services/feedback';
+import { feedbackService, FeedbackDto } from '../../services/feedback';
 import { toast } from 'react-hot-toast';
 
 const FeedbackStatistics: React.FC = () => {
-  const [statistics, setStatistics] = useState<FeedbackStatistics | null>(null);
+  const [statistics, setStatistics] = useState<Map<string, number> | null>(null);
   const [recentFeedbacks, setRecentFeedbacks] = useState<FeedbackDto[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -246,4 +246,37 @@ public class FeedbackDto {
     public void setCanRespond(Boolean canRespond) {
         this.canRespond = canRespond;
     }
+
+    // Additional methods for compatibility with ExerciseResultService
+    public Long getLessonId() {
+        return null; // This is not applicable for admin feedback
+    }
+
+    public void setLessonId(Long lessonId) {
+        // This is not applicable for admin feedback
+    }
+
+    public Long getExerciseId() {
+        return null; // This is not applicable for admin feedback
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        // This is not applicable for admin feedback
+    }
+
+    public Integer getRating() {
+        return null; // This is not applicable for admin feedback
+    }
+
+    public void setRating(Integer rating) {
+        // This is not applicable for admin feedback
+    }
+
+    public String getComment() {
+        return content; // Use content as comment for compatibility
+    }
+
+    public void setComment(String comment) {
+        this.content = comment; // Use content as comment for compatibility
+    }
 }

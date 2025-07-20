@@ -36,7 +36,7 @@ public interface LessonCommentRepository extends JpaRepository<LessonComment, Lo
     Long countByLessonIdAndActive(@Param("lessonId") Long lessonId);
 
     // Find comments that can be edited by user
-    @Query("SELECT c FROM LessonComment c WHERE c.user.id = :userId AND c.isDeleted = false AND c.status = 'PENDING' ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM LessonComment c WHERE c.user.id = :userId AND c.isDeleted = false ORDER BY c.createdAt DESC")
     List<LessonComment> findEditableByUserId(@Param("userId") Long userId);
 
     // Find recent comments

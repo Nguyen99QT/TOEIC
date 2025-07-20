@@ -39,9 +39,9 @@ import LessonDetailPage from './pages/lessons/LessonDetailPage';
 import LessonsPage from './pages/lessons/LessonsPage';
 import PricingPage from './pages/PricingPage';
 import UpgradePremiumPage from './pages/UpgradePremiumPage';
-import ProfilePage from './pages/user/ProfilePage';
 import UserProfile from './pages/user/UserProfile';
 import EditProfilePage from './pages/user/EditProfilePage';
+import ChangePasswordPage from './pages/user/ChangePasswordPage';
 import FeedbackPage from './pages/user/FeedbackPage';
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
 // import SettingsPage from './pages/user/SettingsPage';
@@ -318,19 +318,6 @@ const AppContent: React.FC = () => {
 
             {/* User Routes */}
             <Route
-              path="/profile"
-              element={
-                <ProtectedRoute
-                  promptTitle="Đăng nhập để xem profile"
-                  promptMessage="Bạn cần phải đăng nhập để xem và chỉnh sửa thông tin cá nhân"
-                >
-                  <Layout>
-                    <ProfilePage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/user/profile"
               element={
                 <ProtectedRoute
@@ -352,6 +339,19 @@ const AppContent: React.FC = () => {
                 >
                   <Layout>
                     <EditProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/change-password"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để đổi mật khẩu"
+                  promptMessage="Bạn cần phải đăng nhập để đổi mật khẩu tài khoản"
+                >
+                  <Layout>
+                    <ChangePasswordPage />
                   </Layout>
                 </ProtectedRoute>
               }

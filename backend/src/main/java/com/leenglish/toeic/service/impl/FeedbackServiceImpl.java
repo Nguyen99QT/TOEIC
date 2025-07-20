@@ -59,7 +59,7 @@ public class FeedbackServiceImpl implements FeedbackService {
 
         if (!feedback.getUser().getId().equals(userId)) {
             throw new UnauthorizedException("You can only edit your own feedback");
-        }
+        }   
 
         if (!feedback.canBeEdited()) {
             throw new UnauthorizedException("Feedback cannot be edited");
@@ -323,9 +323,9 @@ public class FeedbackServiceImpl implements FeedbackService {
         dto.setUpdatedAt(feedback.getUpdatedAt());
         
         // Calculate average rating
-        dto.setAverageRating(feedback.getAverageRating());
-        dto.setIsPositiveFeedback(feedback.isPositiveFeedback());
-        dto.setIsNegativeFeedback(feedback.isNegativeFeedback());
+        // dto.setAverageRating(feedback.getAverageRating());
+        // dto.setIsPositiveFeedback(feedback.isPositiveFeedback());
+        // dto.setIsNegativeFeedback(feedback.isNegativeFeedback());
         
         // Set permission flags
         if (currentUserId != null) {

@@ -118,7 +118,7 @@ const Navigation: React.FC = () => {
                                     {isMenuOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-slideInRight">
                                             <Link
-                                                to="/profile"
+                                                to="/user/profile"
                                                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
@@ -126,20 +126,12 @@ const Navigation: React.FC = () => {
                                                 <span>Profile</span>
                                             </Link>
                                             <Link
-                                                to="/user/profile"
+                                                to="/user/change-password"
                                                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
-                                                <span>👤</span>
-                                                <span>My Profile</span>
-                                            </Link>
-                                            <Link
-                                                to="/user/edit-profile"
-                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                <span>✏️</span>
-                                                <span>Edit Profile</span>
+                                                <span>🔒</span>
+                                                <span>Change Password</span>
                                             </Link>
                                             <Link
                                                 to="/feedback"

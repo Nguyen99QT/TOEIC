@@ -310,6 +310,17 @@ public class Feedback {
         return isActive() && !isResolved() && !isClosed();
     }
 
+    // Additional methods for compatibility
+    public Double getAverageRating() {
+        // This is a placeholder method for compatibility
+        // In the actual feedback system, this might be calculated from ratings
+        return null;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        // This is a placeholder method for compatibility
+    }
+
     // Lifecycle Methods
     @PrePersist
     protected void onCreate() {

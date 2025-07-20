@@ -1,4 +1,4 @@
-import { Bell, Search, User } from "lucide-react"
+import { Bell, Search, User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Badge } from "./ui/badge"
@@ -15,56 +15,63 @@ import { ModeToggle } from "./mode-toggle"
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center gap-4 px-6">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="flex h-16 items-center gap-4 px-6 lg:px-8">
         <div className="flex-1">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Tìm kiếm khóa học, người dùng..."
-              className="pl-10 bg-background/80 focus-visible:ring-study-500"
+              className="pl-10 bg-slate-50 border-slate-200 focus-visible:ring-blue-500 focus-visible:border-blue-500 dark:bg-slate-800/50 dark:border-slate-700 dark:focus-visible:ring-blue-400 dark:focus-visible:border-blue-400 transition-all duration-200"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            className="relative text-muted-foreground hover:text-study-600 hover:bg-study-50"
+            className="relative text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-950/50 transition-all duration-200"
           >
             <Bell className="h-4 w-4" />
-            <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs bg-danger-500">3</Badge>
+            <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs bg-blue-500 border-2 border-white dark:border-slate-900">3</Badge>
           </Button>
 
           <ModeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8 border border-study-200">
+              <Button variant="ghost" className="relative h-9 w-auto rounded-full px-3 gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200">
+                <Avatar className="h-7 w-7 border-2 border-slate-200 dark:border-slate-700">
                   <AvatarImage src="/placeholder-user.jpg" alt="Admin" />
-                  <AvatarFallback className="bg-study-100 text-study-700">AD</AvatarFallback>
+                  <AvatarFallback className="bg-blue-500 text-white font-semibold">AD</AvatarFallback>
                 </Avatar>
+                <div className="hidden sm:flex flex-col items-start">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Admin User</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">admin@toeic.com</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-slate-400" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-64" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
-                  <p className="text-xs leading-none text-muted-foreground">admin@toeic.com</p>
+                  <p className="text-sm font-medium leading-none text-slate-900 dark:text-slate-100">Admin User</p>
+                  <p className="text-xs leading-none text-slate-500 dark:text-slate-400">admin@toeic.com</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150">
                 <User className="mr-2 h-4 w-4" />
                 <span>Hồ sơ</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150">
+                <Settings className="mr-2 h-4 w-4" />
                 <span>Cài đặt</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-danger-500 focus:text-danger-500">
+              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors duration-150">
+                <LogOut className="mr-2 h-4 w-4" />
                 <span>Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

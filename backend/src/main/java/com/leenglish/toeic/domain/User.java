@@ -289,6 +289,15 @@ public class User {
         this.profilePictureUrl = profilePictureUrl;
     }
 
+    // Alias for avatar URL compatibility
+    public String getAvatarUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.profilePictureUrl = avatarUrl;
+    }
+
     public LocalDateTime getLastLogin() {
         return lastLogin;
     }

@@ -3,6 +3,7 @@ import { SidebarProvider } from "./ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
 import { ThemeProvider } from "./theme-provider";
+import "./admin-styles.css";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,12 +15,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="study4-theme">
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-muted/40">
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50/30 via-white to-blue-50/20 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
           <AppSidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col overflow-hidden">
             <Header />
-            <main className="flex-1 p-6">
-              {children}
+            <main className="flex-1 overflow-auto p-6 lg:p-8 bg-white/90 dark:bg-slate-900/50">
+              <div className="mx-auto max-w-7xl">
+                {children}
+              </div>
             </main>
           </div>
         </div>

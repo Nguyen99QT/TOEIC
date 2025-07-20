@@ -17,7 +17,7 @@ import com.leenglish.toeic.dto.UpdateUserProfileRequest;
 import com.leenglish.toeic.enums.Gender;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.repository.UserRepository;
-
+import com.leenglish.toeic.exception.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
 
 /**
@@ -40,6 +40,9 @@ public class UserService {
 
     @Autowired
     private EmailVerificationService emailVerificationService;
+
+    @Autowired
+    private com.leenglish.toeic.security.UserDetailsServiceImpl userDetailsService;
 
     // ========== USER RETRIEVAL METHODS ==========
 
@@ -161,7 +164,12 @@ public class UserService {
 
         user.setUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(savedUser.getUsername());
+
+        return savedUser;
     }
 
     /**
@@ -188,7 +196,12 @@ public class UserService {
         user.setRole(newRole);
         user.setUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(savedUser.getUsername());
+
+        return savedUser;
     }
 
     /**
@@ -212,6 +225,9 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(user.getUsername());
     }
 
     /**
@@ -225,6 +241,9 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(user.getUsername());
     }
 
     /**
@@ -504,5 +523,18 @@ public class UserService {
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
         }
+    }
+
+    /**
+     * Get current user from authentication
+     */
+    public User getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
     }
 }

@@ -10,7 +10,7 @@ interface EditProfileFormProps {
 }
 
 const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, onCancel }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateCurrentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   
   // Profile form state
@@ -109,6 +109,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, onCancel }
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🔄 Starting profile update...', profileData);
+    
     if (!profileData.fullName.trim()) {
       toast.error('Họ tên không được để trống');
       return;
@@ -116,6 +118,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, onCancel }
 
     setIsSubmittingProfile(true);
     try {
+      console.log('📤 Sending profile data to API...');
       const updatedUser = await updateUserProfile({
         fullName: profileData.fullName,
         email: profileData.email,
@@ -126,12 +129,15 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({ onSuccess, onCancel }
         profilePictureUrl: profileData.profilePictureUrl
       });
 
+      console.log('✅ Profile updated successfully:', updatedUser);
+
       // Update auth context
-      updateUser(updatedUser);
+      updateCurrentUser(updatedUser);
       
       toast.success('Cập nhật thông tin thành công!');
       onSuccess?.();
     } catch (error: any) {
+      console.error('❌ Profile update failed:', error);
       toast.error(error.message || 'Có lỗi xảy ra khi cập nhật thông tin');
     } finally {
       setIsSubmittingProfile(false);

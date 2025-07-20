@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Progress } from "./ui/progress"
 import { TrendingUp, Users, Eye, Clock, BookOpen, DollarSign, Star, MessageSquare } from "lucide-react"
 
 export function AnalyticsPage() {

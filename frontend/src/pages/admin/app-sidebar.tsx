@@ -1,5 +1,3 @@
-"use client"
-
 import {
   BookOpen,
   Users,
@@ -11,6 +9,7 @@ import {
   Video,
   MessageSquare,
   Bell,
+  MessageCircle,
 } from "lucide-react"
 
 import {
@@ -24,8 +23,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "./ui/sidebar"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 
 const menuItems = [
   {
@@ -52,6 +51,11 @@ const menuItems = [
     title: "Thống kê",
     icon: BarChart3,
     id: "analytics",
+  },
+  {
+    title: "Feedback",
+    icon: MessageCircle,
+    id: "feedback",
   },
 ]
 
@@ -85,10 +89,10 @@ interface AppSidebarProps {
 
 export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
   return (
-    <Sidebar className="border-r bg-gradient-sidebar">
+    <Sidebar className="border-r bg-gradient-to-b from-admin-800 to-admin-900">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-study-600 shadow-lg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-admin-600 shadow-lg">
             <GraduationCap className="h-6 w-6" />
           </div>
           <div>
@@ -174,7 +178,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
         <div className="flex items-center gap-3 rounded-lg bg-white/10 p-3">
           <Avatar className="h-8 w-8 border-2 border-white/20">
             <AvatarImage src="/placeholder-user.jpg" />
-            <AvatarFallback className="bg-study-700 text-white">AD</AvatarFallback>
+            <AvatarFallback className="bg-admin-700 text-white">AD</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white">Admin User</p>

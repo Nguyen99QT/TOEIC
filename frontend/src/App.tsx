@@ -40,10 +40,15 @@ import LessonsPage from './pages/lessons/LessonsPage';
 import PricingPage from './pages/PricingPage';
 import UpgradePremiumPage from './pages/UpgradePremiumPage';
 import ProfilePage from './pages/user/ProfilePage';
+import UserProfile from './pages/user/UserProfile';
+import EditProfilePage from './pages/user/EditProfilePage';
+import FeedbackPage from './pages/user/FeedbackPage';
+import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import AdminPanel from './pages/admin/AdminPanel';
 import AdminRoute from './components/auth/AdminRoute';
 
 // Enhanced UI Components
@@ -326,6 +331,58 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/user/profile"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem profile"
+                  promptMessage="Bạn cần phải đăng nhập để xem và chỉnh sửa thông tin cá nhân"
+                >
+                  <Layout>
+                    <UserProfile />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/edit-profile"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để chỉnh sửa profile"
+                  promptMessage="Bạn cần phải đăng nhập để chỉnh sửa thông tin cá nhân"
+                >
+                  <Layout>
+                    <EditProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feedback"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để gửi feedback"
+                  promptMessage="Bạn cần phải đăng nhập để gửi feedback"
+                >
+                  <Layout>
+                    <FeedbackPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feedback/:exerciseId"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để gửi feedback"
+                  promptMessage="Bạn cần phải đăng nhập để gửi feedback về bài tập"
+                >
+                  <Layout>
+                    <FeedbackPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute
@@ -339,19 +396,20 @@ const AppContent: React.FC = () => {
               }
             />
 
-
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
             <Route
               path="/admin/users"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">User Management</h1>
-                        <p className="text-gray-600">Admin user management page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />
@@ -359,14 +417,7 @@ const AppContent: React.FC = () => {
               path="/admin/content"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Content Management</h1>
-                        <p className="text-gray-600">Admin content management page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />
@@ -374,14 +425,7 @@ const AppContent: React.FC = () => {
               path="/admin/courses"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Course Management</h1>
-                        <p className="text-gray-600">Admin course management page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />
@@ -389,14 +433,7 @@ const AppContent: React.FC = () => {
               path="/admin/analytics"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Analytics</h1>
-                        <p className="text-gray-600">Admin analytics page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />
@@ -404,14 +441,15 @@ const AppContent: React.FC = () => {
               path="/admin/comments"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Comments Management</h1>
-                        <p className="text-gray-600">Admin comments management page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/feedback"
+              element={
+                <AdminRoute>
+                  <AdminFeedbackPage />
                 </AdminRoute>
               }
             />
@@ -419,14 +457,15 @@ const AppContent: React.FC = () => {
               path="/admin/settings"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
-                    <div className="min-h-screen flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl font-bold mb-4">Admin Settings</h1>
-                        <p className="text-gray-600">Admin settings page - Coming soon</p>
-                      </div>
-                    </div>
-                  </Layout>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />

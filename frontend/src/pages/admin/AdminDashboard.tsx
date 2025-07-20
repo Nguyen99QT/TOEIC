@@ -1,220 +1,217 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
+import { Progress } from "./ui/progress"
+import { Users, BookOpen, DollarSign, Eye, MessageSquare, Star } from "lucide-react"
 
-const AdminDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
-
-  const adminMenuItems = [
-    {
-      title: 'Dashboard Overview',
-      description: 'View system statistics and analytics',
-      icon: '📊',
-      link: '/admin/dashboard',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'User Management',
-      description: 'Manage users, roles, and permissions',
-      icon: '👥',
-      link: '/admin/users',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Content Management',
-      description: 'Manage lessons, exercises, and content',
-      icon: '📚',
-      link: '/admin/content',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Course Management',
-      description: 'Manage courses and curriculum',
-      icon: '🎓',
-      link: '/admin/courses',
-      color: 'bg-orange-500'
-    },
-    {
-      title: 'Analytics',
-      description: 'View detailed analytics and reports',
-      icon: '📈',
-      link: '/admin/analytics',
-      color: 'bg-red-500'
-    },
-    {
-      title: 'Comments',
-      description: 'Manage user comments and feedback',
-      icon: '💬',
-      link: '/admin/comments',
-      color: 'bg-indigo-500'
-    },
-    {
-      title: 'Settings',
-      description: 'System settings and configuration',
-      icon: '⚙️',
-      link: '/admin/settings',
-      color: 'bg-gray-500'
-    }
-  ];
-
+export function AdminDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {currentUser?.fullName || currentUser?.username}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                Admin
-              </span>
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                ← Back to User Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">Tổng quan về hoạt động của Toeic.com</p>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">👥</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                    <dd className="text-lg font-medium text-gray-900">1,234</dd>
-                  </dl>
-                </div>
-              </div>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-admin-500 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-admin-50 to-admin-100">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-admin-800">Tổng người dùng</CardTitle>
+            <div className="rounded-full bg-admin-200 p-2 text-admin-700">
+              <Users className="h-4 w-4" />
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-admin-700">12,543</div>
+            <p className="text-xs text-success-600">
+              <span className="font-medium">+12%</span> so với tháng trước
+            </p>
+          </CardContent>
+        </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📚</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Lessons</dt>
-                    <dd className="text-lg font-medium text-gray-900">567</dd>
-                  </dl>
-                </div>
-              </div>
+        <Card className="border-l-4 border-l-success-500 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-success-50 to-success-100">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-success-800">Khóa học</CardTitle>
+            <div className="rounded-full bg-success-200 p-2 text-success-700">
+              <BookOpen className="h-4 w-4" />
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-success-700">156</div>
+            <p className="text-xs text-success-600">
+              <span className="font-medium">+3</span> khóa học mới tuần này
+            </p>
+          </CardContent>
+        </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">🎯</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Active Users</dt>
-                    <dd className="text-lg font-medium text-gray-900">890</dd>
-                  </dl>
-                </div>
-              </div>
+        <Card className="border-l-4 border-l-warning-500 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-warning-50 to-warning-100">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-warning-800">Doanh thu</CardTitle>
+            <div className="rounded-full bg-warning-200 p-2 text-warning-700">
+              <DollarSign className="h-4 w-4" />
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-warning-700">₫45,231,000</div>
+            <p className="text-xs text-success-600">
+              <span className="font-medium">+8%</span> so với tháng trước
+            </p>
+          </CardContent>
+        </Card>
 
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">📈</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Avg. Score</dt>
-                    <dd className="text-lg font-medium text-gray-900">85%</dd>
-                  </dl>
-                </div>
-              </div>
+        <Card className="border-l-4 border-l-primary-500 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-primary-50 to-primary-100">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-primary-800">Lượt xem</CardTitle>
+            <div className="rounded-full bg-primary-200 p-2 text-primary-700">
+              <Eye className="h-4 w-4" />
             </div>
-          </div>
-        </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary-700">89,432</div>
+            <p className="text-xs text-success-600">
+              <span className="font-medium">+15%</span> so với tuần trước
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Admin Menu */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">
-              Admin Tools
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {adminMenuItems.map((item, index) => (
-                <Link
-                  key={index}
-                  to={item.link}
-                  className="block p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200"
-                >
-                  <div className="flex items-center">
-                    <div className={`w-12 h-12 ${item.color} rounded-lg flex items-center justify-center text-white text-xl`}>
-                      {item.icon}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        {/* Recent Courses */}
+        <Card className="col-span-4 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-admin-50 to-admin-100">
+          <CardHeader className="bg-gradient-to-r from-admin-200 to-admin-150">
+            <CardTitle className="text-admin-800">Khóa học gần đây</CardTitle>
+            <CardDescription>Các khóa học được tạo và cập nhật gần đây</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                {
+                  title: "React Advanced Patterns",
+                  instructor: "Nguyễn Văn A",
+                  students: 234,
+                  status: "active",
+                  progress: 85,
+                  color: "study",
+                },
+                {
+                  title: "Node.js Backend Development",
+                  instructor: "Trần Thị B",
+                  students: 189,
+                  status: "draft",
+                  progress: 60,
+                  color: "warning",
+                },
+                {
+                  title: "UI/UX Design Fundamentals",
+                  instructor: "Lê Văn C",
+                  students: 456,
+                  status: "active",
+                  progress: 100,
+                  color: "success",
+                },
+                {
+                  title: "Python Data Science",
+                  instructor: "Phạm Thị D",
+                  students: 123,
+                  status: "review",
+                  progress: 40,
+                  color: "info",
+                },
+              ].map((course, index) => (
+                <div key={index} className="flex items-center justify-between space-x-4">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium leading-none">{course.title}</p>
+                      <Badge
+                        variant={
+                          course.status === "active" ? "default" : course.status === "draft" ? "secondary" : "outline"
+                        }
+                        className={
+                          course.status === "active"
+                            ? "bg-success-500 hover:bg-success-600"
+                            : course.status === "draft"
+                              ? "bg-warning-500 hover:bg-warning-600 text-white"
+                              : "border-info-500 text-info-500"
+                        }
+                      >
+                        {course.status === "active" ? "Hoạt động" : course.status === "draft" ? "Nháp" : "Đang duyệt"}
+                      </Badge>
                     </div>
-                    <div className="ml-4">
-                      <h4 className="text-lg font-medium text-gray-900">{item.title}</h4>
-                      <p className="text-sm text-gray-500">{item.description}</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {course.instructor} • {course.students} học viên
+                    </p>
+                    <Progress
+                      value={course.progress}
+                      className="h-1"
+                      indicatorClassName={
+                        course.color === "study"
+                          ? "bg-study-500"
+                          : course.color === "success"
+                            ? "bg-success-500"
+                            : course.color === "warning"
+                              ? "bg-warning-500"
+                              : "bg-info-500"
+                      }
+                    />
                   </div>
-                </Link>
+                  <Button variant="ghost" size="sm" className="text-study-600 hover:text-study-700 hover:bg-study-50">
+                    Xem chi tiết
+                  </Button>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Recent Activity */}
-        <div className="mt-8 bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Recent Activity
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-sm text-gray-600">New user registered: john.doe@example.com</span>
-                <span className="text-xs text-gray-400">2 minutes ago</span>
+        {/* Quick Stats */}
+        <Card className="col-span-3 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-admin-50 to-admin-100">
+          <CardHeader className="bg-gradient-to-r from-admin-200 to-admin-150">
+            <CardTitle className="text-admin-800">Hoạt động hôm nay</CardTitle>
+            <CardDescription>Thống kê nhanh về hoạt động trong ngày</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-admin-100">
+                <Users className="h-5 w-5 text-admin-600" />
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span className="text-sm text-gray-600">Lesson "Advanced Grammar" was updated</span>
-                <span className="text-xs text-gray-400">15 minutes ago</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                <span className="text-sm text-gray-600">New comment on Exercise #123</span>
-                <span className="text-xs text-gray-400">1 hour ago</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Người dùng mới</p>
+                <p className="text-2xl font-bold text-admin-700">23</p>
               </div>
             </div>
-          </div>
-        </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100">
+                <BookOpen className="h-5 w-5 text-success-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Bài học hoàn thành</p>
+                <p className="text-2xl font-bold text-success-700">156</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning-100">
+                <MessageSquare className="h-5 w-5 text-warning-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Bình luận mới</p>
+                <p className="text-2xl font-bold text-warning-700">34</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-info-100">
+                <Star className="h-5 w-5 text-info-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Đánh giá mới</p>
+                <p className="text-2xl font-bold text-info-700">12</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
-};
-
-export default AdminDashboard; 
+  )
+}

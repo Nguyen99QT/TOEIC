@@ -1,12 +1,10 @@
-"use client"
-
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Badge } from "./ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "./ui/dropdown-menu"
 import { Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Users, Star } from "lucide-react"
 
 const courses = [

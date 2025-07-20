@@ -1,12 +1,10 @@
-"use client"
-
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
+import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Separator } from "./ui/separator"
 import { 
   Search, 
   Filter, 
@@ -26,7 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "./ui/dropdown-menu"
 
 interface Comment {
   id: string

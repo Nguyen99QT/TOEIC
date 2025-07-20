@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.UserDto;
+import com.leenglish.toeic.dto.UpdateUserProfileRequest;
 import com.leenglish.toeic.enums.Gender;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.repository.UserRepository;
@@ -122,25 +123,59 @@ public class UserService {
     }
 
     /**
-     * Update user profile
+     * Update user profile with comprehensive information
      */
-    public User updateUser(Long userId, String fullName,
-            String email, Gender gender, String phone) {
+    public User updateUserProfile(Long userId, UpdateUserProfileRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
 
-        if (fullName != null)
-            user.setFullName(fullName);
-        if (email != null)
-            user.setEmail(email);
-        if (gender != null)
-            user.setGender(gender);
-        if (phone != null)
-            user.setPhone(phone);
+        // Update fields if provided
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getEmail() != null) {
+            // Check if email is already taken by another user
+            Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                throw new IllegalArgumentException("Email is already taken by another user");
+            }
+            user.setEmail(request.getEmail());
+            // Reset email verification if email changed
+            user.setIsEmailVerified(false);
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
+        }
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
+        if (request.getCountry() != null) {
+            user.setCountry(request.getCountry());
+        }
+        if (request.getProfilePictureUrl() != null) {
+            user.setProfilePictureUrl(request.getProfilePictureUrl());
+        }
 
         user.setUpdatedAt(LocalDateTime.now());
 
         return userRepository.save(user);
+    }
+
+    /**
+     * Update user profile (legacy method for backward compatibility)
+     */
+    public User updateUser(Long userId, String fullName,
+            String email, Gender gender, String phone) {
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest();
+        request.setFullName(fullName);
+        request.setEmail(email);
+        request.setGender(gender);
+        request.setPhone(phone);
+        
+        return updateUserProfile(userId, request);
     }
 
     /**
@@ -157,7 +192,30 @@ public class UserService {
     }
 
     /**
-     * Change user password
+     * Change user password with current password verification
+     */
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Check if new password is different from current
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+    }
+
+    /**
+     * Change user password (legacy method for backward compatibility)
      */
     public void changePassword(Long userId, String newPassword) {
         User user = userRepository.findById(userId)
@@ -351,8 +409,34 @@ public class UserService {
     public Page<User> findUsersWithFilters(String username, String email, Role role,
             Gender gender, String country, Boolean active,
             Pageable pageable) {
-        // Fallback implementation - return empty page for now
-        return Page.empty(pageable);
+        // Get all users from database
+        List<User> allUsers = userRepository.findAll();
+        
+        // Apply filters if provided
+        List<User> filteredUsers = allUsers.stream()
+                .filter(user -> username == null || (user.getUsername() != null && user.getUsername().toLowerCase().contains(username.toLowerCase())))
+                .filter(user -> email == null || (user.getEmail() != null && user.getEmail().toLowerCase().contains(email.toLowerCase())))
+                .filter(user -> role == null || role.equals(user.getRole()))
+                .filter(user -> gender == null || gender.equals(user.getGender()))
+                .filter(user -> country == null || (user.getCountry() != null && user.getCountry().toLowerCase().contains(country.toLowerCase())))
+                .filter(user -> active == null || active.equals(user.getIsActive()))
+                .collect(java.util.stream.Collectors.toList());
+        
+        // Apply pagination
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredUsers.size());
+        
+        if (start > filteredUsers.size()) {
+            return Page.empty(pageable);
+        }
+        
+        List<User> pageContent = filteredUsers.subList(start, end);
+        
+        return new org.springframework.data.domain.PageImpl<>(
+                pageContent, 
+                pageable, 
+                filteredUsers.size()
+        );
     }
 
     /**

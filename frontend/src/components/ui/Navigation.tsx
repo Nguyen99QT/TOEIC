@@ -19,6 +19,7 @@ const Navigation: React.FC = () => {
         { path: '/exercises', label: 'Exercises', icon: '✏️' },
         { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
         { path: '/progress', label: 'Progress', icon: '📈' },
+        { path: '/feedback', label: 'Feedback', icon: '💬' },
     ];
 
     return (
@@ -123,6 +124,30 @@ const Navigation: React.FC = () => {
                                             >
                                                 <span>👤</span>
                                                 <span>Profile</span>
+                                            </Link>
+                                            <Link
+                                                to="/user/profile"
+                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <span>👤</span>
+                                                <span>My Profile</span>
+                                            </Link>
+                                            <Link
+                                                to="/user/edit-profile"
+                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <span>✏️</span>
+                                                <span>Edit Profile</span>
+                                            </Link>
+                                            <Link
+                                                to="/feedback"
+                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <span>💬</span>
+                                                <span>Feedback</span>
                                             </Link>
                                             <Link
                                                 to="/settings"

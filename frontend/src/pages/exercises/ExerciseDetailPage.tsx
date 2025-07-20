@@ -201,8 +201,8 @@ const ExerciseDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Start Exercise Button */}
-        <div className="flex justify-center">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <EnhancedButton
             onClick={handleStartExercise}
             className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
@@ -213,6 +213,15 @@ const ExerciseDetailPage: React.FC = () => {
             </svg>
             Start Exercise
           </EnhancedButton>
+          
+          {exerciseId && (
+            <FeedbackButton
+              exerciseId={parseInt(exerciseId)}
+              variant="outline"
+              size="lg"
+              className="px-8 py-4"
+            />
+          )}
         </div>
       </div>
 

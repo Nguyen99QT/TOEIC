@@ -7,10 +7,11 @@
  */
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/ui/SimpleToast';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
+import { resendVerificationEmail } from '../../services/auth';
 
 const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,16 +19,12 @@ const LoginPage: React.FC = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const { login } = useAuth();
   const { success, error } = useToast();
-
-  // ❌ REMOVED: Redirect logic - handled by App.tsx route guard
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     console.log('🚀 User is authenticated, redirecting to:', from);
-  //     navigate(from, { replace: true });
-  //   }
-  // }, [isAuthenticated, navigate, from]);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -35,9 +32,11 @@ const LoginPage: React.FC = () => {
       [e.target.name]: e.target.value,
     });
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setNeedsVerification(false);
 
     try {
       console.log('🔍 LoginPage: Attempting login for:', formData.username);
@@ -45,19 +44,112 @@ const LoginPage: React.FC = () => {
       // Use AuthContext's login method
       await login(formData.username, formData.password);
 
-      success('Login successful!');
-      console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
+      // Get current user from auth context to check role
+      const { getCurrentUser } = await import('../../services/auth');
+      const currentUser = getCurrentUser();
 
-      // ✅ REMOVED: Manual navigation - Let App.tsx handle redirect automatically
-      // The useEffect in App.tsx will detect isAuthenticated change and redirect
+      if (currentUser && currentUser.role === 'ADMIN') {
+        success('Login successful! Redirecting to admin dashboard...');
+        navigate('/admin/dashboard');
+      } else {
+        success('Login successful!');
+        console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
+      }
 
     } catch (loginError: any) {
       console.error('❌ LoginPage: Login failed:', loginError);
-      error(loginError.message || 'Login failed');
+      
+      // Check if it's an email verification error
+      if (loginError.response?.status === 403 && loginError.response?.data?.needsVerification) {
+        setNeedsVerification(true);
+        setUnverifiedEmail(loginError.response.data.email);
+        error('Please verify your email before logging in');
+      } else {
+        error(loginError.message || 'Login failed');
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    
+    setIsResending(true);
+    try {
+      await resendVerificationEmail(unverifiedEmail);
+      success('Verification email sent successfully. Please check your inbox.');
+    } catch (err: any) {
+      error(err.message || 'Failed to resend verification email');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Show email verification message if needed
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gradient">LeEnglish</div>
+              <span className="text-sm text-gray-500">TOEIC Platform</span>
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Email Verification Required
+            </h2>
+          </div>
+
+          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <svg className="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                Verify Your Email
+              </h3>
+              
+              <p className="mt-2 text-sm text-gray-600">
+                Please verify your email address before logging in.
+              </p>
+              
+              <p className="mt-2 text-sm text-gray-600">
+                Email: <strong>{unverifiedEmail}</strong>
+              </p>
+              
+              <div className="mt-6 space-y-4">
+                <button
+                  onClick={handleResendVerification}
+                  disabled={isResending}
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 disabled:opacity-50"
+                >
+                  {isResending ? (
+                    <>
+                      <LoadingSpinner size="sm" color="primary" />
+                      <span className="ml-2">Sending...</span>
+                    </>
+                  ) : (
+                    'Resend Verification Email'
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setNeedsVerification(false)}
+                  className="w-full inline-flex justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Back to Login
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

@@ -28,6 +28,7 @@ import SimpleHomePage from './pages/SimpleHomePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
+import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
@@ -39,12 +40,17 @@ import LessonDetailPage from './pages/lessons/LessonDetailPage';
 import LessonsPage from './pages/lessons/LessonsPage';
 import PricingPage from './pages/PricingPage';
 import UpgradePremiumPage from './pages/UpgradePremiumPage';
-import ProfilePage from './pages/user/ProfilePage';
+import UserProfile from './pages/user/UserProfile';
+import EditProfilePage from './pages/user/EditProfilePage';
+import ChangePasswordPage from './pages/user/ChangePasswordPage';
+import FeedbackPage from './pages/user/FeedbackPage';
+import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
-import AdminUsersPage from './pages/admin/AdminUsersPage'; // Added import
-import AdminContentPage from './pages/admin/AdminContentPage'; // Added import
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import AdminPanel from './pages/admin/AdminPanel';
+import AdminRoute from './components/auth/AdminRoute';
 
 // Enhanced UI Components
 import { ToastProvider } from './components/ui/SimpleToast';
@@ -165,6 +171,16 @@ const AppContent: React.FC = () => {
               element={
                 <Layout showNavigation={false} showFooter={false}>
                   <LogoutPage />
+                </Layout>
+              }
+            />
+
+            {/* Email Verification Route */}
+            <Route
+              path="/verify-email"
+              element={
+                <Layout showNavigation={false} showFooter={false}>
+                  <EmailVerificationPage />
                 </Layout>
               }
             />
@@ -306,14 +322,66 @@ const AppContent: React.FC = () => {
 
             {/* User Routes */}
             <Route
-              path="/profile"
+              path="/user/profile"
               element={
                 <ProtectedRoute
                   promptTitle="Đăng nhập để xem profile"
                   promptMessage="Bạn cần phải đăng nhập để xem và chỉnh sửa thông tin cá nhân"
                 >
                   <Layout>
-                    <ProfilePage />
+                    <UserProfile />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/edit-profile"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để chỉnh sửa profile"
+                  promptMessage="Bạn cần phải đăng nhập để chỉnh sửa thông tin cá nhân"
+                >
+                  <Layout>
+                    <EditProfilePage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user/change-password"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để đổi mật khẩu"
+                  promptMessage="Bạn cần phải đăng nhập để đổi mật khẩu tài khoản"
+                >
+                  <Layout>
+                    <ChangePasswordPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feedback"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để gửi feedback"
+                  promptMessage="Bạn cần phải đăng nhập để gửi feedback"
+                >
+                  <Layout>
+                    <FeedbackPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feedback/:exerciseId"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để gửi feedback"
+                  promptMessage="Bạn cần phải đăng nhập để gửi feedback về bài tập"
+                >
+                  <Layout>
+                    <FeedbackPage />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -334,23 +402,75 @@ const AppContent: React.FC = () => {
 
             {/* Admin Routes */}
             <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="/admin/users"
               element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdminUsersPage />
-                  </Layout>
-                </ProtectedRoute>
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
               }
             />
             <Route
               path="/admin/content"
               element={
-                <ProtectedRoute>
-                  <Layout>
-                    <AdminContentPage />
-                  </Layout>
-                </ProtectedRoute>
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/courses"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/comments"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/feedback"
+              element={
+                <AdminRoute>
+                  <AdminFeedbackPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
               }
             />
 

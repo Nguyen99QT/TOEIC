@@ -19,6 +19,7 @@ const Navigation: React.FC = () => {
         { path: '/exercises', label: 'Exercises', icon: '✏️' },
         { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
         { path: '/progress', label: 'Progress', icon: '📈' },
+        { path: '/feedback', label: 'Feedback', icon: '💬' },
     ];
 
     return (
@@ -117,12 +118,28 @@ const Navigation: React.FC = () => {
                                     {isMenuOpen && (
                                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-slideInRight">
                                             <Link
-                                                to="/profile"
+                                                to="/user/profile"
                                                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
                                                 <span>👤</span>
                                                 <span>Profile</span>
+                                            </Link>
+                                            <Link
+                                                to="/user/change-password"
+                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <span>🔒</span>
+                                                <span>Change Password</span>
+                                            </Link>
+                                            <Link
+                                                to="/feedback"
+                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                <span>💬</span>
+                                                <span>Feedback</span>
                                             </Link>
                                             <Link
                                                 to="/settings"
@@ -132,6 +149,16 @@ const Navigation: React.FC = () => {
                                                 <span>⚙️</span>
                                                 <span>Settings</span>
                                             </Link>
+                                            {currentUser.role === 'ADMIN' && (
+                                                <Link
+                                                    to="/admin/dashboard"
+                                                    className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors duration-200"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    <span>👑</span>
+                                                    <span>Admin Panel</span>
+                                                </Link>
+                                            )}
                                             <hr className="my-2" />
                                             <Link
                                                 to="/logout"

@@ -48,6 +48,9 @@ public class AuthenticationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.leenglish.toeic.security.UserDetailsServiceImpl userDetailsService;
+
     // JWT Configuration
     @Value("${jwt.secret:leenglish-toeic-platform-secret-key-2024}")
     private String jwtSecret;
@@ -80,7 +83,7 @@ public class AuthenticationService {
             User user = userOpt.get();
 
             // Verify password
-            if (!passwordEncoder.matches(password, user.getPassword())) {
+            if (!passwordEncoder.matches(password, user.getPasswordHash())) {
                 return null; // Invalid password
             }
 
@@ -122,7 +125,7 @@ public class AuthenticationService {
             User newUser = new User();
             newUser.setUsername(username);
             newUser.setEmail(email);
-            newUser.setPassword(passwordEncoder.encode(password)); // Encode password
+            newUser.setPasswordHash(passwordEncoder.encode(password)); // Encode password
             newUser.setRole(role != null ? role : Role.USER); // Default to USER role
             newUser.setCreatedDate(LocalDateTime.now());
             newUser.setLastLoginDate(LocalDateTime.now());
@@ -333,13 +336,16 @@ public class AuthenticationService {
             User user = userOpt.get();
 
             // Verify current password
-            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
                 return false; // Current password is incorrect
             }
 
             // Set new password
-            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
             userRepository.save(user);
+            
+            // Clear user cache to ensure fresh data is loaded on next authentication
+            userDetailsService.evictUserFromCache(user.getUsername());
 
             return true;
 

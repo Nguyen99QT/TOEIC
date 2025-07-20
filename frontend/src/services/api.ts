@@ -65,6 +65,13 @@ apiClient.interceptors.request.use(
 
       config.headers.Authorization = `Bearer ${token}`;
       console.log("🔒 Added token to request headers");
+      
+      // Add Current-User-Id header for backend compatibility
+      const currentUserId = getCurrentUserId();
+      if (currentUserId) {
+        config.headers["Current-User-Id"] = currentUserId.toString();
+        console.log("🔑 Added Current-User-Id header:", currentUserId);
+      }
     } else {
       console.log("⚠️ No auth token available for request");
     }

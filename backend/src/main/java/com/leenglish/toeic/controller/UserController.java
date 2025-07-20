@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.dto.UpdateUserProfileRequest;
+import com.leenglish.toeic.dto.ChangePasswordRequest;
 import com.leenglish.toeic.enums.Gender;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.service.AuthorizationService;
@@ -320,30 +322,84 @@ public class UserController {
     }
 
     /**
-     * PUT /api/users/profile - Cập nhật profile của user hiện tại
-     * Endpoint tiện lợi để user tự cập nhật profile mình
-     * User KHÔNG thể thay đổi role thông qua endpoint này
+     * PUT /api/users/profile - Update current user profile
+     * AUTHORIZATION: User chỉ được update profile của chính mình
      */
     @PutMapping("/profile")
     public ResponseEntity<?> updateCurrentUserProfile(
-            @RequestBody UpdateUserProfileRequest request,
+            @RequestBody com.leenglish.toeic.dto.UpdateUserProfileRequest request,
             @RequestHeader("Current-User-Id") Long currentUserId) {
 
         try {
-            // Tự động forward request tới endpoint chính với ID = currentUserId
-            UpdateUserRequest fullRequest = new UpdateUserRequest();
-            fullRequest.setFullName(request.getFullName());
-            fullRequest.setPhone(request.getPhone());
-            fullRequest.setDateOfBirth(request.getDateOfBirth());
-            fullRequest.setGender(request.getGender());
-            fullRequest.setCountry(request.getCountry());
-            // NOTE: Không set role để đảm bảo user không thể tự thay đổi role
+            // BƯỚC 1: Lấy thông tin user hiện tại
+            Optional<User> currentUserOpt = userService.findById(currentUserId);
+            if (currentUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not found or not authenticated");
+            }
 
-            return updateUser(currentUserId, fullRequest, currentUserId);
+            User currentUser = currentUserOpt.get();
 
+            // BƯỚC 2: Validate request
+            if (!request.hasAnyField()) {
+                return ResponseEntity.badRequest().body("At least one field must be provided for update");
+            }
+
+            // BƯỚC 3: Update profile
+            User updatedUser = userService.updateUserProfile(currentUserId, request);
+
+            return ResponseEntity.ok(updatedUser);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error updating profile: " + e.getMessage());
+        }
+    }
+
+    /**
+     * PUT /api/users/password - Change current user password
+     * AUTHORIZATION: User chỉ được change password của chính mình
+     */
+    @PutMapping("/password")
+    public ResponseEntity<?> changeCurrentUserPassword(
+            @RequestBody ChangePasswordRequest request,
+            @RequestHeader("Current-User-Id") Long currentUserId) {
+
+        try {
+            // BƯỚC 1: Lấy thông tin user hiện tại
+            Optional<User> currentUserOpt = userService.findById(currentUserId);
+            if (currentUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not found or not authenticated");
+            }
+
+            User currentUser = currentUserOpt.get();
+
+            // BƯỚC 2: Validate request
+            if (!request.isPasswordMatch()) {
+                return ResponseEntity.badRequest().body("New password and confirm password do not match");
+            }
+
+            if (!request.isNewPasswordDifferent()) {
+                return ResponseEntity.badRequest().body("New password must be different from current password");
+            }
+
+            if (!request.isPasswordStrong()) {
+                return ResponseEntity.badRequest().body(request.getPasswordStrengthMessage());
+            }
+
+            // BƯỚC 3: Change password
+            userService.changePassword(currentUserId, request.getCurrentPassword(), request.getNewPassword());
+
+            return ResponseEntity.ok().body("Password changed successfully");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error changing password: " + e.getMessage());
         }
     }
 

@@ -41,7 +41,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
-    "date-fns": "4.1.0",
+    "date-fns": "^3.0.0",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
@@ -60,6 +60,8 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@types/react": "^19.1.8",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.53.0",
     "eslint-config-next": "14.0.0",

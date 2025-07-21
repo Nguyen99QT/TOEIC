@@ -13,10 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw } from "lucide-react"
+import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw, Bug } from "lucide-react"
 import { getUsers, toggleUserStatus, updateUserRole } from "../../services/users"
 import { User, Role } from "../../types"
 import { toast } from "react-hot-toast"
+import apiClient from "../../services/apiClient"
 
 // Helper function to get user display name
 const getUserDisplayName = (user: User): string => {
@@ -52,6 +53,12 @@ export function UsersPage() {
       setError(null)
       
       console.log("🔄 Loading users from API...")
+      console.log("📝 Request params:", {
+        page: currentPage,
+        size: 20,
+        search: searchTerm || undefined
+      })
+      
       const response = await getUsers({
         page: currentPage,
         size: 20,
@@ -59,6 +66,12 @@ export function UsersPage() {
       })
       
       console.log("✅ Users loaded successfully:", response)
+      console.log("📊 Response structure:", {
+        content: response.content?.length,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+        hasContent: !!response.content
+      })
       setUsers(response.content)
       setTotalUsers(response.totalElements)
       
@@ -77,6 +90,19 @@ export function UsersPage() {
       toast.error('Không thể tải danh sách người dùng: ' + error.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Debug function to test user count
+  const debugUserCount = async () => {
+    try {
+      console.log("🐛 [DEBUG] Testing user count endpoint...")
+      const response = await apiClient.get('/api/users/count')
+      console.log("🐛 [DEBUG] User count response:", response.data)
+      toast.success('Debug info logged to console')
+    } catch (error: any) {
+      console.error("🐛 [DEBUG] User count error:", error)
+      toast.error('Debug failed: ' + error.message)
     }
   }
 
@@ -127,6 +153,14 @@ export function UsersPage() {
           <Button className="bg-study-600 hover:bg-study-700">
             <Plus className="mr-2 h-4 w-4" />
             Thêm giảng viên
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={debugUserCount}
+            className="border-study-200 hover:bg-study-50 hover:text-study-600"
+          >
+            <Bug className="mr-2 h-4 w-4" />
+            Debug User Count
           </Button>
         </div>
       </div>

@@ -57,6 +57,11 @@ const menuItems = [
     icon: MessageCircle,
     id: "feedback",
   },
+  {
+    title: "Contact",
+    icon: MessageSquare,
+    id: "contact",
+  },
 ]
 
 const contentItems = [

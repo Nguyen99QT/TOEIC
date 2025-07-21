@@ -35,11 +35,35 @@ export const getUsers = async (params: {
 }): Promise<PaginatedResponse<User>> => {
   try {
     const queryParams = buildQueryParams(params);
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(
-      `/users${queryParams}`
-    );
-    return extractData(response);
+    const url = `/api/users${queryParams}`;
+    
+    console.log("🌐 [users.ts] API Call:", {
+      url: url,
+      fullUrl: `http://localhost:8080${url}`,
+      params
+    });
+    
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(url);
+    
+    console.log("📡 [users.ts] Raw response:", {
+      status: response.status,
+      data: response.data,
+      headers: response.headers
+    });
+    
+    const extractedData = extractData(response);
+    console.log("🎯 [users.ts] Extracted data:", extractedData);
+    
+    return extractedData;
   } catch (error: any) {
+    console.error("❌ [users.ts] API Error:", error);
+    console.error("📄 Error details:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers
+    });
+    
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
   }
@@ -50,7 +74,7 @@ export const getUsers = async (params: {
  */
 export const getUserById = async (id: number): Promise<User> => {
   try {
-    const response = await apiClient.get<ApiResponse<User>>(`/users/${id}`);
+    const response = await apiClient.get<ApiResponse<User>>(`/api/users/${id}`);
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -74,7 +98,7 @@ export const updateUserProfile = async (
 ): Promise<User> => {
   try {
     const response = await apiClient.put<ApiResponse<User>>(
-      `/users/profile`,
+      `/api/users/profile`,
       profileData
     );
     return extractData(response);
@@ -96,7 +120,7 @@ export const changePassword = async (
 ): Promise<{ message: string }> => {
   try {
     const response = await apiClient.put<ApiResponse<{ message: string }>>(
-      `/users/password`,
+      `/api/users/password`,
       passwordData
     );
     return extractData(response);
@@ -127,7 +151,7 @@ export const updateUser = async (
 ): Promise<User> => {
   try {
     const response = await apiClient.put<ApiResponse<User>>(
-      `/users/${id}`,
+      `/api/users/${id}`,
       userData
     );
     return extractData(response);
@@ -143,7 +167,7 @@ export const updateUser = async (
 export const updateUserRole = async (id: number, role: Role): Promise<User> => {
   try {
     const response = await apiClient.put<ApiResponse<User>>(
-      `/users/${id}/role`,
+      `/api/users/${id}/role`,
       { role }
     );
     return extractData(response);
@@ -162,7 +186,7 @@ export const toggleUserStatus = async (
 ): Promise<User> => {
   try {
     const response = await apiClient.put<ApiResponse<User>>(
-      `/users/${id}/status`,
+      `/api/users/${id}/status`,
       { isActive }
     );
     return extractData(response);
@@ -177,7 +201,7 @@ export const toggleUserStatus = async (
  */
 export const deleteUser = async (id: number): Promise<void> => {
   try {
-    await apiClient.delete<ApiResponse<void>>(`/users/${id}`);
+    await apiClient.delete<ApiResponse<void>>(`/api/users/${id}`);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
@@ -196,7 +220,7 @@ export const searchUsers = async (
   try {
     const params = buildQueryParams({ q: query, limit });
     const response = await apiClient.get<ApiResponse<User[]>>(
-      `/users/search${params}`
+      `/api/users/search${params}`
     );
     return extractData(response);
   } catch (error: any) {
@@ -211,7 +235,7 @@ export const searchUsers = async (
 export const getUsersByRole = async (role: Role): Promise<User[]> => {
   try {
     const response = await apiClient.get<ApiResponse<User[]>>(
-      `/users/role/${role}`
+      `/api/users/role/${role}`
     );
     return extractData(response);
   } catch (error: any) {
@@ -231,7 +255,7 @@ export const getEnums = async (): Promise<{
   difficultyLevels: Array<{ value: DifficultyLevel; label: string }>;
 }> => {
   try {
-    const response = await apiClient.get<ApiResponse<any>>("/users/enums");
+    const response = await apiClient.get<ApiResponse<any>>("/api/users/enums");
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -275,7 +299,7 @@ export const uploadProfilePicture = async (
  */
 export const deleteProfilePicture = async (id: number): Promise<void> => {
   try {
-    await apiClient.delete<ApiResponse<void>>(`/users/${id}/profile-picture`);
+    await apiClient.delete<ApiResponse<void>>(`/api/users/${id}/profile-picture`);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
@@ -326,7 +350,7 @@ export const bulkUpdateUsers = async (
   }
 ): Promise<User[]> => {
   try {
-    const response = await apiClient.put<ApiResponse<User[]>>("/users/bulk", {
+    const response = await apiClient.put<ApiResponse<User[]>>("/api/users/bulk", {
       userIds,
       updates,
     });
@@ -342,7 +366,7 @@ export const bulkUpdateUsers = async (
  */
 export const bulkDeleteUsers = async (userIds: number[]): Promise<void> => {
   try {
-    await apiClient.delete<ApiResponse<void>>("/users/bulk", {
+    await apiClient.delete<ApiResponse<void>>("/api/users/bulk", {
       data: { userIds },
     });
   } catch (error: any) {
@@ -364,7 +388,7 @@ export const exportUsers = async (filters?: {
 }): Promise<Blob> => {
   try {
     const queryParams = buildQueryParams(filters || {});
-    const response = await apiClient.get(`/users/export${queryParams}`, {
+    const response = await apiClient.get(`/api/users/export${queryParams}`, {
       responseType: "blob",
     });
     return response.data;
@@ -384,7 +408,7 @@ export const checkUsernameAvailability = async (
 ): Promise<boolean> => {
   try {
     const response = await apiClient.get<ApiResponse<{ available: boolean }>>(
-      `/users/check-username?username=${encodeURIComponent(username)}`
+      `/api/users/check-username?username=${encodeURIComponent(username)}`
     );
     const result = extractData(response);
     return result.available;
@@ -402,7 +426,7 @@ export const checkEmailAvailability = async (
 ): Promise<boolean> => {
   try {
     const response = await apiClient.get<ApiResponse<{ available: boolean }>>(
-      `/users/check-email?email=${encodeURIComponent(email)}`
+      `/api/users/check-email?email=${encodeURIComponent(email)}`
     );
     const result = extractData(response);
     return result.available;

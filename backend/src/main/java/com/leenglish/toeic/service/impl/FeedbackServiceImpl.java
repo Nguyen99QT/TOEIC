@@ -164,7 +164,7 @@ public class FeedbackServiceImpl implements FeedbackService {
         }
 
         feedback.setAdminResponse(request.getAdminResponse());
-        feedback.setStatus(request.getStatus());
+        feedback.setStatus(Status.valueOf(request.getStatus().toUpperCase()));
         feedback.setRespondedBy(adminId);
         feedback.setRespondedAt(LocalDateTime.now());
 

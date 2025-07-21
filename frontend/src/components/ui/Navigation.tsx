@@ -134,12 +134,12 @@ const Navigation: React.FC = () => {
                                                 <span>Change Password</span>
                                             </Link>
                                             <Link
-                                                to="/feedback"
+                                                to="/contact"
                                                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
-                                                <span>💬</span>
-                                                <span>Feedback</span>
+                                                <span>📞</span>
+                                                <span>Liên hệ</span>
                                             </Link>
                                             <Link
                                                 to="/settings"

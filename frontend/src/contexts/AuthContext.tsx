@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { useContext, useEffect, useState, useCallback, useRef, startTransition } from 'react';
 import { User } from '../types';
 import { clearCompletedExercises } from '../services/exerciseProgress';
 
@@ -63,6 +63,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setCurrentUser(user);
                     setIsAuthenticated(true);
                     startAutoRefresh();
+
+                    // ⚡ ADDED: Fetch complete user profile after refresh (same as login)
+                    try {
+                        const { getUserById } = await import('../services/users');
+                        const completeUserProfile = await getUserById(user.id);
+                        
+                        console.log('✅ AuthProvider: Refreshed complete user profile:', completeUserProfile);
+                        
+                        // Update with complete profile data
+                        startTransition(() => {
+                            setCurrentUser(completeUserProfile);
+                        });
+                    } catch (profileError: any) {
+                        console.warn('⚠️ Could not refresh user profile after page load:', profileError);
+                        // Keep the cached user data if profile fetch fails
+                    }
                 } else {
                     console.log('ℹ️ No valid authentication found - user is guest');
                     console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
@@ -134,30 +150,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 }
                 
-                const user: User = {
+                // Create initial user object with available data
+                const responseAny = response as any; // Type assertion for dynamic response
+                const initialUser: User = {
                     id: response.id || 0,
                     username: response.username || '',
                     email: response.email || '',
-                    fullName: response.username || '',
+                    fullName: responseAny.fullName || response.user?.fullName || response.username || '',
                     role: userRole,
-                    membershipType: "FREE"
+                    membershipType: "FREE",
+                    // Add additional fields from response if available
+                    phone: responseAny.phone || response.user?.phone,
+                    dateOfBirth: responseAny.dateOfBirth || response.user?.dateOfBirth,
+                    country: responseAny.country || response.user?.country,
+                    gender: responseAny.gender || response.user?.gender,
+                    totalScore: responseAny.totalScore || response.user?.totalScore,
+                    isActive: responseAny.isActive !== false, // Default to true if not specified
+                    createdAt: responseAny.createdAt || response.user?.createdAt,
+                    updatedAt: responseAny.updatedAt || response.user?.updatedAt
                 };
 
-                console.log('✅ AuthContext: Setting user data:', user);
+                console.log('✅ AuthContext: Setting initial user data:', initialUser);
 
-                // ⚡ FIX: Use React's state batching to ensure updates happen together
-                setCurrentUser(user);
-                setIsAuthenticated(true);
+                // ⚡ FIXED: Use React's startTransition to ensure consistent state updates
+                startTransition(() => {
+                    setCurrentUser(initialUser);
+                    setIsAuthenticated(true);
+                });
 
-                // ⚡ ADD: Force state update with a small delay to ensure DOM updates
-                setTimeout(() => {
-                    console.log('🔍 Post-login state verification:', {
-                        isAuthenticated: true,
-                        currentUser: user.username
-                    });
-                }, 100);
-
+                // Start auto refresh
                 startAutoRefresh();
+
+                // Try to fetch complete user profile from the server (in background)
+                try {
+                    const { getUserById } = await import('../services/users');
+                    const completeUserProfile = await getUserById(initialUser.id);
+                    
+                    // Update with complete profile data
+                    startTransition(() => {
+                        setCurrentUser(completeUserProfile);
+                    });
+                } catch (profileError: any) {
+                    console.warn('⚠️ Could not fetch complete user profile:', profileError);
+                    // Keep the initial user data if profile fetch fails
+                }
+
                 console.log('✅ AuthContext: Login state updated successfully');
             } else {
                 console.error('❌ AuthContext: Invalid login response structure:', response);

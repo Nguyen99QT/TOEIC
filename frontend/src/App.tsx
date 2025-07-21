@@ -28,6 +28,8 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
@@ -44,6 +46,8 @@ import EditProfilePage from './pages/user/EditProfilePage';
 import ChangePasswordPage from './pages/user/ChangePasswordPage';
 import FeedbackPage from './pages/user/FeedbackPage';
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
+import ContactPage from './pages/contact/ContactPage';
+import AdminContactPage from './pages/admin/AdminContactPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
@@ -85,7 +89,7 @@ const AppContent: React.FC = () => {
   }) => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        {showNavigation && <Navigation />}
+        {showNavigation && <Navigation key={`nav-${isAuthenticated}-${currentUser?.id || 'guest'}`} />}
         <main className="flex-1">
           {children}
         </main>
@@ -180,6 +184,38 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
+
+            {/* Forgot Password Route */}
+            <Route
+              path="/forgot-password"
+              element={
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Layout showNavigation={false} showFooter={false}>
+                    <ForgotPasswordPage />
+                  </Layout>
+                )
+              }
+            />
+
+            {/* Reset Password Route */}
+            <Route
+              path="/reset-password"
+              element={
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Layout showNavigation={false} showFooter={false}>
+                    <ResetPasswordPage />
+                  </Layout>
+                )
+              }
+            />
             <Route path="/pricing" element={
               <Layout>
                 <PricingPage />
@@ -192,7 +228,7 @@ const AppContent: React.FC = () => {
             } />
 
             {/* Protected Routes */}
-            <Route
+            {/* <Route
               path="/dashboard"
               element={
                 <ProtectedRoute
@@ -204,7 +240,7 @@ const AppContent: React.FC = () => {
                   </Layout>
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             {/* Lessons Routes */}
             <Route
@@ -383,6 +419,19 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/contact"
+              element={
+                <ProtectedRoute
+                  promptTitle="Login to Contact"
+                                      promptMessage="You need to login to send contact to us"
+                >
+                  <Layout>
+                    <ContactPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute
@@ -449,7 +498,15 @@ const AppContent: React.FC = () => {
               path="/admin/feedback"
               element={
                 <AdminRoute>
-                  <AdminFeedbackPage />
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/contact"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />

@@ -1,27 +1,12 @@
 import React, { useState } from 'react';
 import FeedbackList from '../../components/feedback/FeedbackList';
 import FeedbackStatistics from '../../components/feedback/FeedbackStatistics';
-import { useAuth } from '../../hooks/useAuth';
 
 const AdminFeedbackPage: React.FC = () => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'list' | 'statistics'>('list');
 
-  // Check if user is admin
-  if (!user || user.role !== 'ADMIN') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Không có quyền truy cập</h1>
-          <p className="text-gray-600">Bạn cần quyền admin để truy cập trang này</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý Feedback</h1>
@@ -89,7 +74,6 @@ const AdminFeedbackPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };

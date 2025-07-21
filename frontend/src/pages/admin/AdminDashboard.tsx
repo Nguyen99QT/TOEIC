@@ -8,10 +8,22 @@ export function AdminDashboard() {
   return (
     <div className="space-y-8 admin-content">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight text-black admin-title dark:text-white">
+        <h1 style={{
+          color: '#000000',
+          fontSize: '2.25rem',
+          fontWeight: 'bold',
+          letterSpacing: '-0.025em',
+          margin: 0,
+          lineHeight: 1.1
+        }}>
           Dashboard
         </h1>
-        <p className="text-lg text-black admin-subtitle dark:text-slate-300">
+        <p style={{
+          color: '#000000',
+          fontSize: '1.125rem',
+          margin: 0,
+          lineHeight: 1.6
+        }}>
           Tổng quan về hoạt động của Toeic.com
         </p>
       </div>

@@ -33,6 +33,21 @@ html:not(.dark) .admin-subtitle {
   color: #000000 !important;
 }
 
+/* Maximum specificity CSS override */
+html body div.admin-content h1.admin-title,
+html body div.admin-content p.admin-subtitle,
+html body .admin-title,
+html body .admin-subtitle {
+  color: #000000 !important;
+  text-decoration-color: #000000 !important;
+}
+
+/* Remove any text-white inheritance */
+.admin-title:not(.dark),
+.admin-subtitle:not(.dark) {
+  color: #000000 !important;
+}
+
 /* Smooth transitions for all elements */
 * {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;

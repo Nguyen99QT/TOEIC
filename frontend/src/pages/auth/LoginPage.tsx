@@ -52,8 +52,8 @@ const LoginPage: React.FC = () => {
         success('Login successful! Redirecting to admin dashboard...');
         navigate('/admin/dashboard');
       } else {
-        success('Login successful!');
-        console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
+        success('Login successful! Redirecting to homepage...');
+        navigate('/', { replace: true });
       }
 
     } catch (loginError: any) {
@@ -220,9 +220,9 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-                Forgot your password?
-              </a>
+              <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+                Quên mật khẩu?
+              </Link>
             </div>
           </div>
 

@@ -13,7 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { lessonService } from '../../services/lessons';
 import progressService from '../../services/progressService';
-import { Lesson, UserProgressDto } from '../../types';
+import { Lesson } from '../../types';
 
 const LessonsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +25,6 @@ const LessonsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | 'FREE' | 'PREMIUM'>('ALL');
   const [levelFilter, setLevelFilter] = useState<'ALL' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('ALL');
-  const [userProgress, setUserProgress] = useState<UserProgressDto[]>([]);
   const [progressMap, setProgressMap] = useState<Map<number, number>>(new Map());
 
   // Utility functions
@@ -98,7 +97,6 @@ const LessonsPage: React.FC = () => {
         if (isAuthenticated && currentUser?.id) {
           try {
             const progressData = await progressService.getUserProgress(currentUser.id);
-            setUserProgress(progressData);
 
             // Create progress map for easy lookup
             const newProgressMap = progressService.createLessonProgressMap(progressData);
@@ -136,7 +134,6 @@ const LessonsPage: React.FC = () => {
         // Refresh only progress data without showing loading
         progressService.getUserProgress(currentUser.id)
           .then(progressData => {
-            setUserProgress(progressData);
             const newProgressMap = progressService.createLessonProgressMap(progressData);
             setProgressMap(newProgressMap);
 

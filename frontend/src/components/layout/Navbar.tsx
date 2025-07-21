@@ -166,7 +166,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuCli
             {/* User menu */}
             <div className="flex items-center space-x-3">
               {/* User avatar */}
-              <div className="flex items-center space-x-2">
+              <Link to="/profile" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
                     {currentUser?.username?.[0]?.toUpperCase() || currentUser?.email?.[0]?.toUpperCase() || 'U'}
@@ -175,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuCli
                 <span className="text-sm text-gray-700 hidden sm:block">
                   {currentUser?.username || currentUser?.email || 'User'}
                 </span>
-              </div>
+              </Link>
 
               <button
                 onClick={handleUserLogout} // Thay thế handleLogout bằng handleUserLogout

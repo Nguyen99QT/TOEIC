@@ -14,8 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
 import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw } from "lucide-react"
-import { getUsers, toggleUserStatus, updateUserRole } from "../../services/users"
-import { User, Role } from "../../types"
+import { getUsers, toggleUserStatus } from "../../services/users"
+import { User } from "../../types"
 import { toast } from "react-hot-toast"
 
 // Helper function to get user display name
@@ -36,9 +36,8 @@ const getUserAvatarFallback = (user: User): string => {
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage] = useState(0)  // Use 0-based pagination to match backend
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalStudents, setTotalStudents] = useState(0)
   const [totalInstructors, setTotalInstructors] = useState(0)
@@ -49,7 +48,6 @@ export function UsersPage() {
   const loadUsers = async () => {
     try {
       setLoading(true)
-      setError(null)
       
       console.log("🔄 Loading users from API...")
       const response = await getUsers({
@@ -73,7 +71,6 @@ export function UsersPage() {
       
     } catch (error: any) {
       console.error("❌ Failed to load users:", error)
-      setError(error.message)
       toast.error('Không thể tải danh sách người dùng: ' + error.message)
     } finally {
       setLoading(false)
@@ -91,20 +88,10 @@ export function UsersPage() {
     }
   }
 
-  // Handle role update
-  const handleRoleUpdate = async (userId: number, newRole: Role) => {
-    try {
-      await updateUserRole(userId, newRole)
-      toast.success('Cập nhật vai trò thành công')
-      loadUsers() // Reload users
-    } catch (error: any) {
-      toast.error('Không thể cập nhật vai trò: ' + error.message)
-    }
-  }
-
   // Load users on component mount and when search term changes
   useEffect(() => {
     loadUsers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm])
 
   return (

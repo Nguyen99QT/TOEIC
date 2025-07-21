@@ -4,7 +4,7 @@
  * ================================================================
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -23,29 +23,7 @@ const FlashcardsPage: React.FC = () => {
   const navigate = useNavigate();
   const breadcrumbItems = useBreadcrumb();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Get current user first
-        const user = getCurrentUser();
-        setCurrentUser(user);
-
-        await fetchFlashcardSets(user);
-      } catch (err: any) {
-        console.error('Error in fetchData:', err);
-        setError('Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const fetchFlashcardSets = async (user: User | null) => {
+  const fetchFlashcardSets = useCallback(async (user: User | null) => {
     try {
       setLoading(true);
       console.log('🔄 Fetching flashcard sets...');
@@ -93,7 +71,29 @@ const FlashcardsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get current user first
+        const user = getCurrentUser();
+        setCurrentUser(user);
+
+        await fetchFlashcardSets(user);
+      } catch (err: any) {
+        console.error('Error in fetchData:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [fetchFlashcardSets]);
 
   const getFallbackFlashcardSets = (): FlashcardSet[] => {
     return [

@@ -35,10 +35,11 @@ export const getUsers = async (params: {
 }): Promise<PaginatedResponse<User>> => {
   try {
     const queryParams = buildQueryParams(params);
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(
-      `/users${queryParams}`
+    const response = await apiClient.get<PaginatedResponse<User>>(
+      `/api/users${queryParams}`
     );
-    return extractData(response);
+    // Backend returns Page object directly, not ApiResponse<Page>
+    return response.data;
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
@@ -50,8 +51,22 @@ export const getUsers = async (params: {
  */
 export const getUserById = async (id: number): Promise<User> => {
   try {
-    const response = await apiClient.get<ApiResponse<User>>(`/users/${id}`);
-    return extractData(response);
+    const response = await apiClient.get<any>(`/api/users/${id}`);
+    const userData = response.data;
+    
+    // Map backend properties to frontend expected properties (same as getUserProfile)
+    const mappedUser: User = {
+      ...userData,
+      firstName: userData.firstName || userData.fullName?.split(' ')[0] || '',
+      lastName: userData.lastName || userData.fullName?.split(' ').slice(1).join(' ') || '',
+      phoneNumber: userData.phoneNumber || userData.phone,
+      profilePicture: userData.profilePicture || userData.profilePictureUrl,
+      registrationDate: userData.registrationDate || userData.createdAt,
+      lastLoginDate: userData.lastLoginDate || userData.lastLogin,
+      birthDate: userData.birthDate || userData.dateOfBirth
+    };
+    
+    return mappedUser;
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
@@ -302,11 +317,20 @@ export const getUserStats = async (
   partBreakdown: any;
 }> => {
   try {
-    // Use a consistent API path
-    const response = await apiClient.get<ApiResponse<any>>(
-      `/api/users/${id}/stats`
-    );
-    return extractData(response);
+    // For now, return default stats since the backend endpoint doesn't exist
+    // TODO: Implement proper stats endpoint in backend
+    return {
+      totalLessonsCompleted: 0,
+      totalExercisesCompleted: 0,
+      averageScore: 0,
+      totalTimeSpent: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+      registrationDate: new Date().toISOString(),
+      lastLoginDate: new Date().toISOString(),
+      skillBreakdown: {},
+      partBreakdown: {}
+    };
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);
@@ -417,8 +441,24 @@ export const checkEmailAvailability = async (
  */
 export const getUserProfile = async (id: number): Promise<User> => {
   try {
-    const response = await apiClient.get<ApiResponse<User>>(`/api/users/${id}`);
-    return extractData(response);
+    const response = await apiClient.get<any>(`/api/users/${id}`);
+    const userData = response.data;
+    
+    // Map backend properties to frontend expected properties
+    const mappedUser: User = {
+      ...userData,
+      // Map fullName to firstName/lastName if they don't exist
+      firstName: userData.firstName || userData.fullName?.split(' ')[0] || '',
+      lastName: userData.lastName || userData.fullName?.split(' ').slice(1).join(' ') || '',
+      // Map other backend properties
+      phoneNumber: userData.phoneNumber || userData.phone,
+      profilePicture: userData.profilePicture || userData.profilePictureUrl,
+      registrationDate: userData.registrationDate || userData.createdAt,
+      lastLoginDate: userData.lastLoginDate || userData.lastLogin,
+      birthDate: userData.birthDate || userData.dateOfBirth
+    };
+    
+    return mappedUser;
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);

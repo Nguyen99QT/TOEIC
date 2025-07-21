@@ -53,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const adminNavigation = [
+    { name: 'Admin Dashboard', href: '/admin', icon: ChartBarIcon },
     { name: 'User Management', href: '/admin/users', icon: UserGroupIcon },
     { name: 'Content Management', href: '/admin/content', icon: ChartBarIcon },
     { name: 'Add Questions', href: '/add/add-questions', icon: AcademicCapIcon },
@@ -153,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex-1 flex flex-col overflow-y-auto">
             {/* User info */}
             <div className="px-4 py-6 border-b border-gray-200">
-              <div className="flex items-center">
+              <Link to="/profile" className="flex items-center hover:opacity-80 transition-opacity">
                 <div className="flex-shrink-0">
                   {currentUser.profilePicture ? (
                     <img
@@ -177,7 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {currentUser.role}
                   </p>
                 </div>
-              </div>
+              </Link>
             </div>
 
             {/* Main navigation */}

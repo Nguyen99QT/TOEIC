@@ -44,10 +44,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String requestPath = request.getRequestURI();
         final String method = request.getMethod();
 
-        // Only log at debug level to prevent excessive logging
-        if (logger.isDebugEnabled()) {
-            logger.debug("JWT Filter processing: {} {}", method, requestPath);
-        }
+        // Log request for debugging
+        logger.debug("JWT Filter processing: {} {}", method, requestPath);
 
         // Skip JWT processing for public endpoints
         if (isPublicEndpoint(requestPath)) {
@@ -71,20 +69,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             try {
                 username = jwtUtils.extractUsername(jwt);
-                // Only log at trace level to prevent excessive logging
-                if (logger.isTraceEnabled()) {
-                    logger.trace("JWT extracted username: {}", username);
-                }
+                logger.debug("JWT extracted username: {}", username);
             } catch (Exception e) {
                 logger.error("Invalid JWT token: {}", e.getMessage());
             }
-        } else if (logger.isDebugEnabled()) {
+        } else {
             logger.debug("No Authorization header or invalid format for: {}", requestPath);
         }
 
-        // Add cache to avoid repeated database lookups for the same user
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Use an in-memory cache or session attribute to avoid repeated lookups
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
             if (jwtUtils.validateToken(jwt, userDetails)) {
@@ -93,10 +86,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                // Only log at debug level to prevent excessive logging
-                if (logger.isDebugEnabled()) {
-                    logger.debug("JWT Filter: Authenticated user = {}", username);
-                }
+                logger.debug("JWT Filter: Authenticated user = {}", username);
             } else {
                 logger.warn("JWT token validation failed for user: {}", username);
             }

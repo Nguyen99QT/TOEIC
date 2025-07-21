@@ -1,11 +1,9 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 const UpgradePremiumPage: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const {  currentUser } = useAuth();
 
     const state = location.state as { from?: string; requestedLesson?: any };
 

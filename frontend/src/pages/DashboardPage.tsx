@@ -20,7 +20,7 @@ import Breadcrumb from '../components/ui/Breadcrumb';
 import { useAuth } from '../contexts/AuthContext';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
 import dashboardService, { DashboardStats, RecentActivity } from '../services/dashboard';
-import lessonService, { LessonProgress } from '../services/lessons'; // Bạn cần tạo service này nếu chưa có
+// import lessonService, { LessonProgress } from '../services/lessons'; // TODO: Implement backend endpoint
 
 const DashboardPage: React.FC = () => {
   const { currentUser, isAuthenticated } = useAuth();
@@ -28,7 +28,7 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
+  // const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]); // TODO: Implement backend endpoint
 
   useEffect(() => {
     if (!isAuthenticated) return; // Chỉ fetch khi đã đăng nhập
@@ -59,7 +59,8 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser?.id) return;
-    lessonService.getUserLessonProgress(currentUser.id).then(setLessonProgress);
+    // TODO: Implement getUserLessonProgress endpoint on backend
+    // lessonService.getUserLessonProgress(currentUser.id).then(setLessonProgress);
   }, [isAuthenticated, currentUser]);
 
   const formatTimeAgo = (timestamp: string) => {
@@ -369,45 +370,8 @@ const DashboardPage: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900">Your Lessons Progress</h2>
         </div>
         <div className="p-6">
-          {lessonProgress.length > 0 ? (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lesson</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-                  <th className="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {lessonProgress.map((lp) => (
-                  <tr key={lp.lessonId}>
-                    <td className="px-4 py-2">{lp.lessonTitle}</td>
-                    <td className="px-4 py-2">
-                      <div className="w-32 bg-gray-100 rounded-full h-3">
-                        <div
-                          className="bg-blue-500 h-3 rounded-full"
-                          style={{ width: `${lp.progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="ml-2 text-sm text-gray-600">{lp.progress}%</span>
-                    </td>
-                    <td className="px-4 py-2">{lp.score ?? '-'}</td>
-                    <td className="px-4 py-2">
-                      <a
-                        href={`/lessons/${lp.lessonId}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {lp.progress < 100 ? 'Continue' : 'Review'}
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-gray-500">No lessons started yet.</div>
-          )}
+          {/* TODO: Implement lesson progress when backend endpoint is available */}
+          <div className="text-gray-500">Lesson progress data not available yet.</div>
         </div>
       </motion.div>
     </motion.div>

@@ -12,6 +12,7 @@ import { questionService } from '../../services/questions';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import EnhancedButton from '../../components/ui/EnhancedButton';
+import FeedbackButton from '../../components/ui/FeedbackButton';
 
 const ExerciseDetailPage: React.FC = () => {
   const breadcrumbItems = useBreadcrumb();

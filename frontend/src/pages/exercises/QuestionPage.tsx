@@ -12,7 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { exerciseService } from '../../services/exercises';
-import feedbackService from '../../services/feedback';
+import { feedbackService } from '../../services/feedback';
 import progressService from '../../services/progressService';
 import { questionService } from '../../services/questions';
 import FeedbackModal from '../../components/ui/FeedbackModal';
@@ -48,11 +48,6 @@ const QuestionPage: React.FC = () => {
         totalQuestions: number;
         points: number;
     } | null>(null);
-
-    const calculateScore = useCallback((): number => {
-        const answeredQuestions = Object.keys(answers).length;
-        return Math.round((answeredQuestions / questions.length) * 100);
-    }, [answers, questions.length]);
 
     const handleSubmitExercise = useCallback(async () => {
         if (!exercise || questions.length === 0) return;
@@ -168,7 +163,7 @@ const QuestionPage: React.FC = () => {
         } finally {
             setIsSubmitting(false);
         }
-    }, [exercise, questions, answers, timeLeft, lessonId, navigate, calculateScore, currentUser]);
+    }, [exercise, questions, answers, timeLeft, lessonId, currentUser]); // Removed unnecessary dependencies
 
     // Function to handle going back to lesson and mark it as completed if needed
     const handleReturnToLesson = async () => {
@@ -273,11 +268,12 @@ const QuestionPage: React.FC = () => {
     const handleFeedbackModalSubmit = async ({ rating, comment }: { rating: number; comment: string }) => {
         setIsFeedbackSubmitting(true);
         try {
-            await feedbackService.submitFeedback({
-                lessonId: parseInt(lessonId!),
+            await feedbackService.submitExerciseFeedback({
                 exerciseId: parseInt(exerciseId!),
                 rating,
-                comment: comment || undefined
+                difficulty: 'medium', // có thể thêm state để user chọn
+                comment: comment || '',
+                isHelpful: rating >= 4 // coi rating >= 4 là helpful
             });
             setShowFeedbackModal(false);
             navigate(`/lessons/${lessonId}`, {

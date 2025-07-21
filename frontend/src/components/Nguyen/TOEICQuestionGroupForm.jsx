@@ -51,7 +51,7 @@ const TOEICQuestionGroupForm = () => {
     const saveData = { groupData, content: { ...content, audio: null, image: null }, questions };
     localStorage.setItem('toeicGroupDraft', JSON.stringify(saveData));
     localStorage.setItem('toeicGroupDraftTime', new Date().toISOString());
-  }, [groupData, content.textContent, questions]);
+  }, [groupData, content, questions]); // Include full content object
 
   // Load saved draft
   useEffect(() => {
@@ -67,6 +67,7 @@ const TOEICQuestionGroupForm = () => {
         console.error('Error loading draft:', error);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateGroupData = (field, value) => {

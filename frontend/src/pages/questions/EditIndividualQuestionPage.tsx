@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface Option {
   label: string;
@@ -28,7 +27,6 @@ const EditIndividualQuestionPage: React.FC = () => {
   const audioInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchQuestion = async () => {

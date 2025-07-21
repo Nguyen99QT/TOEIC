@@ -6,10 +6,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
-import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import apiClient from '../../services/api';
 import { Flashcard, FlashcardSet } from '../../types'; // ✅ Import unified types
 
@@ -17,11 +15,8 @@ const FlashcardStudyPage: React.FC = () => {
     const { setId } = useParams<{ setId: string }>();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
-    const breadcrumbItems = useBreadcrumb();
 
     const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
-    const [currentCardIndex, setCurrentCardIndex] = useState(0);
-    const [isFlipped, setIsFlipped] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -164,33 +159,6 @@ const FlashcardStudyPage: React.FC = () => {
         fetchFlashcardSet();
     }, [setId, isAuthenticated]);
 
-    const handleNext = () => {
-        if (flashcardSet && flashcardSet.flashcards && currentCardIndex < flashcardSet.flashcards.length - 1) {
-            setCurrentCardIndex(currentCardIndex + 1);
-            setIsFlipped(false);
-        }
-    };
-
-    const handlePrevious = () => {
-        if (currentCardIndex > 0) {
-            setCurrentCardIndex(currentCardIndex - 1);
-            setIsFlipped(false);
-        }
-    };
-
-
-    const handleFlip = () => {
-        setIsFlipped(!isFlipped);
-    };
-
-    const handleFinishStudy = () => {
-        // Record study session
-        if (isAuthenticated && flashcardSet) {
-            apiClient.post(`/flashcards/sets/${flashcardSet.id}/complete`).catch(console.error);
-        }
-        navigate('/flashcards');
-    };
-
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-64">
@@ -222,8 +190,7 @@ const FlashcardStudyPage: React.FC = () => {
     }
 
     // ✅ Now we can safely access flashcards - TypeScript knows it's not undefined
-    const currentCard = flashcardSet.flashcards[currentCardIndex];
-    const progress = ((currentCardIndex + 1) / flashcardSet.flashcards.length) * 100;
+    const currentCard = flashcardSet.flashcards[0]; // Use first card for demo
 
     // Debug: Log current card media URLs
     console.log('🎯 Current card media:', {

@@ -43,6 +43,10 @@ public class QuestionDto {
     private Integer questionOrder;
     private Boolean isActive;
 
+    // Additional fields
+    private String audioUrl;
+    private String imageUrl;
+
     // Helper method
     public String getDifficultyDisplayName() {
         return difficultyLevel != null ? difficultyLevel.getDisplayName() : "Easy";

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,24 +26,40 @@ public class FlashcardService {
     private FlashcardSetRepository flashcardSetRepository;
 
     public List<FlashcardDto> getFlashcardsBySet(Long flashcardSetId) {
-        List<Flashcard> flashcards = flashcardRepository.findByFlashcardSetIdAndIsActiveTrue(flashcardSetId);
-        return flashcards.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            // Updated to use the new repository method name
+            List<Flashcard> flashcards = flashcardRepository.findActiveFlashcardsBySetId(flashcardSetId);
+            return flashcards.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("? Error getting flashcards for set " + flashcardSetId + ": " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     public List<FlashcardDto> getFlashcardsByLevel(String level) {
-        List<Flashcard> flashcards = flashcardRepository.findByLevelAndIsActiveTrue(level);
-        return flashcards.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            List<Flashcard> flashcards = flashcardRepository.findByLevelAndIsActiveTrue(level);
+            return flashcards.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("? Error getting flashcards by level " + level + ": " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     public List<FlashcardDto> getFlashcardsByCategory(String category) {
-        List<Flashcard> flashcards = flashcardRepository.findByCategoryAndIsActiveTrue(category);
-        return flashcards.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            List<Flashcard> flashcards = flashcardRepository.findByCategoryAndIsActiveTrue(category);
+            return flashcards.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("? Error getting flashcards by category " + category + ": " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     public FlashcardDto createFlashcard(FlashcardDto flashcardDto) {
@@ -101,10 +118,20 @@ public class FlashcardService {
     }
 
     public List<FlashcardDto> searchFlashcards(String searchTerm) {
-        List<Flashcard> flashcards = flashcardRepository.searchFlashcards(searchTerm);
-        return flashcards.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            List<Flashcard> flashcards = flashcardRepository.searchFlashcards(searchTerm);
+            return flashcards.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("? Error searching flashcards with term '" + searchTerm + "': " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    // Consolidated method - remove duplicate functionality
+    public List<FlashcardDto> getFlashcardsBySetId(Long setId) {
+        return getFlashcardsBySet(setId); // Delegate to existing method
     }
 
     private FlashcardDto convertToDto(Flashcard flashcard) {

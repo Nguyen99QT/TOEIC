@@ -13,6 +13,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import org.springframework.security.core.Authentication;
+import com.leenglish.toeic.security.UserDetailsImpl;
+import org.springframework.security.core.GrantedAuthority;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtUtils {
@@ -58,7 +62,7 @@ public class JwtUtils {
         }
     }
 
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationFromToken(token);
         return expiration != null && expiration.before(new Date());
     }
@@ -91,5 +95,17 @@ public class JwtUtils {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public String generateToken(Authentication authentication) {
+        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+        Map<String, Object> claims = new HashMap<>();
+
+        // Thêm roles vào claims
+        claims.put("roles", userPrincipal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+
+        return createToken(claims, userPrincipal.getUsername());
     }
 }

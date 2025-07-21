@@ -10,13 +10,21 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
         @Override
         public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-                // Serve audio files - legacy endpoint
+                // Serve audio files from static directory
                 registry.addResourceHandler("/audio/**")
                                 .addResourceLocations("classpath:/static/audio/");
 
-                // Serve image files from external images directory - legacy endpoint
+                // Serve image files from static directory
                 registry.addResourceHandler("/images/**")
-                                .addResourceLocations("file:images/")
+                                .addResourceLocations("classpath:/static/images/")
+                                .setCachePeriod(3600);
+
+                // Serve static resources directly
+                registry.addResourceHandler("/static/audio/**")
+                                .addResourceLocations("classpath:/static/audio/");
+
+                registry.addResourceHandler("/static/images/**")
+                                .addResourceLocations("classpath:/static/images/")
                                 .setCachePeriod(3600);
 
                 // Serve other static resources - legacy endpoint

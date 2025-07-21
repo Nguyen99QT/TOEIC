@@ -11,18 +11,22 @@ import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
+// Toast Provider
+import { ToastProvider } from './components/ui/SimpleToast';
+
 // Authentication
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Layout Components
 // import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
-import Footer from './components/layout/Footer';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 
 // Page Components
-import AdminContentPage from './pages/admin/AdminContentPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
+import { ContentPage as AdminContentPage } from './pages/admin/content-page';
+import { UsersPage as AdminUsersPage } from './pages/admin/users-page';
+import AdminPanel from './pages/admin/AdminPanel';
+import AdminRoute from './components/auth/AdminRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -109,7 +113,15 @@ const AppContent: React.FC = () => {
             </div>
           </main>
         </div>
-        <Footer />
+        <footer className="bg-gray-900 text-white py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <p className="text-sm text-gray-400">
+                © 2025 LeEnglish TOEIC Platform. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </footer>
         {/* Token refresh indicator for authenticated users */}
         {/* <TokenRefreshIndicator /> */}
       </div>
@@ -138,21 +150,21 @@ const AppContent: React.FC = () => {
         />
         <Routes>
           {/* ========== PUBLIC ROUTES ========== */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-          <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/upgrade-premium" element={<UpgradePremiumPage />} />
+          <Route path="/" element={<Layout><HomePage /></Layout>} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Layout><LoginPage /></Layout>} />
+          <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Layout><RegisterPage /></Layout>} />
+          <Route path="/pricing" element={<Layout><PricingPage /></Layout>} />
+          <Route path="/upgrade-premium" element={<Layout><UpgradePremiumPage /></Layout>} />
           
           {/* ========== PUBLIC TEST ROUTE FOR DEBUGGING ========== */}
-          <Route path="/test-selection" element={<TestSelectionPage />} />
-          <Route path="/test/:testId" element={<SimpleTOEICTest />} />
-          <Route path="/test-debug/:testId" element={<SimpleTest />} />
-          <Route path="/test-full/:testId" element={<Test />} />
-          <Route path="/toeic-test/:testId" element={<SimpleTOEICTest />} />
-          <Route path="/simple-toeic-test/:testId" element={<SimpleTOEICTest />} />
-          <Route path="/debug-toeic/:testId" element={<DebugTOEIC />} />
-          <Route path="/audio-test" element={<AudioTest />} />
+          <Route path="/test-selection" element={<Layout><TestSelectionPage /></Layout>} />
+          <Route path="/test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
+          <Route path="/test-debug/:testId" element={<Layout><SimpleTest /></Layout>} />
+          <Route path="/test-full/:testId" element={<Layout><Test /></Layout>} />
+          <Route path="/toeic-test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
+          <Route path="/simple-toeic-test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
+          <Route path="/debug-toeic/:testId" element={<Layout><DebugTOEIC /></Layout>} />
+          <Route path="/audio-test" element={<Layout><AudioTest /></Layout>} />
           
           {/* ========== PROTECTED ROUTES ========== */}
           <Route path="/dashboard" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
@@ -179,6 +191,8 @@ const AppContent: React.FC = () => {
           <Route path="/results" element={<ProtectedRoute><Layout><TestHistoryPage /></Layout></ProtectedRoute>} />
           
           {/* ========== ADMIN ROUTES ========== */}
+          <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+          <Route path="/admin/*" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><Layout><AdminUsersPage /></Layout></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute><Layout><AdminContentPage /></Layout></ProtectedRoute>} />
           
@@ -208,9 +222,11 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ToastProvider>
   );
 };
 

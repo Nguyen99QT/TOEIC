@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,23 +25,61 @@ public class FlashcardSet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name")
     private String name;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "description")
     private String description;
+
+    @Column(name = "category")
     private String category;
-    private String level; // Thêm
-    private Integer cardCount; // Thêm
+
+    @Column(name = "level")
+    private String level;
+
+    @Column(name = "difficulty")
+    private String difficulty;
+
+    @Column(name = "difficulty_level")
+    private String difficultyLevel;
+
+    @Column(name = "card_count")
+    private Integer cardCount;
+
+    @Column(name = "is_public")
     private Boolean isPublic;
+
+    @Column(name = "is_active")
     private Boolean isActive;
+
+    @Column(name = "is_premium")
     private Boolean isPremium;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "view_count")
     private Integer viewCount = 0;
+
+    @Column(name = "tags", length = 500)
+    private String tags;
+
+    @Column(name = "estimated_time_minutes")
+    private Integer estimatedTimeMinutes;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
+    @JsonIgnore
     private User createdBy;
 
     @OneToMany(mappedBy = "flashcardSet", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Flashcard> flashcards = new ArrayList<>();
 
     // ========== CONSTRUCTORS ==========
@@ -68,9 +108,13 @@ public class FlashcardSet {
         this.name = name;
     }
 
-    // ✅ Add title getter for frontend compatibility
+    // ✅ FIXED: Complete getTitle method
     public String getTitle() {
-        return name;
+        return title != null ? title : name; // Fallback to name if title is null
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getDescription() {
@@ -89,7 +133,6 @@ public class FlashcardSet {
         this.isActive = isActive;
     }
 
-    // ✅ isPremium getter/setter
     public Boolean getIsPremium() {
         return isPremium;
     }
@@ -98,7 +141,6 @@ public class FlashcardSet {
         this.isPremium = isPremium;
     }
 
-    // ✅ isPublic getter/setter
     public Boolean getIsPublic() {
         return isPublic;
     }
@@ -123,6 +165,22 @@ public class FlashcardSet {
         this.level = level;
     }
 
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public String getDifficultyLevel() {
+        return difficultyLevel;
+    }
+
+    public void setDifficultyLevel(String difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
+    }
+
     public Integer getCardCount() {
         return cardCount;
     }
@@ -137,6 +195,22 @@ public class FlashcardSet {
 
     public void setViewCount(Integer viewCount) {
         this.viewCount = viewCount;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public Integer getEstimatedTimeMinutes() {
+        return estimatedTimeMinutes;
+    }
+
+    public void setEstimatedTimeMinutes(Integer estimatedTimeMinutes) {
+        this.estimatedTimeMinutes = estimatedTimeMinutes;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -182,8 +256,14 @@ public class FlashcardSet {
         flashcard.setFlashcardSet(null);
     }
 
-    // ✅ Computed properties for frontend compatibility
     public Integer getTotalCards() {
+        return flashcards != null ? flashcards.size() : 0;
+    }
+
+    public Integer getFlashcardCount() {
+        if (cardCount != null) {
+            return cardCount;
+        }
         return flashcards != null ? flashcards.size() : 0;
     }
 
@@ -191,48 +271,16 @@ public class FlashcardSet {
         this.viewCount = (this.viewCount != null ? this.viewCount : 0) + 1;
     }
 
-    @Column(name = "difficulty_level")
-    private String difficultyLevel;
-
-    public String getDifficultyLevel() {
-        return difficultyLevel;
-    }
-
-    public void setDifficultyLevel(String difficultyLevel) {
-        this.difficultyLevel = difficultyLevel;
-    }
-
-    @Column(name = "tags", length = 500)
-    private String tags;
-
-    @Column(name = "estimated_time_minutes")
-    private Integer estimatedTimeMinutes;
-
-    public String getTags() {
-        return tags;
-    }
-
-    public void setTags(String tags) {
-        this.tags = tags;
-    }
-
-    public Integer getEstimatedTimeMinutes() {
-        return estimatedTimeMinutes;
-    }
-
-    public void setEstimatedTimeMinutes(Integer estimatedTimeMinutes) {
-        this.estimatedTimeMinutes = estimatedTimeMinutes;
-    }
-
     @Override
     public String toString() {
         return "FlashcardSet{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
+                ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", isPremium=" + isPremium +
                 ", isPublic=" + isPublic +
-                ", difficultyLevel=" + difficultyLevel +
+                ", difficulty='" + difficulty + '\'' +
                 ", viewCount=" + viewCount +
                 ", isActive=" + isActive +
                 '}';

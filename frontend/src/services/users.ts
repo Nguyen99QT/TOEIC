@@ -59,7 +59,55 @@ export const getUserById = async (id: number): Promise<User> => {
 };
 
 /**
- * Update user profile
+ * Update user profile with comprehensive information
+ */
+export const updateUserProfile = async (
+  profileData: {
+    fullName?: string;
+    email?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    gender?: Gender;
+    country?: string;
+    profilePictureUrl?: string;
+  }
+): Promise<User> => {
+  try {
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/users/profile`,
+      profileData
+    );
+    return extractData(response);
+  } catch (error: any) {
+    const errorInfo = handleApiError(error);
+    throw new Error(errorInfo.message);
+  }
+};
+
+/**
+ * Change user password
+ */
+export const changePassword = async (
+  passwordData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }
+): Promise<{ message: string }> => {
+  try {
+    const response = await apiClient.put<ApiResponse<{ message: string }>>(
+      `/users/password`,
+      passwordData
+    );
+    return extractData(response);
+  } catch (error: any) {
+    const errorInfo = handleApiError(error);
+    throw new Error(errorInfo.message);
+  }
+};
+
+/**
+ * Update user (legacy method for backward compatibility)
  * Users can only update their own profile, admins can update any user
  */
 export const updateUser = async (
@@ -377,29 +425,4 @@ export const getUserProfile = async (id: number): Promise<User> => {
   }
 };
 
-/**
- * Update user profile with simplified data
- */
-export const updateUserProfile = async (
-  id: number,
-  profileData: {
-    fullName?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phoneNumber?: string;
-    address?: string;
-    targetScore?: number;
-  }
-): Promise<User> => {
-  try {
-    const response = await apiClient.put<ApiResponse<User>>(
-      `/api/users/${id}`,
-      profileData
-    );
-    return extractData(response);
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
-  }
-};
+

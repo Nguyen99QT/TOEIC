@@ -51,7 +51,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
         // Find exercises by multiple criteria
         @Query("SELECT e FROM Exercise e WHERE " +
-                        "(:lessonId IS NULL OR e.lessonId = :lessonId) AND " +
+                        "(:lessonId IS NULL OR e.lesson.id = :lessonId) AND " +
                         "(:type IS NULL OR e.type = :type) AND " +
                         "(:level IS NULL OR e.level = :level) AND " +
                         "(:difficultyLevel IS NULL OR e.difficultyLevel = :difficultyLevel) AND " +
@@ -67,8 +67,9 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
         // Search exercises by keyword
         @Query("SELECT e FROM Exercise e WHERE " +
-                        "(e.title LIKE %:keyword% OR e.description LIKE %:keyword% OR e.question LIKE %:keyword%) AND "
-                        +
+                        "(LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(e.question) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
                         "e.isActive = true")
         List<Exercise> searchByKeyword(@Param("keyword") String keyword);
 
@@ -85,9 +86,10 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         Long countByType(@Param("type") String type);
 
         // Count exercises by lesson
-        @Query("SELECT COUNT(e) FROM Exercise e WHERE e.lessonId = :lessonId AND e.isActive = true")
-        Long countByLessonId(@Param("lessonId") Long lessonId); // Find random exercises by type and level
+        @Query("SELECT COUNT(e) FROM Exercise e WHERE e.lesson.id = :lessonId AND e.isActive = true")
+        Long countByLessonId(@Param("lessonId") Long lessonId);
 
+        // Find random exercises by type and level
         @Query("SELECT e FROM Exercise e WHERE e.type = :type AND e.level = :level AND e.isActive = true ORDER BY FUNCTION('RAND')")
         List<Exercise> findRandomExercises(@Param("type") String type, @Param("level") String level, Pageable pageable);
 
@@ -98,6 +100,33 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         // Find exercises by title containing
         List<Exercise> findByTitleContaining(String title);
 
-        @Query("SELECT e FROM Exercise e JOIN FETCH e.questions WHERE e.lesson.id = :lessonId AND e.isActive = true")
+        // Find exercises by lesson ID with eager fetching of questions
+        @Query("SELECT DISTINCT e FROM Exercise e LEFT JOIN FETCH e.questions WHERE e.lesson.id = :lessonId AND e.isActive = true")
         List<Exercise> findByLessonIdWithQuestions(@Param("lessonId") Long lessonId);
+
+        // Find exercises by advanced search criteria
+        @Query("SELECT DISTINCT e FROM Exercise e LEFT JOIN FETCH e.questions WHERE " +
+                        "(:keyword IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                        "LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND " +
+                        "(:lessonId IS NULL OR e.lesson.id = :lessonId) AND " +
+                        "(:difficultyLevel IS NULL OR e.difficultyLevel = :difficultyLevel) AND " +
+                        "(:hasAudio IS NULL OR " +
+                        "  (:hasAudio = true AND e.audioUrl IS NOT NULL AND e.audioUrl != '') OR " +
+                        "  (:hasAudio = false AND (e.audioUrl IS NULL OR e.audioUrl = ''))) AND " +
+                        "(:hasImage IS NULL OR " +
+                        "  (:hasImage = true AND e.imageUrl IS NOT NULL AND e.imageUrl != '') OR " +
+                        "  (:hasImage = false AND (e.imageUrl IS NULL OR e.imageUrl = ''))) AND " +
+                        "e.isActive = true")
+        List<Exercise> advancedSearch(
+                        @Param("keyword") String keyword,
+                        @Param("lessonId") Long lessonId,
+                        @Param("difficultyLevel") String difficultyLevel,
+                        @Param("hasAudio") Boolean hasAudio,
+                        @Param("hasImage") Boolean hasImage,
+                        Pageable pageable);
+
+        // Find exercises by points range with pagination
+        @Query("SELECT e FROM Exercise e WHERE e.points BETWEEN :minPoints AND :maxPoints AND e.isActive = true")
+        List<Exercise> findByPointsRangeWithPagination(@Param("minPoints") Integer minPoints,
+                        @Param("maxPoints") Integer maxPoints, Pageable pageable);
 }

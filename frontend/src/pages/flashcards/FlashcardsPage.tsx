@@ -10,9 +10,10 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { getCurrentUser } from '../../services/auth';
-import { flashcardService } from '../../services/flashcardService'; // Import flashcard service
+import flashcardService from '../../services/flashcardService'; // Import flashcard service
 import { FlashcardSet, User } from '../../types'; // ✅ Import unified types
 import { canAccessFlashcardSet } from '../../utils/accessControl'; // Import access control function
+
 
 const FlashcardsPage: React.FC = () => {
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);

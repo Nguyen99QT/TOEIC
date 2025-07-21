@@ -6,36 +6,25 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:leenglish_mobile/main.dart';
+
+import 'package:toeic_mobile/main.dart';
 
 void main() {
-  testWidgets('LeEnglish app smoke test', (WidgetTester tester) async {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: LeEnglishApp()));
+    await tester.pumpWidget(const MyApp());
 
-    // Wait for any animations to complete
-    await tester.pumpAndSettle();
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
 
-    // Verify that the app loads with the home screen.
-    expect(find.text('LeEnglish TOEIC'), findsOneWidget);
-    expect(find.text('Welcome to LeEnglish!'), findsOneWidget);
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
 
-    // Verify that we can find some key UI elements
-    expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.byType(AppBar), findsOneWidget);
-  });
-
-  testWidgets('Navigation test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: LeEnglishApp()));
-
-    // Wait for the app to settle
-    await tester.pumpAndSettle();
-
-    // The test will verify that the app can be instantiated without errors
-    expect(find.byType(LeEnglishApp), findsOneWidget);
-    expect(find.byType(Scaffold), findsOneWidget);
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
   });
 }

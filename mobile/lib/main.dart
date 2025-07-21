@@ -1,78 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/register_screen.dart';
-import 'screens/auth/logout_screen.dart';
-import 'screens/auth_check.dart';
-import 'screens/main_navigation_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:toeic_mobile/core/theme/app_theme.dart';
+import 'package:toeic_mobile/core/router.dart';
+import 'package:toeic_mobile/core/services/storage_service.dart';
 
-// GoRouter configuration
-final _router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(path: '/', builder: (context, state) => const AuthCheck()),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-    GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterScreen(),
-    ),
-    GoRoute(path: '/logout', builder: (context, state) => const LogoutScreen()),
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const MainNavigationScreen(),
-    ),
-    GoRoute(
-      path: '/practice',
-      builder:
-          (context, state) => const Scaffold(
-            body: Center(child: Text('Practice Screen - Coming Soon')),
-          ),
-    ),
-    GoRoute(
-      path: '/tests',
-      builder:
-          (context, state) => const Scaffold(
-            body: Center(child: Text('Tests Screen - Coming Soon')),
-          ),
-    ),
-    GoRoute(
-      path: '/progress',
-      builder:
-          (context, state) => const Scaffold(
-            body: Center(child: Text('Progress Screen - Coming Soon')),
-          ),
-    ),
-  ],
-);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
-  runApp(const ProviderScope(child: LeEnglishApp()));
+  // Initialize Hive
+  await Hive.initFlutter();
+
+  // Initialize Storage Service
+  await StorageService.instance.init();
+
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
-class LeEnglishApp extends StatelessWidget {
-  const LeEnglishApp({super.key});
+class MyApp extends ConsumerWidget {
+  const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'LeEnglish - TOEIC Learning',
+      title: 'TOEIC Learning Platform',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2196F3),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
-        cardTheme: CardTheme(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      routerConfig: _router,
     );
   }
 }

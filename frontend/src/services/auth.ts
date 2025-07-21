@@ -6,7 +6,7 @@
  * Integrates with Spring Boot backend auth endpoints
  */
 
-import { LoginRequest, RegisterRequest, User } from "../types";
+import { LoginRequest, RegisterRequest, RegistrationResponse, User } from "../types";
 import { api } from "./api";
 import apiClient from "./apiRequest";
 
@@ -23,9 +23,17 @@ const USER_KEY = "toeic_current_user";
 
 export interface LoginResponse {
   accessToken: string;
+  token?: string; // Backend sometimes returns 'token' instead of 'accessToken'
   refreshToken?: string;
-  user: User;
+  user?: User;
   expiresIn?: number;
+  // Additional fields that backend actually returns
+  id?: number;
+  username?: string;
+  email?: string;
+  role?: string;
+  roles?: string[];
+  type?: string;
 }
 
 export interface AuthResponse {
@@ -46,8 +54,9 @@ let refreshInterval: NodeJS.Timeout | null = null;
 
 export const setToken = (token: string): void => {
   try {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem("authToken", token); // For backward compatibility
+    localStorage.setItem("accessToken", token);
+    localStorage.setItem("toeic_access_token", token);
+    localStorage.setItem("authToken", token);
     console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken");
   } catch (error) {
     console.error("❌ Failed to store token in localStorage:", error);
@@ -64,11 +73,11 @@ export const setToken = (token: string): void => {
 };
 
 export const getToken = (): string | null => {
-  // Try new key first, then fallback to old keys
   const token =
     localStorage.getItem(TOKEN_KEY) ||
     localStorage.getItem("authToken") ||
-    localStorage.getItem("accessToken");
+    localStorage.getItem("accessToken") ||
+    null; // Thêm null fallback
 
   if (token) {
     console.log(
@@ -81,19 +90,8 @@ export const getToken = (): string | null => {
       return null; // Return null for invalid token format
     }
 
-    // Check for token expiration
-    try {
-      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-      const currentTime = Date.now() / 1000;
-
-      if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-        console.warn("⚠️ Token has expired, returning null");
-        return null;
-      }
-    } catch (e) {
-      console.warn("⚠️ Could not parse token payload:", e);
-      // Continue and return token anyway, let the API handle invalid tokens
-    }
+    // Don't check expiration here - let the API interceptor handle it
+    // This prevents premature logout when token is still valid for refresh
   } else {
     console.log(
       "⚠️ No token found in localStorage with keys:",
@@ -145,10 +143,10 @@ export const setCurrentUser = (user: User): void => {
 
 export const getCurrentUser = (): User | null => {
   try {
-    // Try new key first, then fallback to old key
     const userStr =
-      localStorage.getItem(USER_KEY) || localStorage.getItem("currentUser");
-
+      localStorage.getItem(USER_KEY) ||
+      localStorage.getItem("currentUser") ||
+      null;
     if (!userStr) return null;
 
     const user = JSON.parse(userStr);
@@ -192,40 +190,33 @@ export const isAuthenticated = (): boolean => {
     return false;
   }
 
-  // Check if token is expired (basic check)
-  try {
-    // Use the debug function for detailed token info in development
-    if (process.env.NODE_ENV !== "production") {
-      debugJwtToken(token);
+  // Special handling for development test token
+  if (process.env.NODE_ENV === "development") {
+    try {
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+      if (tokenPayload.dev === true) {
+        console.log("🔧 Development mode: Using development test token");
+        return true;
+      }
+    } catch (error) {
+      // If it's the old test token format, still allow it
+      if (
+        token.includes("test_token_for_development_only") ||
+        token.includes("dev-signature")
+      ) {
+        console.log("🔧 Development mode: Using legacy test token");
+        return true;
+      }
     }
-
-    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-    const currentTime = Date.now() / 1000;
-
-    if (tokenPayload.exp && tokenPayload.exp < currentTime) {
-      console.warn("🔑 Token expired, removing authentication");
-      removeToken();
-      return false;
-    }
-
-    console.log(
-      "✅ Authentication check passed: User is authenticated as",
-      user.username || user.email
-    );
-    return true;
-  } catch (error) {
-    console.error("🔑 Error checking token validity:", error);
-
-    // Don't clear token on parse error, just return true if we have token and user
-    // But log it clearly for debugging
-    console.log(
-      `Token parse failed, but token exists. Token starts with: ${token.substring(
-        0,
-        15
-      )}...`
-    );
-    return !!(token && user);
   }
+
+  // Don't check token expiration here - let the API interceptor handle refresh
+  // This prevents premature logout when token can still be refreshed
+  console.log(
+    "✅ Authentication check passed: User is authenticated as",
+    user.username || user.email
+  );
+  return true;
 };
 
 export const isTokenExpiringSoon = (): boolean => {
@@ -351,19 +342,49 @@ export const login = async (
     // Use the correct endpoint /api/auth/login that matches the backend
     const response = await api.post("/api/auth/login", credentials);
 
-    if (!response.data || !response.data.accessToken) {
+    console.log("🔍 Raw login response:", response.data);
+
+    // Handle both formats (backend returns token, frontend expects accessToken)
+    if (
+      !response.data ||
+      (!response.data.accessToken && !response.data.token)
+    ) {
       console.error("❌ Invalid login response:", response.data);
       throw new Error("Server returned invalid login data");
     }
 
-    const { accessToken, refreshToken, user } = response.data;
+    // Map response to our expected format
+    const accessToken = response.data.accessToken || response.data.token;
+    const refreshToken = response.data.refreshToken || null;
+
+    // Handle backend response format which returns individual user fields
+    const user = response.data.user || {
+      id: response.data.id,
+      username: response.data.username,
+      email: response.data.email,
+      role:
+        response.data.roles && response.data.roles.length > 0
+          ? response.data.roles[0].replace("ROLE_", "")
+          : "USER",
+      roles: response.data.roles,
+    };
 
     // Add explicit console logs for debugging
     console.log("🔐 Received login response:", {
+      token: response.data.token ? "✓ Present" : "✗ Missing",
       accessToken: response.data.accessToken ? "✓ Present" : "✗ Missing",
       refreshToken: response.data.refreshToken ? "✓ Present" : "✗ Missing",
       user: response.data.user ? "✓ Present" : "✗ Missing",
-      tokenLength: response.data.accessToken?.length,
+      id: response.data.id ? "✓ Present" : "✗ Missing",
+      username: response.data.username ? "✓ Present" : "✗ Missing",
+      email: response.data.email ? "✓ Present" : "✗ Missing",
+      roles: response.data.roles
+        ? `✓ Present (${response.data.roles.join(", ")})`
+        : "✗ Missing",
+      mappedToken: accessToken
+        ? `✓ Length: ${accessToken.length}`
+        : "✗ Missing",
+      mappedUser: user ? `✓ Username: ${user.username}` : "✗ Missing",
     });
 
     // Store tokens and user data with explicit success checks
@@ -444,22 +465,54 @@ export const login = async (
   }
 };
 
-
-
-export const register = async (userData: RegisterRequest): Promise<User> => {
+export const register = async (userData: RegisterRequest): Promise<RegistrationResponse> => {
   try {
     console.log("📝 Attempting registration for:", userData.username);
 
-    const response = await api.post("/auth/register", userData);
+    // First check if the server is available
+    const isServerUp = await checkServerStatus().catch(() => false);
+    if (!isServerUp) {
+      throw new Error("Server is not responding. Please try again later.");
+    }
+
+    // Use the correct endpoint /api/auth/register that matches the backend
+    const response = await api.post("/api/auth/register", userData);
     const registrationData = response.data;
 
     console.log("✅ Registration successful:", registrationData);
-    return registrationData.user || registrationData;
+    return registrationData;
   } catch (error: any) {
     console.error("❌ Registration failed:", error);
-    throw new Error(
-      error.response?.data?.message || error.message || "Registration failed"
-    );
+
+    // Add better error handling with detailed messages
+    if (error.response) {
+      console.error(
+        `Server responded with ${error.response.status}: ${JSON.stringify(
+          error.response.data
+        )}`
+      );
+
+      if (error.response.status === 400) {
+        throw new Error(
+          error.response.data?.message ||
+            "Invalid registration data. Please check your inputs."
+        );
+      } else if (error.response.status === 409) {
+        throw new Error(
+          "Username or email already exists. Please try different credentials."
+        );
+      }
+
+      throw new Error(
+        error.response.data?.message || `Server error ${error.response.status}`
+      );
+    } else if (error.request) {
+      throw new Error(
+        "Server not responding. Please check your connection or try again later."
+      );
+    } else {
+      throw new Error("Registration request failed: " + error.message);
+    }
   }
 };
 //handleLogout
@@ -481,7 +534,7 @@ export const handleLogout = async (): Promise<void> => {
     // Even if logout fails, ensure local data is cleared
     clearAuthData();
     // Redirect to login page
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   }
 };
 
@@ -502,7 +555,7 @@ export const logout = async (): Promise<void> => {
     removeCurrentUser();
     stopAutoRefresh();
     // Force reload to reset app state and AuthContext
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
     console.log("✅ Local data cleared and redirected to login");
   }
 };
@@ -562,7 +615,7 @@ export const changePassword = async (
   newPassword: string
 ): Promise<void> => {
   try {
-    await api.put("/auth/change-password", {
+    await api.put("/api/auth/change-password", {
       currentPassword,
       newPassword,
     });
@@ -575,7 +628,7 @@ export const changePassword = async (
 
 export const requestPasswordReset = async (email: string): Promise<void> => {
   try {
-    await api.post("/auth/forgot-password", { email });
+    await api.post("/api/auth/forgot-password", { email });
     console.log("✅ Password reset requested");
   } catch (error: any) {
     console.error("❌ Password reset request failed:", error);
@@ -590,7 +643,7 @@ export const resetPassword = async (
   newPassword: string
 ): Promise<void> => {
   try {
-    await api.post("/auth/reset-password", {
+    await api.post("/api/auth/reset-password", {
       token,
       newPassword,
     });
@@ -598,6 +651,35 @@ export const resetPassword = async (
   } catch (error: any) {
     console.error("❌ Password reset failed:", error);
     throw new Error(error.response?.data?.message || "Password reset failed");
+  }
+};
+
+// ================================================================
+// EMAIL VERIFICATION FUNCTIONS
+// ================================================================
+
+export const resendVerificationEmail = async (email: string): Promise<void> => {
+  try {
+    await api.post("/api/auth/resend-verification", { email });
+    console.log("✅ Verification email resent successfully");
+  } catch (error: any) {
+    console.error("❌ Failed to resend verification email:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to resend verification email"
+    );
+  }
+};
+
+export const verifyEmail = async (token: string): Promise<boolean> => {
+  try {
+    const response = await api.get(`/api/auth/verify-email?token=${token}`);
+    console.log("✅ Email verified successfully");
+    return response.data.verified || false;
+  } catch (error: any) {
+    console.error("❌ Email verification failed:", error);
+    throw new Error(
+      error.response?.data?.message || "Email verification failed"
+    );
   }
 };
 
@@ -673,7 +755,6 @@ export const debugJwtToken = (token: string | null): void => {
   }
 };
 
-// Add this to your utility functions section
 export const diagnosePossibleAuthIssues = (): void => {
   console.group("🔍 Authentication Diagnostic Check");
 

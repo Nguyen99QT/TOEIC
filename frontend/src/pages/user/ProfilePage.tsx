@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '../../components/ui/SimpleToast';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
@@ -48,6 +48,7 @@ interface ProfileFormData {
 
 const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser } = useAuth();
+  const toast = useToast();
   const breadcrumbItems = useBreadcrumb();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);

@@ -42,7 +42,6 @@ export enum Difficult {
   EASY = "EASY",
   MEDIUM = "MEDIUM",
   HARD = "HARD",
-
 }
 
 export enum QuestionType {
@@ -87,7 +86,13 @@ export interface Question {
   createdAt: string;
   updatedAt: string;
   difficulty?: Difficult | "EASY" | "MEDIUM" | "HARD"; // Use the Difficult enum or string for compatibility
-  questionType?: QuestionType | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_IN_BLANK" | "LISTENING" | "READING_COMPREHENSION"; // Use the QuestionType enum or string for compatibility
+  questionType?:
+    | QuestionType
+    | "MULTIPLE_CHOICE"
+    | "TRUE_FALSE"
+    | "FILL_IN_BLANK"
+    | "LISTENING"
+    | "READING_COMPREHENSION"; // Use the QuestionType enum or string for compatibility
   questiontext?: string; // For compatibility with legacy backend property
 }
 
@@ -110,17 +115,25 @@ export interface User {
   membershipType: "FREE" | "PREMIUM";
   gender?: Gender;
   birthDate?: string;
+  dateOfBirth?: string; // Added for backend compatibility
   phoneNumber?: string;
+  phone?: string; // Added for backend compatibility
   address?: string;
+  country?: string; // Added for backend compatibility
   targetScore?: number;
+  totalScore?: number; // Added for backend compatibility
   currentLevel?: DifficultyLevel;
   registrationDate?: string;
   lastLoginDate?: string;
+  createdAt?: string; // Added for backend compatibility
+  updatedAt?: string; // Added for backend compatibility
   isActive?: boolean;
   profilePicture?: string;
+  profilePictureUrl?: string; // Added for backend compatibility
   isPremium?: boolean;
   premiumExpiresAt?: string;
   redirectUrl?: string;
+  isEmailVerified?: boolean; // Added for email verification
 }
 export interface DifficultyLevel {
   id: number;
@@ -136,14 +149,18 @@ export interface Lesson {
   title: string;
   description: string;
   content?: string;
-  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; // CEFR levels
+  level?: string; // Changed from specific CEFR levels to generic string
+  difficulty?: string; // Added difficulty field from backend
+  type?: string; // Added type field from backend
   isPremium: boolean;
+  isPublic?: boolean; // Added for public/private lessons
+  isActive: boolean;
   imageUrl?: string;
   audioUrl?: string;
   videoUrl?: string;
-  duration?: number; // in minutes
+  duration?: number; // Duration in minutes (matches backend)
+  estimatedTimeMinutes?: number; // Alias for duration for consistency
   orderIndex: number;
-  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 
@@ -326,7 +343,6 @@ export interface LoginRequest {
   password: string;
   email?: string; // Optional for flexibility
   rememberMe?: boolean; // Optional for "Remember Me" functionality
-
 }
 
 export interface RegisterRequest {
@@ -339,6 +355,20 @@ export interface RegisterRequest {
   gender?: Gender;
   birthDate?: string;
   phoneNumber?: string;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    fullName: string;
+    role: string;
+    emailVerified: boolean;
+  };
+  emailSent: boolean;
+  registeredAt: string;
 }
 
 export interface AuthResponse {
@@ -377,7 +407,6 @@ export interface UserStats {
     };
   };
 }
-
 
 export interface DashboardData {
   user: User;
@@ -469,4 +498,32 @@ export interface SortOptions {
 export interface PaginationOptions {
   page: number;
   size: number;
+}
+
+// ========== PROGRESS TRACKING ==========
+
+export interface UserProgressDto {
+  id: number;
+  userId: number;
+  lessonId: number;
+  lessonTitle: string;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  progressPercentage: number;
+  timeSpentMinutes: number;
+  startedAt: string;
+  completedAt?: string;
+  lastAccessedAt: string;
+}
+
+export interface ProgressStats {
+  totalLessons: number;
+  completedLessons: number;
+  inProgressLessons: number;
+  notStartedLessons: number;
+  overallProgress: number;
+  completionRate: number;
+  currentStreak: number;
+  averageStudyTimeMinutes: number;
+  totalTimeSpent: number;
+  lastActivity: string;
 }

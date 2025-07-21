@@ -48,6 +48,9 @@ public class AuthenticationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.leenglish.toeic.security.UserDetailsServiceImpl userDetailsService;
+
     // JWT Configuration
     @Value("${jwt.secret:leenglish-toeic-platform-secret-key-2024}")
     private String jwtSecret;
@@ -69,28 +72,18 @@ public class AuthenticationService {
      */
     public User authenticateUser(String usernameOrEmail, String password) {
         try {
-            System.out.println("=== DEBUG AUTH ===");
-            System.out.println("Login attempt for: " + usernameOrEmail);
-            System.out.println("Password provided: " + password);
-            
             // Find user by username or email
             Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
 
             if (userOpt.isEmpty()) {
-                System.out.println("User not found in database");
+                // Không tìm thấy user trong DB, trả về null (không cho đăng nhập)
                 return null;
             }
 
             User user = userOpt.get();
-            System.out.println("User found: " + user.getUsername());
-            System.out.println("User hash: " + user.getPassword());
 
             // Verify password
-            boolean matches = passwordEncoder.matches(password, user.getPassword());
-            System.out.println("Password matches: " + matches);
-            
-            if (!matches) {
-                System.out.println("Password verification failed");
+            if (!passwordEncoder.matches(password, user.getPasswordHash())) {
                 return null; // Invalid password
             }
 
@@ -132,7 +125,7 @@ public class AuthenticationService {
             User newUser = new User();
             newUser.setUsername(username);
             newUser.setEmail(email);
-            newUser.setPassword(passwordEncoder.encode(password)); // Encode password
+            newUser.setPasswordHash(passwordEncoder.encode(password)); // Encode password
             newUser.setRole(role != null ? role : Role.USER); // Default to USER role
             newUser.setCreatedDate(LocalDateTime.now());
             newUser.setLastLoginDate(LocalDateTime.now());
@@ -343,13 +336,16 @@ public class AuthenticationService {
             User user = userOpt.get();
 
             // Verify current password
-            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
                 return false; // Current password is incorrect
             }
 
             // Set new password
-            user.setPassword(passwordEncoder.encode(newPassword));
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
             userRepository.save(user);
+            
+            // Clear user cache to ensure fresh data is loaded on next authentication
+            userDetailsService.evictUserFromCache(user.getUsername());
 
             return true;
 
@@ -373,16 +369,6 @@ public class AuthenticationService {
             return userRepository.findByUsername(username).orElse(null);
         }
         return null;
-    }
-
-    /**
-     * Get user by username
-     * 
-     * @param username Username to search for
-     * @return User object or null if not found
-     */
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElse(null);
     }
 
     /**

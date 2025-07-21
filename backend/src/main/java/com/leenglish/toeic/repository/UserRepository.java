@@ -58,4 +58,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "u.email LIKE %:keyword% OR " +
             "u.fullName LIKE %:keyword%")
     Page<User> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    Page<User> findByIsActiveTrue(Pageable pageable);
+    
+
 }

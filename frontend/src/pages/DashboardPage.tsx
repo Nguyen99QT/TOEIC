@@ -19,9 +19,8 @@ import React, { useEffect, useState } from 'react';
 import Breadcrumb from '../components/ui/Breadcrumb';
 import { useAuth } from '../contexts/AuthContext';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
-import apiClient from '../services/apiClient';
 import dashboardService, { DashboardStats, RecentActivity } from '../services/dashboard';
-import CollaboratorDashboard from './CollaboratorDashboard';
+import lessonService, { LessonProgress } from '../services/lessons'; // Bạn cần tạo service này nếu chưa có
 
 const DashboardPage: React.FC = () => {
   const { currentUser, isAuthenticated } = useAuth();
@@ -29,6 +28,7 @@ const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) return; // Chỉ fetch khi đã đăng nhập
@@ -37,11 +37,18 @@ const DashboardPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('🔄 DashboardPage: Starting to fetch dashboard data...');
         const dashboardStats = await dashboardService.getDashboardStats();
+        console.log('✅ DashboardPage: Dashboard data fetched successfully');
         setStats(dashboardStats);
       } catch (err: any) {
+        console.error('❌ DashboardPage: Dashboard data fetch error:', {
+          message: err.message,
+          status: err?.response?.status,
+          statusText: err?.response?.statusText,
+          endpoint: err?.config?.url
+        });
         setError(err.message || 'Failed to load dashboard data');
-        console.error('Dashboard data fetch error:', err);
       } finally {
         setLoading(false);
       }
@@ -50,15 +57,10 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData();
   }, [isAuthenticated]);
 
-  // Show collaborator dashboard for COLLABORATOR role
-  if (currentUser?.role === 'COLLABORATOR') {
-    return (
-      <div className="space-y-6">
-        <Breadcrumb items={breadcrumbItems} />
-        <CollaboratorDashboard />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser?.id) return;
+    lessonService.getUserLessonProgress(currentUser.id).then(setLessonProgress);
+  }, [isAuthenticated, currentUser]);
 
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -360,16 +362,56 @@ const DashboardPage: React.FC = () => {
           )}
         </div>
       </motion.div>
+
+      {/* Your Lessons Progress */}
+      <motion.div className="bg-white rounded-lg shadow-lg" variants={cardVariants}>
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Your Lessons Progress</h2>
+        </div>
+        <div className="p-6">
+          {lessonProgress.length > 0 ? (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lesson</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                  <th className="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {lessonProgress.map((lp) => (
+                  <tr key={lp.lessonId}>
+                    <td className="px-4 py-2">{lp.lessonTitle}</td>
+                    <td className="px-4 py-2">
+                      <div className="w-32 bg-gray-100 rounded-full h-3">
+                        <div
+                          className="bg-blue-500 h-3 rounded-full"
+                          style={{ width: `${lp.progress}%` }}
+                        ></div>
+                      </div>
+                      <span className="ml-2 text-sm text-gray-600">{lp.progress}%</span>
+                    </td>
+                    <td className="px-4 py-2">{lp.score ?? '-'}</td>
+                    <td className="px-4 py-2">
+                      <a
+                        href={`/lessons/${lp.lessonId}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {lp.progress < 100 ? 'Continue' : 'Review'}
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="text-gray-500">No lessons started yet.</div>
+          )}
+        </div>
+      </motion.div>
     </motion.div>
   );
 };
 
 export default DashboardPage;
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});

@@ -32,4 +32,12 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
         @Query("SELECT COUNT(l) FROM Lesson l WHERE l.isActive = true")
         long countActiveLessons();
+
+        // ========== PUBLIC LESSONS ==========
+
+        // Find public and active lessons
+        List<Lesson> findByIsPublicTrueAndIsActiveTrue();
+
+        @Query("SELECT l FROM Lesson l WHERE l.isPublic = true AND l.isActive = true ORDER BY l.createdAt DESC")
+        List<Lesson> findPublicLessonsOrderByCreatedDesc();
 }

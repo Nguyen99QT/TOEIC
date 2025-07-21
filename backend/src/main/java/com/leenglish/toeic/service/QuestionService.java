@@ -114,10 +114,23 @@ public class QuestionService {
                                         .findFirst()
                                         .orElse(null);
 
-                        // So sánh đáp án user với đáp án đúng
-                        if (question != null
-                                        && question.getCorrectAnswer().equalsIgnoreCase(answer.getSelectedAnswer())) {
-                                correctAnswers++;
+                        // Log thông tin để gỡ lỗi
+                        if (question != null) {
+                                log.info("Checking answer for question ID {}: text='{}', user answer='{}', correct answer='{}'",
+                                                question.getId(), question.getQuestionText(),
+                                                answer.getSelectedAnswer(), question.getCorrectAnswer());
+
+                                // So sánh đáp án user với đáp án đúng
+                                if (question.getCorrectAnswer().equalsIgnoreCase(answer.getSelectedAnswer())) {
+                                        correctAnswers++;
+                                        log.info("CORRECT answer for question {}", question.getId());
+                                } else {
+                                        log.warn("INCORRECT answer for question {}: expected '{}', got '{}'",
+                                                        question.getId(), question.getCorrectAnswer(),
+                                                        answer.getSelectedAnswer());
+                                }
+                        } else {
+                                log.error("Question not found for ID {}", answer.getQuestionId());
                         }
                 }
 
@@ -180,15 +193,74 @@ public class QuestionService {
                                 .optionB(question.getOptionB())
                                 .optionC(question.getOptionC())
                                 .optionD(question.getOptionD())
+                                .correctAnswer(question.getCorrectAnswer())
                                 .explanation(question.getExplanation())
                                 .points(question.getPoints())
                                 .questionOrder(question.getQuestionOrder())
+                                .audioUrl(question.getAudioUrl())
+                                .imageUrl(question.getImageUrl())
+                                .difficultyLevel(question.getDifficultyLevel())
+                                .isActive(question.getIsActive())
                                 .build();
         }
 
         public QuestionDto getQuestionById(Long questionId) {
                 Question question = questionRepository.findById(questionId)
                                 .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
+                return convertToDto(question);
+        }
+
+        /**
+         * Tạo mới một câu hỏi
+         */
+        public QuestionDto createQuestion(QuestionDto questionDTO) {
+                Question question = new Question();
+                // Set các trường hiện có
+                question.setQuestionText(questionDTO.getQuestionText());
+                question.setOptionA(questionDTO.getOptionA());
+                question.setOptionB(questionDTO.getOptionB());
+                question.setOptionC(questionDTO.getOptionC());
+                question.setOptionD(questionDTO.getOptionD());
+                question.setCorrectAnswer(questionDTO.getCorrectAnswer());
+                question.setExplanation(questionDTO.getExplanation());
+                question.setPoints(questionDTO.getPoints());
+                question.setQuestionOrder(questionDTO.getQuestionOrder());
+
+                // Thêm mới
+                question.setAudioUrl(questionDTO.getAudioUrl());
+                question.setImageUrl(questionDTO.getImageUrl());
+
+                question = questionRepository.save(question);
+                return convertToDto(question);
+        }
+
+        /**
+         * Cập nhật một câu hỏi
+         */
+        public QuestionDto updateQuestion(Long questionId, QuestionDto questionDTO) {
+                Question question = questionRepository.findById(questionId)
+                                .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
+
+                // Cập nhật các trường
+                question.setQuestionText(questionDTO.getQuestionText());
+                question.setOptionA(questionDTO.getOptionA());
+                question.setOptionB(questionDTO.getOptionB());
+                question.setOptionC(questionDTO.getOptionC());
+                question.setOptionD(questionDTO.getOptionD());
+                question.setCorrectAnswer(questionDTO.getCorrectAnswer());
+                question.setExplanation(questionDTO.getExplanation());
+                question.setPoints(questionDTO.getPoints());
+                question.setQuestionOrder(questionDTO.getQuestionOrder());
+
+                // Nếu có thay đổi về audio/image, cập nhật lại
+                if (questionDTO.getAudioUrl() != null) {
+                        question.setAudioUrl(questionDTO.getAudioUrl());
+                }
+                if (questionDTO.getImageUrl() != null) {
+                        question.setImageUrl(questionDTO.getImageUrl());
+                }
+
+                question = questionRepository.save(question);
                 return convertToDto(question);
         }
 }

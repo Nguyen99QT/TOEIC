@@ -13,7 +13,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { exerciseService } from '../../services/exercises';
 import feedbackService from '../../services/feedback';
+import progressService from '../../services/progressService';
 import { questionService } from '../../services/questions';
+import FeedbackModal from '../../components/ui/FeedbackModal';
 import { Exercise, Question, QuestionAnswerRequest } from '../../types';
 
 
@@ -33,8 +35,6 @@ const QuestionPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-    const [feedbackRating, setFeedbackRating] = useState(0);
-    const [feedbackText, setFeedbackText] = useState('');
     const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
     const [questionResults, setQuestionResults] = useState<{
         [questionId: number]: {
@@ -127,7 +127,19 @@ const QuestionPage: React.FC = () => {
             // Show completion notification
             setShowCompletionModal(true);
 
-            // Update user progress (if API exists)
+            // Mark lesson as completed automatically when exercise is finished
+            if (currentUser?.id && lessonId) {
+                try {
+                    console.log('🎯 Auto-marking lesson as completed after exercise...');
+                    await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 5); // 5 minutes for exercise completion
+                    console.log('✅ Lesson automatically marked as completed');
+                } catch (error) {
+                    console.warn('⚠️ Failed to auto-mark lesson as completed:', error);
+                    // Continue anyway - don't block the UI
+                }
+            }
+
+            // Update user progress (if API exists) - Legacy code, can be removed later
             try {
                 await fetch(`/api/users/${currentUser?.id}/progress`, {
                     method: 'PUT',
@@ -157,6 +169,24 @@ const QuestionPage: React.FC = () => {
             setIsSubmitting(false);
         }
     }, [exercise, questions, answers, timeLeft, lessonId, navigate, calculateScore, currentUser]);
+
+    // Function to handle going back to lesson and mark it as completed if needed
+    const handleReturnToLesson = async () => {
+        if (currentUser?.id && lessonId) {
+            try {
+                // Mark lesson as completed
+                console.log('🎯 Marking lesson as completed...');
+                await progressService.markLessonCompleted(currentUser.id, parseInt(lessonId), 30); // 30 minutes estimated time
+                console.log('✅ Lesson marked as completed');
+            } catch (error) {
+                console.warn('⚠️ Failed to mark lesson as completed:', error);
+                // Continue anyway - don't block navigation
+            }
+        }
+
+        setShowCompletionModal(false);
+        navigate(`/lessons/${lessonId}`);
+    };
 
     useEffect(() => {
         const fetchExerciseAndQuestions = async () => {
@@ -239,23 +269,16 @@ const QuestionPage: React.FC = () => {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    // Handle submitting feedback
-    const handleSubmitFeedback = async () => {
-        if (feedbackRating === 0) {
-            alert('Vui lòng đánh giá từ 1-5 sao');
-            return;
-        }
-
+    // Replace handleSubmitFeedback with new handler for FeedbackModal
+    const handleFeedbackModalSubmit = async ({ rating, comment }: { rating: number; comment: string }) => {
         setIsFeedbackSubmitting(true);
         try {
             await feedbackService.submitFeedback({
                 lessonId: parseInt(lessonId!),
                 exerciseId: parseInt(exerciseId!),
-                rating: feedbackRating,
-                comment: feedbackText || undefined
+                rating,
+                comment: comment || undefined
             });
-
-            console.log('✅ Feedback submitted successfully');
             setShowFeedbackModal(false);
             navigate(`/lessons/${lessonId}`, {
                 state: {
@@ -265,7 +288,6 @@ const QuestionPage: React.FC = () => {
                 }
             });
         } catch (error) {
-            console.error('❌ Error submitting feedback:', error);
             alert('Không thể gửi đánh giá. Vui lòng thử lại sau.');
         } finally {
             setIsFeedbackSubmitting(false);
@@ -367,24 +389,20 @@ const QuestionPage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-8 py-8 px-2 md:px-0 animate-fade-in">
             {/* Breadcrumb Navigation */}
             <Breadcrumb items={breadcrumbItems} />
 
             {/* Header with Timer and Progress */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">{exercise.title}</h1>
+                    <h1 className="text-3xl font-extrabold text-gray-900 mb-1">{exercise.title}</h1>
+                    <p className="text-gray-500 text-base">{exercise.description}</p>
                 </div>
-
                 {timeLeft > 0 && (
-                    <div className={`flex items-center space-x-2 text-lg font-mono ${timeLeft < 60 ? 'text-red-600 animate-pulse' :
-                        timeLeft < 300 ? 'text-red-600' :
-                            'text-gray-700'
-                        }`}>
+                    <div className={`flex items-center space-x-2 text-lg font-mono ${timeLeft < 60 ? 'text-red-600 animate-pulse' : timeLeft < 300 ? 'text-red-600' : 'text-gray-700'}`}>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span>{formatTime(timeLeft)}</span>
                     </div>
@@ -392,153 +410,105 @@ const QuestionPage: React.FC = () => {
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                 ></div>
             </div>
-            <div className="flex justify-between text-sm text-gray-600">
+            <div className="flex justify-between text-sm text-gray-600 mb-4">
                 <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
                 <span>{Math.round(progress)}% Complete</span>
             </div>
 
             {/* Question Card */}
-            <div className="card">
-                <div className="card-body">
-                    <div className="mb-6">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                Question {currentQuestionIndex + 1}
-                            </span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentQuestion.difficulty === 'EASY' ? 'bg-green-100 text-green-800' :
-                                currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-red-100 text-red-800'
-                                }`}>
-                                {currentQuestion.difficulty}
-                            </span>
-
-                            {/* Show correctness indicator when reviewing after submission */}
-                            {Object.keys(questionResults).length > 0 && questionResults[currentQuestion.id] && (
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${questionResults[currentQuestion.id].correct
-                                    ? 'bg-green-100 text-green-600'
-                                    : 'bg-red-100 text-red-600'
-                                    }`}>
-                                    {questionResults[currentQuestion.id].correct ? '✓ Đúng' : '✗ Sai'}
-                                </span>
-                            )}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 animate-fade-in-up">
+                <div className="mb-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            Question {currentQuestionIndex + 1}
+                        </span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentQuestion.difficulty === 'EASY' ? 'bg-green-100 text-green-800' : currentQuestion.difficulty === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{currentQuestion.difficulty}</span>
+                        {/* Show correctness indicator when reviewing after submission */}
+                        {Object.keys(questionResults).length > 0 && questionResults[currentQuestion.id] && (
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${questionResults[currentQuestion.id].correct ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{questionResults[currentQuestion.id].correct ? '✓ Đúng' : '✗ Sai'}</span>
+                        )}
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">{getQuestionText(currentQuestion)}</h2>
+                    {currentQuestion.imageUrl && (
+                        <img src={currentQuestion.imageUrl} alt="Question" className="w-full max-w-md mx-auto mb-4 rounded-lg shadow" />
+                    )}
+                    {currentQuestion.audioUrl && (
+                        <div className="mb-4">
+                            <audio controls className="w-full">
+                                <source src={currentQuestion.audioUrl} type="audio/mpeg" />
+                                Your browser does not support the audio element.
+                            </audio>
                         </div>
-
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                            {getQuestionText(currentQuestion)}
-                        </h2>
-
-                        {currentQuestion.imageUrl && (
-                            <img
-                                src={currentQuestion.imageUrl}
-                                alt="Question"
-                                className="w-full max-w-md mx-auto mb-4 rounded-lg"
-                            />
-                        )}
-
-                        {currentQuestion.audioUrl && (
-                            <div className="mb-4">
-                                <audio controls className="w-full">
-                                    <source src={currentQuestion.audioUrl} type="audio/mpeg" />
-                                    Your browser does not support the audio element.
-                                </audio>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Answer Options */}
-                    <div className="space-y-3 mt-6">
-                        {getOptionsArray(currentQuestion).map((option, index) => {
-                            const optionLetter = String.fromCharCode(65 + index); // A, B, C, D...
-                            const isSelected = answers[currentQuestion.id] === optionLetter;
-                            const isReviewing = Object.keys(questionResults).length > 0;
-                            const questionResult = isReviewing ? questionResults[currentQuestion.id] : null;
-                            const isCorrectAnswer = questionResult && questionResult.correctAnswer === optionLetter;
-
-                            // Determine styling based on state
-                            let optionClass = "border p-3 rounded-md flex items-start gap-3 cursor-pointer transition-colors";
-
-                            if (isReviewing) {
-                                if (isCorrectAnswer) {
-                                    // This is the correct answer
-                                    optionClass += " bg-green-50 border-green-300";
-                                } else if (isSelected && !isCorrectAnswer) {
-                                    // This was selected but is wrong
-                                    optionClass += " bg-red-50 border-red-300";
-                                } else {
-                                    // Not selected, not correct
-                                    optionClass += " border-gray-200 hover:border-gray-300 hover:bg-gray-50";
-                                }
+                    )}
+                </div>
+                {/* Answer Options */}
+                <div className="space-y-3 mt-6">
+                    {getOptionsArray(currentQuestion).map((option, index) => {
+                        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D...
+                        const isSelected = answers[currentQuestion.id] === optionLetter;
+                        const isReviewing = Object.keys(questionResults).length > 0;
+                        const questionResult = isReviewing ? questionResults[currentQuestion.id] : null;
+                        const isCorrectAnswer = questionResult && questionResult.correctAnswer === optionLetter;
+                        let optionClass = "border p-4 rounded-xl flex items-center gap-3 cursor-pointer transition-colors text-base font-medium shadow-sm";
+                        if (isReviewing) {
+                            if (isCorrectAnswer) {
+                                optionClass += " bg-green-50 border-green-300";
+                            } else if (isSelected && !isCorrectAnswer) {
+                                optionClass += " bg-red-50 border-red-300";
                             } else {
-                                // Normal answering mode
-                                optionClass += isSelected
-                                    ? " bg-blue-50 border-blue-500"
-                                    : " border-gray-200 hover:border-gray-300 hover:bg-gray-50";
+                                optionClass += " border-gray-200 hover:border-gray-300 hover:bg-gray-50";
                             }
-
-                            return (
-                                <div
-                                    key={index}
-                                    className={optionClass}
-                                    onClick={() => {
-                                        // Only allow selection if not in review mode
-                                        if (!isReviewing) {
-                                            handleAnswerSelect(currentQuestion.id, optionLetter);
-                                        }
-                                    }}
-                                >
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-100 text-gray-700'
-                                        }`}>
-                                        {optionLetter}
+                        } else {
+                            optionClass += isSelected ? " bg-blue-50 border-blue-500" : " border-gray-200 hover:border-blue-300 hover:bg-blue-50";
+                        }
+                        return (
+                            <div
+                                key={index}
+                                className={optionClass}
+                                onClick={() => {
+                                    if (!isReviewing) {
+                                        handleAnswerSelect(currentQuestion.id, optionLetter);
+                                    }
+                                }}
+                            >
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-base font-bold border-2 ${isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-100 text-gray-700 border-gray-200'}`}>{optionLetter}</div>
+                                <div className="flex-1">{option}</div>
+                                {isReviewing && (
+                                    <div className="flex-shrink-0">
+                                        {isCorrectAnswer && (
+                                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                        )}
+                                        {isSelected && !isCorrectAnswer && (
+                                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                        )}
                                     </div>
-                                    <div className="flex-1">
-                                        {option}
-                                    </div>
-
-                                    {/* Correct/Wrong indicators when reviewing */}
-                                    {isReviewing && (
-                                        <div className="flex-shrink-0">
-                                            {isCorrectAnswer && (
-                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
-                                            {isSelected && !isCorrectAnswer && (
-                                                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Navigation Controls */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mt-6">
                 <button
                     onClick={handlePreviousQuestion}
                     disabled={currentQuestionIndex === 0}
-                    className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 rounded-lg font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     ← Previous
                 </button>
-
                 <div className="flex gap-2">
                     {Object.keys(questionResults).length > 0 ? (
                         <button
                             onClick={() => navigate(`/lessons/${lessonId}`)}
-                            className="btn btn-success"
+                            className="px-6 py-2 rounded-lg font-semibold bg-green-500 text-white hover:bg-green-600 transition"
                         >
                             Hoàn thành ✓
                         </button>
@@ -547,25 +517,22 @@ const QuestionPage: React.FC = () => {
                             onClick={() => {
                                 const unansweredCount = questions.length - Object.keys(answers).length;
                                 if (unansweredCount > 0) {
-                                    const confirmSubmit = window.confirm(
-                                        `Bạn chưa trả lời ${unansweredCount} câu hỏi.\nBạn có chắc chắn muốn nộp bài không?`
-                                    );
+                                    const confirmSubmit = window.confirm(`Bạn chưa trả lời ${unansweredCount} câu hỏi.\nBạn có chắc chắn muốn nộp bài không?`);
                                     if (!confirmSubmit) return;
                                 }
                                 handleSubmitExercise();
                             }}
                             disabled={isSubmitting}
-                            className="btn btn-primary disabled:opacity-50"
+                            className="px-6 py-2 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition disabled:opacity-50"
                         >
                             {isSubmitting ? 'Đang nộp bài...' : 'Nộp bài'}
                         </button>
                     )}
                 </div>
-
                 {currentQuestionIndex === questions.length - 1 ? (
                     <button
                         disabled={true}
-                        className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 rounded-lg font-semibold bg-white border border-gray-300 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Next →
                     </button>
@@ -573,43 +540,41 @@ const QuestionPage: React.FC = () => {
                     <button
                         onClick={handleNextQuestion}
                         disabled={currentQuestionIndex === questions.length - 1}
-                        className="btn btn-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 rounded-lg font-semibold bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Next →
                     </button>
                 )}
             </div>
 
-            {/* Exercise Summary */}
-            <div className="card border-gray-200 bg-gray-50">
-                <div className="card-body">
-                    <h3 className="font-semibold text-gray-900 mb-3">Progress Summary</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div className="text-center">
-                            <div className="font-semibold text-blue-600">{Object.keys(answers).length}</div>
-                            <div className="text-gray-600">Answered</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="font-semibold text-gray-600">{questions.length - Object.keys(answers).length}</div>
-                            <div className="text-gray-600">Remaining</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="font-semibold text-green-600">{Math.round(progress)}%</div>
-                            <div className="text-gray-600">Complete</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="font-semibold text-orange-600">{currentQuestion.points || 10}</div>
-                            <div className="text-gray-600">Points</div>
-                        </div>
+            {/* Progress Summary */}
+            <div className="bg-gray-50 rounded-2xl shadow border border-gray-100 p-6 mt-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Progress Summary</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                        <div className="font-semibold text-blue-600 text-lg">{Object.keys(answers).length}</div>
+                        <div className="text-gray-600">Answered</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-semibold text-gray-600 text-lg">{questions.length - Object.keys(answers).length}</div>
+                        <div className="text-gray-600">Remaining</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-semibold text-green-600 text-lg">{Math.round(progress)}%</div>
+                        <div className="text-gray-600">Complete</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="font-semibold text-orange-600 text-lg">{currentQuestion.points || 10}</div>
+                        <div className="text-gray-600">Points</div>
                     </div>
                 </div>
             </div>
 
             {/* Completion Modal */}
             {showCompletionModal && completionData && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-                        <h2 className="text-xl font-bold text-center mb-4">🎉 Kết quả bài tập</h2>
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full animate-fade-in-up">
+                        <h2 className="text-2xl font-bold text-center mb-4">🎉 Kết quả bài tập</h2>
                         <div className="text-center mb-4">
                             <svg className="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -640,8 +605,6 @@ const QuestionPage: React.FC = () => {
                                 <div>Điểm thưởng</div>
                             </div>
                         </div>
-
-                        {/* Thời gian làm bài */}
                         {exercise?.timeLimit && (
                             <div className="mb-4 text-center">
                                 <div className="font-medium text-gray-700">Thời gian làm bài:</div>
@@ -651,14 +614,10 @@ const QuestionPage: React.FC = () => {
                                 </div>
                             </div>
                         )}
-
                         <div className="flex flex-wrap justify-center gap-2 mt-6">
                             <button
-                                onClick={() => {
-                                    setShowCompletionModal(false);
-                                    navigate(`/lessons/${lessonId}`);
-                                }}
-                                className="btn btn-primary flex-1"
+                                onClick={handleReturnToLesson}
+                                className="px-6 py-2 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition flex-1"
                             >
                                 Quay lại bài học
                             </button>
@@ -666,7 +625,7 @@ const QuestionPage: React.FC = () => {
                                 onClick={() => {
                                     setShowCompletionModal(false);
                                 }}
-                                className="btn btn-outline flex-1"
+                                className="px-6 py-2 rounded-lg font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 transition flex-1"
                             >
                                 Xem lại bài tập
                             </button>
@@ -675,7 +634,7 @@ const QuestionPage: React.FC = () => {
                                     setShowCompletionModal(false);
                                     setShowFeedbackModal(true);
                                 }}
-                                className="btn btn-success flex-1"
+                                className="px-6 py-2 rounded-lg font-semibold bg-green-500 text-white hover:bg-green-600 transition flex-1"
                             >
                                 Đánh giá bài học
                             </button>
@@ -685,68 +644,12 @@ const QuestionPage: React.FC = () => {
             )}
 
             {/* Feedback Modal */}
-            {showFeedbackModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-                        <h2 className="text-xl font-bold text-center mb-4">Đánh giá bài học</h2>
-
-                        <div className="mb-6">
-                            <p className="text-gray-700 text-center mb-3">Bạn thấy bài học này như thế nào?</p>
-
-                            {/* Star Rating */}
-                            <div className="flex justify-center mb-4">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <button
-                                        key={star}
-                                        onClick={() => setFeedbackRating(star)}
-                                        className="mx-1 focus:outline-none"
-                                        aria-label={`Rate ${star} stars`}
-                                    >
-                                        <svg
-                                            className={`w-8 h-8 ${feedbackRating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Feedback Text */}
-                            <div className="mb-4">
-                                <label htmlFor="feedback" className="block text-gray-700 text-sm font-medium mb-2">
-                                    Ý kiến của bạn (không bắt buộc):
-                                </label>
-                                <textarea
-                                    id="feedback"
-                                    rows={4}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Hãy chia sẻ trải nghiệm học tập của bạn..."
-                                    value={feedbackText}
-                                    onChange={(e) => setFeedbackText(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between">
-                            <button
-                                onClick={() => setShowFeedbackModal(false)}
-                                className="btn btn-outline"
-                            >
-                                Hủy bỏ
-                            </button>
-                            <button
-                                onClick={handleSubmitFeedback}
-                                disabled={isFeedbackSubmitting || feedbackRating === 0}
-                                className="btn btn-primary disabled:opacity-50"
-                            >
-                                {isFeedbackSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <FeedbackModal
+                open={showFeedbackModal}
+                onClose={() => setShowFeedbackModal(false)}
+                onSubmit={handleFeedbackModalSubmit}
+                submitting={isFeedbackSubmitting}
+            />
         </div>
     );
 };

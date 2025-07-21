@@ -117,15 +117,22 @@ export interface StudyTimeAnalytics {
  */
 export const getDashboardData = async (): Promise<DashboardData> => {
   try {
+    console.log("🔄 Fetching dashboard data from /api/dashboard endpoint...");
     const response = await apiClient.get<ApiResponse<DashboardData>>(
       "/dashboard"
     );
+    console.log("✅ Dashboard data fetched successfully:", response.data);
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     console.warn(
-      "Dashboard API error, using fallback data:",
-      errorInfo.message
+      "⚠️ Dashboard API error - using fallback data. Error details:",
+      {
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        message: errorInfo.message,
+        endpoint: "/dashboard",
+      }
     );
 
     // Fallback data matching backend structure

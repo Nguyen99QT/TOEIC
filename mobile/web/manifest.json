@@ -1,6 +1,6 @@
 {
-    "name": "leenglish_mobile",
-    "short_name": "leenglish_mobile",
+    "name": "toeic_mobile",
+    "short_name": "toeic_mobile",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

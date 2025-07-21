@@ -23,6 +23,8 @@ public class LessonDto {
     private String imageUrl;
     private Integer duration;
     private Boolean isActive;
+    private Boolean isPremium;
+    private Boolean isPublic;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long categoryId;
@@ -114,6 +116,22 @@ public class LessonDto {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public Boolean getIsPremium() {
+        return isPremium;
+    }
+
+    public void setIsPremium(Boolean isPremium) {
+        this.isPremium = isPremium;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -8,8 +8,8 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { handleLogout } from '../../services/auth';
 import { User } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -20,11 +20,12 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuClick }) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   // Nếu muốn sử dụng handleLogout trong component, cần tạo handler
   const handleUserLogout = async () => {
     try {
-      await handleLogout();
+      await logout();
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -109,6 +110,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuCli
                 }`}
             >
               Flashcards
+            </Link>
+            <Link
+              to="/tests"
+              className={`text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/tests') ? 'text-blue-600 bg-blue-50' : ''
+                }`}
+            >
+              Tests
             </Link>
             <Link
               to="/progress"

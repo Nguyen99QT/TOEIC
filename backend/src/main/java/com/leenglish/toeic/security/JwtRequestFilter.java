@@ -47,6 +47,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // Log request for debugging
         logger.debug("JWT Filter processing: {} {}", method, requestPath);
 
+        // Skip JWT processing for public endpoints
+        if (isPublicEndpoint(requestPath)) {
+            logger.debug("Skipping JWT filter for public endpoint: {}", requestPath);
+            chain.doFilter(request, response);
+            return;
+        }
+
         String username = null;
         String jwt = null;
 
@@ -86,5 +93,49 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    /**
+     * Check if the request path is a public endpoint that doesn't require JWT authentication
+     */
+    private boolean isPublicEndpoint(String requestPath) {
+        // List of public endpoints that should skip JWT processing
+        String[] publicPaths = {
+            "/api/auth/",
+            "/api/health",
+            "/api/question-bank/test",
+            "/api/question-bank/test-json",
+            "/api/question-group/test",
+            "/api/question-group/test-json",
+            "/api/test-data/",
+            "/api/debug/",
+            "/audio/",
+            "/images/",
+            "/uploads/",
+            "/static/",
+            "/files/",
+            "/api/users/register",
+            "/h2-console/",
+            "/swagger-ui/",
+            "/v3/api-docs/",
+            "/api/lessons/free",
+            "/api/questions/free",
+            "/api/flashcard-sets/public",
+            "/api/flashcards/free"
+        };
+        
+        // Check exact matches first
+        if (requestPath.equals("/api/health")) {
+            return true;
+        }
+        
+        // Check prefix matches
+        for (String publicPath : publicPaths) {
+            if (requestPath.startsWith(publicPath)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

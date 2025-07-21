@@ -69,18 +69,28 @@ public class AuthenticationService {
      */
     public User authenticateUser(String usernameOrEmail, String password) {
         try {
+            System.out.println("=== DEBUG AUTH ===");
+            System.out.println("Login attempt for: " + usernameOrEmail);
+            System.out.println("Password provided: " + password);
+            
             // Find user by username or email
             Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
 
             if (userOpt.isEmpty()) {
-                // Không tìm thấy user trong DB, trả về null (không cho đăng nhập)
+                System.out.println("User not found in database");
                 return null;
             }
 
             User user = userOpt.get();
+            System.out.println("User found: " + user.getUsername());
+            System.out.println("User hash: " + user.getPassword());
 
             // Verify password
-            if (!passwordEncoder.matches(password, user.getPassword())) {
+            boolean matches = passwordEncoder.matches(password, user.getPassword());
+            System.out.println("Password matches: " + matches);
+            
+            if (!matches) {
+                System.out.println("Password verification failed");
                 return null; // Invalid password
             }
 
@@ -363,6 +373,16 @@ public class AuthenticationService {
             return userRepository.findByUsername(username).orElse(null);
         }
         return null;
+    }
+
+    /**
+     * Get user by username
+     * 
+     * @param username Username to search for
+     * @return User object or null if not found
+     */
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
     }
 
     /**

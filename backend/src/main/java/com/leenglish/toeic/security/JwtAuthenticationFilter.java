@@ -120,6 +120,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         path.startsWith("/api/lessons/free") ||
                         path.startsWith("/api/exercises/free") ||
 
+                        // Public question bank endpoints
+                        path.startsWith("/api/question-bank/") ||
+                        
+                        // Public question group endpoints (only specific endpoints)
+                        (method.equals("GET") && path.equals("/api/question-group/test")) ||
+                        (method.equals("POST") && path.equals("/api/question-group/test-json")) ||
+
                         // PUBLIC FLASHCARD ENDPOINTS
                         (method.equals("GET") && path.equals("/api/flashcards/sets")) ||
                         (method.equals("GET") && path.equals("/api/flashcards/free")) ||

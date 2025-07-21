@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
-import { login } from '../../services/auth';
 
 const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +20,12 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginWithUserData } = useAuth();
+  const { login, logout } = useAuth(); // Use AuthContext login instead of service
+
+  const clearSession = () => {
+    logout();
+    toast.success('Session cleared! You can now login with a different account.');
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -29,27 +33,24 @@ const LoginPage: React.FC = () => {
       [e.target.name]: e.target.value,
     });
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Gọi API login, lấy user và token từ backend
-      const result = await login(formData);
-
-      // Check if result has user and accessToken properties
-      if (result && result.user && result.accessToken) {
-        // Lưu user và token vào context
-        loginWithUserData(result.user, result.accessToken);
-        // Lưu token vào localStorage
-        toast.success('Login successful!');
-        const redirectTo = location.state?.from || '/';
-        navigate(redirectTo, { replace: true });
-      } else {
-        throw new Error('Invalid login response');
-      }
+      console.log('🔑 LoginPage: Attempting login...', formData.username);
+      
+      // Use AuthContext login method
+      await login(formData.username, formData.password);
+      
+      toast.success('Login successful!');
+      const redirectTo = location.state?.from || '/dashboard';
+      navigate(redirectTo, { replace: true });
+      
     } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      console.error('❌ Login error:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +142,16 @@ const LoginPage: React.FC = () => {
               ) : (
                 'Sign in'
               )}
+            </button>
+          </div>
+
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={clearSession}
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              🔄 Clear Session & Login with Different Account
             </button>
           </div>
         </form>

@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.leenglish.toeic.service.UserService;
-import com.leenglish.toeic.service.ExerciseService;
+import com.leenglish.toeic.service.ExerciseService; // ENABLED
 import com.leenglish.toeic.service.LessonService;
 
 import java.util.HashMap;
@@ -19,26 +19,25 @@ public class AdminController {
 
     @Autowired
     private UserService userService;
-
+    
     @Autowired
-    private ExerciseService exerciseService;
-
+    private ExerciseService exerciseService; // ENABLED
+    
     @Autowired
-    private LessonService lessonService;
-
-    @GetMapping("/dashboard")
+    private LessonService lessonService;    @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getDashboardData() {
         Map<String, Object> response = new HashMap<>();
 
         try {
             // Get statistics for admin dashboard
             long totalUsers = userService.getTotalUserCount();
-            long totalExercises = exerciseService.getTotalExerciseCount();
+            long totalExercises = exerciseService.getTotalExerciseCount(); // ENABLED
             long totalLessons = lessonService.getTotalLessonCount();
 
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalUsers", totalUsers);
-            stats.put("totalExercises", totalExercises);
+            stats.put("totalExercises", totalExercises); // ENABLED
+            stats.put("totalLessons", totalLessons);
             stats.put("totalLessons", totalLessons);
 
             response.put("success", true);

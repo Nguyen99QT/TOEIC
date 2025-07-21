@@ -21,6 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
 import apiClient from '../services/apiClient';
 import dashboardService, { DashboardStats, RecentActivity } from '../services/dashboard';
+import CollaboratorDashboard from './CollaboratorDashboard';
 
 const DashboardPage: React.FC = () => {
   const { currentUser, isAuthenticated } = useAuth();
@@ -48,6 +49,16 @@ const DashboardPage: React.FC = () => {
 
     fetchDashboardData();
   }, [isAuthenticated]);
+
+  // Show collaborator dashboard for COLLABORATOR role
+  if (currentUser?.role === 'COLLABORATOR') {
+    return (
+      <div className="space-y-6">
+        <Breadcrumb items={breadcrumbItems} />
+        <CollaboratorDashboard />
+      </div>
+    );
+  }
 
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();

@@ -5,8 +5,7 @@ class ExerciseCard extends StatelessWidget {
   final Exercise exercise;
   final VoidCallback onTap;
 
-  const ExerciseCard({Key? key, required this.exercise, required this.onTap})
-    : super(key: key);
+  const ExerciseCard({super.key, required this.exercise, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +145,7 @@ class ExerciseCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${_formatTime(exercise.timeLimitSeconds!)}',
+                              _formatTime(exercise.timeLimitSeconds!),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,

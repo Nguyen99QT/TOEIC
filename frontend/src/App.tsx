@@ -44,6 +44,30 @@ import SettingsPage from './pages/user/SettingsPage';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import ProtectedRoute from './contexts/ProtectRoute';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';
+import ModernAddQuestionPage from './pages/questions/ModernAddQuestionPage';
+import AddQuestionGroupForm from './components/Nguyen/AddQuestionGroupForm';
+import TestAddQuestion from './components/debug/TestAddQuestion';
+import TestToast from './components/Nguyen/TestToast';
+import MyQuestionsPage from './pages/questions/MyQuestionsPage';
+import SimpleMyQuestionsPage from './pages/questions/SimpleMyQuestionsPage';
+import ViewQuestionGroupPage from './pages/questions/ViewQuestionGroupPage';
+import EditQuestionGroupPage from './pages/questions/EditQuestionGroupPage';
+import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestionPage';
+import TokenDebugger from './components/Nguyen/TokenDebugger';
+import QuickLogin from './components/Nguyen/QuickLogin';
+import TOEICQuestionGroupForm from './components/Nguyen/TOEICQuestionGroupForm';
+import TOEICDemo from './components/Nguyen/TOEICDemo';
+
+// Nguyen's Test Pages
+import { TestListPage } from './pages/Nguyen';
+import TestSelectionPage from './components/TestSelectionPage';
+import Test from './components/Nguyen/Test';
+import SimpleTest from './components/Nguyen/SimpleTest';
+import SimpleTOEICTest from './components/Nguyen/SimpleTOEICTest';
+import DebugTOEIC from './components/Nguyen/DebugTOEIC';
+import AudioTest from './components/Nguyen/AudioTest';
+import TestHistoryPage from './pages/test-results/TestHistoryPage';
+import TestResultDetailPage from './pages/test-results/TestResultDetailPage';
 
 // ========== MAIN APP COMPONENT ==========
 
@@ -94,7 +118,12 @@ const AppContent: React.FC = () => {
 
   // ========== MAIN RENDER ========== 
   return (
-    <Router>
+    <Router
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
       <div className="App">
         {/* Global Toast Notifications */}
         <Toaster
@@ -114,6 +143,17 @@ const AppContent: React.FC = () => {
           <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/upgrade-premium" element={<UpgradePremiumPage />} />
+          
+          {/* ========== PUBLIC TEST ROUTE FOR DEBUGGING ========== */}
+          <Route path="/test-selection" element={<TestSelectionPage />} />
+          <Route path="/test/:testId" element={<SimpleTOEICTest />} />
+          <Route path="/test-debug/:testId" element={<SimpleTest />} />
+          <Route path="/test-full/:testId" element={<Test />} />
+          <Route path="/toeic-test/:testId" element={<SimpleTOEICTest />} />
+          <Route path="/simple-toeic-test/:testId" element={<SimpleTOEICTest />} />
+          <Route path="/debug-toeic/:testId" element={<DebugTOEIC />} />
+          <Route path="/audio-test" element={<AudioTest />} />
+          
           {/* ========== PROTECTED ROUTES ========== */}
           <Route path="/dashboard" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
@@ -127,9 +167,37 @@ const AppContent: React.FC = () => {
           <Route path="/flashcards/study/:setId" element={<ProtectedRoute><Layout><FlashcardStudyPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons/:lessonId/exercises/:exerciseId/questions" element={<ProtectedRoute><Layout><QuestionPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons/:lessonId/exercises/:exerciseId" element={<ProtectedRoute><Layout><ExerciseQuestionsPage /></Layout></ProtectedRoute>} />
-          {/* Admin Routes */}
+          
+         {/* ========== TEST ROUTES BY NGUYEN ========== */}
+          <Route path="/tests" element={<ProtectedRoute><Layout><TestListPage /></Layout></ProtectedRoute>} />
+          <Route path="/tests/:testId" element={<ProtectedRoute><Layout><Test /></Layout></ProtectedRoute>} />
+          <Route path="/tests/demo" element={<ProtectedRoute><Layout><Test /></Layout></ProtectedRoute>} />
+          
+          {/* ========== TEST RESULTS AND HISTORY ========== */}
+          <Route path="/test-history" element={<ProtectedRoute><Layout><TestHistoryPage /></Layout></ProtectedRoute>} />
+          <Route path="/test-results/:resultId" element={<ProtectedRoute><Layout><TestResultDetailPage /></Layout></ProtectedRoute>} />
+          <Route path="/results" element={<ProtectedRoute><Layout><TestHistoryPage /></Layout></ProtectedRoute>} />
+          
+          {/* ========== ADMIN ROUTES ========== */}
           <Route path="/admin/users" element={<ProtectedRoute><Layout><AdminUsersPage /></Layout></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute><Layout><AdminContentPage /></Layout></ProtectedRoute>} />
+          
+          {/* ========== QUESTION MANAGEMENT ROUTES ========== */}
+          <Route path="/add/add-questions" element={<ProtectedRoute><Layout><ModernAddQuestionPage /></Layout></ProtectedRoute>} />
+          <Route path="/add/add-group-questions" element={<ProtectedRoute><Layout><AddQuestionGroupForm /></Layout></ProtectedRoute>} />
+          <Route path="/add/toeic-group" element={<ProtectedRoute><Layout><TOEICQuestionGroupForm /></Layout></ProtectedRoute>} />
+          <Route path="/demo/toeic" element={<Layout><TOEICDemo /></Layout>} />
+          <Route path="/questions/my" element={<ProtectedRoute><Layout><MyQuestionsPage /></Layout></ProtectedRoute>} />
+          <Route path="/questions/simple" element={<ProtectedRoute><Layout><SimpleMyQuestionsPage /></Layout></ProtectedRoute>} />
+          <Route path="/questions/view/:groupId" element={<ProtectedRoute><Layout><ViewQuestionGroupPage /></Layout></ProtectedRoute>} />
+          <Route path="/questions/edit/:groupId" element={<ProtectedRoute><Layout><EditQuestionGroupPage /></Layout></ProtectedRoute>} />
+          <Route path="/questions/edit-individual/:id" element={<EditIndividualQuestionPage />} />
+          <Route path="/debug/token" element={<Layout><TokenDebugger /></Layout>} />
+          <Route path="/debug/quick-login" element={<Layout><QuickLogin /></Layout>} />
+          <Route path="/debug/test-add" element={<ProtectedRoute><Layout><TestAddQuestion /></Layout></ProtectedRoute>} />
+          <Route path="/debug/test-toast" element={<ProtectedRoute><Layout><TestToast /></Layout></ProtectedRoute>} />
+          
+          
           {/* 404 Route */}
           <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
         </Routes>

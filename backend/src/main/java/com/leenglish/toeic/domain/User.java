@@ -29,7 +29,7 @@ import jakarta.validation.constraints.Size;
  */
 
 @Entity
-@Table(name = "users", indexes = {
+@Table(name = "user", indexes = {
         @Index(name = "idx_username", columnList = "username"),
         @Index(name = "idx_email", columnList = "email"),
         @Index(name = "idx_role", columnList = "role")
@@ -38,6 +38,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @NotBlank(message = "Username is required")

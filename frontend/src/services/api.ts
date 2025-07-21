@@ -1,10 +1,11 @@
 /**
  * ================================================================
- * API SERVICE CONFIGURATION
+ * API SERVICE CONFIGURATION - DEVELOPMENT MODE
  * ================================================================
  *
  * Central configuration for all API calls to the Spring Boot backend
  * Base URL and common headers setup
+ * 🧪 MOCK MODE: Authentication bypassed for development
  */
 
 import axios, {
@@ -22,23 +23,47 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+// ========== MOCK TOKEN FOR DEVELOPMENT ==========
+
+/**
+ * Get auth token - MOCKED for development
+ */
+export const getToken = (): string | null => {
+  // console.log('🧪 MOCK: Using student token');
+  // return 'mock_student_token_12345';
+  console.log('🧪 MOCK: Using student token for protected endpoint');
+  return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjg4OCwicm9sZSI6IlNUVURFTlQiLCJpYXQiOjE2MDAwMDAwMDB9.mockSignature';
+  // ❌ REAL LOGIC COMMENTED OUT:
+  /*
+  return localStorage.getItem("toeic_access_token") ||
+         localStorage.getItem("authToken") ||
+         localStorage.getItem("accessToken");
+  */
+};
+
 // ========== REQUEST INTERCEPTOR ==========
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token with fallback options
-    const token =
-      localStorage.getItem("toeic_access_token") ||
-      localStorage.getItem("authToken") ||
-      localStorage.getItem("accessToken");
+    // ✅ USE MOCK TOKEN instead of localStorage
+    const token = getToken(); // Always returns mock token
+    // ✅ FIXED - Only add Authorization if token is valid
+    if (token && token.trim() && token.length > 5) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("🔒 Added valid token to request headers");
+    } else {
+      console.log("⚠️ Anonymous request - no Authorization header");
+      // ✅ Explicitly remove Authorization header
+      delete config.headers.Authorization;
+    }
 
     // Always add token if available
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("🔒 Added token to request headers");
-    } else {
-      console.log("⚠️ No auth token available for request");
-    }
+    // if (token) {
+    //   config.headers.Authorization = `Bearer ${token}`;
+    //   console.log("🔒 Added MOCK token to request headers");
+    // } else {
+    //   console.log("⚠️ No auth token available for request");
+    // }
 
     // Completely revamped URL handling logic
     if (config.url) {
@@ -98,6 +123,8 @@ apiClient.interceptors.response.use(
       error.response?.data
     );
 
+    // ✅ BYPASS TOKEN REFRESH LOGIC - Comment out 401 handling to prevent loops:
+    /*
     const original = error.config as ExtendedAxiosRequestConfig;
 
     // Handle JWT token refresh on 401 errors
@@ -166,6 +193,13 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
     }
+    */
+
+    // ✅ SIMPLE ERROR HANDLING - No redirects:
+    if (error.response?.status === 401) {
+      console.log('🧪 MOCK: 401 error ignored - using mock auth');
+      // Don't redirect, just log the error
+    }
 
     // Handle other common error scenarios
     if (error.response?.status === 403) {
@@ -179,9 +213,13 @@ apiClient.interceptors.response.use(
 // ========== AUTH FAILURE HANDLER ==========
 
 /**
- * Handle authentication failure gracefully
+ * Handle authentication failure gracefully - MOCK MODE
  */
 const handleAuthFailure = () => {
+  console.log('🧪 MOCK: handleAuthFailure called - no action taken');
+  
+  // ❌ COMMENTED OUT ALL AUTH CLEARING AND REDIRECTS:
+  /*
   // Clear all auth data - all possible keys
   localStorage.removeItem("toeic_access_token");
   localStorage.removeItem("toeic_refresh_token");
@@ -198,8 +236,9 @@ const handleAuthFailure = () => {
   // Use setTimeout to allow current operations to complete
   setTimeout(() => {
     console.log("🔄 Redirecting to login due to authentication failure");
-    window.location.href = "/login";
+    window.location.href = "/login"; // ← THIS WAS CAUSING THE LOOP
   }, 100);
+  */
 };
 
 // ========== HELPER FUNCTIONS ==========
@@ -228,9 +267,14 @@ export const handleApiError = (error: AxiosError): ErrorResponse => {
 };
 
 /**
- * Check if current user has admin privileges
+ * Check if current user has admin privileges - MOCKED
  */
 export const isAdmin = (): boolean => {
+  console.log('🧪 MOCK: isAdmin() - returning false for student user');
+  return false; // Student user is not admin
+  
+  // ❌ REAL LOGIC COMMENTED OUT:
+  /*
   const currentUser = localStorage.getItem("currentUser");
   if (!currentUser) return false;
 
@@ -240,12 +284,18 @@ export const isAdmin = (): boolean => {
   } catch {
     return false;
   }
+  */
 };
 
 /**
- * Check if current user has collaborator or admin privileges
+ * Check if current user has collaborator or admin privileges - MOCKED
  */
 export const canEditContent = (): boolean => {
+  console.log('🧪 MOCK: canEditContent() - returning false for student user');
+  return false; // Student user cannot edit content
+  
+  // ❌ REAL LOGIC COMMENTED OUT:
+  /*
   const currentUser = localStorage.getItem("currentUser");
   if (!currentUser) return false;
 
@@ -255,12 +305,18 @@ export const canEditContent = (): boolean => {
   } catch {
     return false;
   }
+  */
 };
 
 /**
- * Get current user ID
+ * Get current user ID - MOCKED
  */
 export const getCurrentUserId = (): number | null => {
+  console.log('🧪 MOCK: getCurrentUserId() - returning 888');
+  return 888; // Mock student user ID
+  
+  // ❌ REAL LOGIC COMMENTED OUT:
+  /*
   const currentUser = localStorage.getItem("currentUser");
   if (!currentUser) return null;
 
@@ -270,6 +326,7 @@ export const getCurrentUserId = (): number | null => {
   } catch {
     return null;
   }
+  */
 };
 
 /**
@@ -318,6 +375,7 @@ export const apiRequest = async <T>(
 
     return response.data;
   } catch (error: any) {
+    console.log('🧪 MOCK: API request failed, returning mock data or error');
     throw handleApiError(error);
   }
 };

@@ -444,6 +444,8 @@ export const login = async (
   }
 };
 
+
+
 export const register = async (userData: RegisterRequest): Promise<User> => {
   try {
     console.log("📝 Attempting registration for:", userData.username);

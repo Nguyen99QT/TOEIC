@@ -66,8 +66,7 @@
 			"type": "shell",
 			"command": "npm",
 			"args": [
-				"run",
-				"dev"
+				"start"
 			],
 			"group": "build",
 			"isBackground": true,

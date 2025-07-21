@@ -8,10 +8,12 @@
 
 import {
   AcademicCapIcon,
+  ArrowRightOnRectangleIcon,
   BookOpenIcon,
   ChartBarIcon,
   CogIcon,
   CreditCardIcon,
+  DocumentTextIcon,
   HomeIcon,
   UserGroupIcon,
   XMarkIcon
@@ -20,6 +22,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { User } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
   currentUser: User | null;
@@ -35,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onMenuClick
 }) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   if (!currentUser) {
     return null;
@@ -44,34 +48,55 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
     { name: 'Exercises', href: '/exercises', icon: AcademicCapIcon },
+    { name: 'Test History', href: '/test-history', icon: DocumentTextIcon },
     { name: 'Flashcards', href: '/flashcards', icon: CreditCardIcon },
   ];
 
   const adminNavigation = [
     { name: 'User Management', href: '/admin/users', icon: UserGroupIcon },
     { name: 'Content Management', href: '/admin/content', icon: ChartBarIcon },
+    { name: 'Add Questions', href: '/add/add-questions', icon: AcademicCapIcon },
+    { name: 'Add Question Groups', href: '/add/toeic-group', icon: AcademicCapIcon },
+  ];
+
+  const collaboratorNavigation = [
+    { name: 'Add Questions', href: '/add/add-questions', icon: AcademicCapIcon },
+    { name: 'Add Question Groups', href: '/add/toeic-group', icon: AcademicCapIcon },
+    { name: 'My Questions', href: '/questions/my', icon: ChartBarIcon },
   ];
 
   const bottomNavigation = [
     { name: 'Settings', href: '/settings', icon: CogIcon },
+    { name: 'Logout', href: '#', icon: ArrowRightOnRectangleIcon, action: 'logout' },
   ];
 
   const NavItem: React.FC<{
-    item: { name: string; href: string; icon: React.ElementType };
+    item: { name: string; href: string; icon: React.ElementType; action?: string };
     onClick?: () => void;
   }> = ({ item, onClick }) => {
     const isActive = location.pathname === item.href;
     const Icon = item.icon;
 
+    const handleClick = (e: React.MouseEvent) => {
+      if (item.action === 'logout') {
+        e.preventDefault();
+        logout();
+        if (onClick) onClick();
+        return;
+      }
+      if (onClick) onClick();
+    };
+
     return (
       <Link
         to={item.href}
-        onClick={onClick}
+        onClick={handleClick}
         className={clsx(
           'group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors',
           isActive
             ? 'bg-primary-100 text-primary-900 border-r-2 border-primary-500'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+          item.action === 'logout' && 'hover:bg-red-50 hover:text-red-700'
         )}
       >
         <Icon
@@ -79,7 +104,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             'mr-3 flex-shrink-0 h-6 w-6 transition-colors',
             isActive
               ? 'text-primary-500'
-              : 'text-gray-400 group-hover:text-gray-500'
+              : 'text-gray-400 group-hover:text-gray-500',
+            item.action === 'logout' && 'group-hover:text-red-500'
           )}
         />
         {item.name}
@@ -164,16 +190,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
               ))}
 
-              {/* Admin section */}
-              {currentUser.role === 'ADMIN' && (
+              {/* Admin/Collaborator section */}
+              {(currentUser.role === 'ADMIN' || currentUser.role === 'COLLABORATOR') && (
                 <>
                   <div className="pt-6">
                     <div className="px-2 mb-2">
                       <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Administration
+                        {currentUser.role === 'ADMIN' ? 'Administration' : 'Content Management'}
                       </h3>
                     </div>
-                    {adminNavigation.map((item) => (
+                    {(currentUser.role === 'ADMIN' ? adminNavigation : collaboratorNavigation).map((item) => (
                       <NavItem
                         key={item.name}
                         item={item}

@@ -23,12 +23,16 @@ type ProtectedRouteProps = {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     const { isAuthenticated, loading } = useAuth();
-    if (loading) return <Spinner />;
-    return isAuthenticated ? (
-        children
-    ) : (
-        <Navigate to="/login" replace />
-    );
+    
+    if (loading) {
+        return <Spinner />;
+    }
+    
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    return <>{children}</>;
 };
 
 export default ProtectedRoute;

@@ -10,6 +10,9 @@
 import React, { Suspense, useEffect } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 
+import BlogList from './components/blog/BlogList';
+import BlogDetail from './components/blog/BlogDetail';
+import CreateBlog from './components/blog/CreateBlog';
 // Authentication
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -53,6 +56,8 @@ import AdminRoute from './components/auth/AdminRoute';
 
 // Enhanced UI Components
 import { ToastProvider } from './components/ui/SimpleToast';
+import PaymentPage from './components/blog/PayPalButton'; // Thêm dòng này
+import MembershipPlans from './components/blog/MembershipPlans'; // Import MembershipPlans
 
 // ========== MAIN APP COMPONENT ==========
 
@@ -109,7 +114,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <Router>
+    <>
       <LocationLogger />
       <div className="App">
         <Suspense fallback={<LoadingFallback />}>
@@ -180,6 +185,32 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
+            <Route
+              path="/blog/:id"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem Blog"
+                  promptMessage="Bạn cần phải đăng nhập để xem chi tiết bài viết Blog"
+                >
+                  <Layout>
+                    <BlogDetail />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create-blog"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để đăng bài Blog"
+                  promptMessage="Bạn cần phải đăng nhập để đăng bài viết Blog mới"
+                >
+                  <Layout>
+                    <CreateBlog />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/pricing" element={
               <Layout>
                 <PricingPage />
@@ -233,7 +264,32 @@ const AppContent: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/blogs"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem Blog"
+                  promptMessage="Bạn cần phải đăng nhập để xem các bài viết Blog"
+                >
+                  <Layout>
+                    <BlogList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/blog/:id"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem Blog"
+                  promptMessage="Bạn cần phải đăng nhập để xem chi tiết bài viết Blog"
+                >
+                  <Layout>
+                    <BlogDetail />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             {/* Exercises Routes */}
             <Route
               path="/lessons/:lessonId/exercises"
@@ -474,10 +530,9 @@ const AppContent: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-
         <TokenRefreshIndicator />
       </div>
-    </Router>
+    </>
   );
 };
 
@@ -485,7 +540,14 @@ const App: React.FC = () => {
   return (
     <ToastProvider>
       <AuthProvider>
-        <AppContent />
+        <Router>
+          <Routes>
+            {/* Existing routes */}
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/membership" element={<MembershipPlans />} /> {/* Route cho MembershipPlans */}
+          </Routes>
+          <AppContent />
+        </Router>
       </AuthProvider>
     </ToastProvider>
   );

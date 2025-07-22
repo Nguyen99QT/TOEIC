@@ -29,6 +29,13 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <Button
+            variant="outline"
+            className="text-blue-600 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+            onClick={() => window.location.href = '/blogs'}
+          >
+            📰 Blog
+          </Button>
+          <Button
             variant="ghost"
             size="icon"
             className="relative text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-blue-400 dark:hover:bg-blue-950/50 transition-all duration-200"

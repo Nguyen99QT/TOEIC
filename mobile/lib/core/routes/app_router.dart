@@ -13,6 +13,10 @@ import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
 import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
 import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_list_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_history_page.dart';
 import 'package:toeic_mobile/shared/widgets/layout/main_layout.dart';
 import 'package:toeic_mobile/shared/widgets/layout/auth_layout.dart' as auth;
 
@@ -139,6 +143,44 @@ class AppRouter {
             child: FlashcardStudyPage(
               flashcardSetId: state.pathParameters['id']!,
             ),
+          ),
+        ),
+      ),
+
+      // Tests routes
+      GoRoute(
+        path: '/tests',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: TestListPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test/:id',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestPage(
+              testId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-result/:submissionId',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestResultPage(
+              submissionId: int.parse(state.pathParameters['submissionId']!),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-history',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: TestHistoryPage(),
           ),
         ),
       ),

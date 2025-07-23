@@ -90,7 +90,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -157,7 +157,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
                   _selectedFilter = filter;
                 });
               },
-              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+              selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
               checkmarkColor: Theme.of(context).primaryColor,
             ),
           );
@@ -188,7 +188,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: exercise['color'].withOpacity(0.1),
+                      color: exercise['color'].withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -230,7 +230,7 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getDifficultyColor(exercise['difficulty'])
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

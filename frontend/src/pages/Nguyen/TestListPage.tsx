@@ -8,9 +8,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { testService, Test, TestGenerateRequest } from '../../services/tests';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useAuth } from '../../contexts/AuthContext';
+import { Test, testService } from '../../services/tests';
+import { debugAuthState } from '../../utils/debugAuth';
 
 const TestListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,28 +21,47 @@ const TestListPage: React.FC = () => {
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-
-  // Create test form state
-  const [newTest, setNewTest] = useState({
-    title: '',
-    description: '',
-    partQuestionCount: {
-      1: 6,   // Part 1: Photographs
-      2: 25,  // Part 2: Question-Response  
-      3: 39,  // Part 3: Conversations
-      4: 30,  // Part 4: Talks
-      5: 30,  // Part 5: Incomplete Sentences
-      6: 16,  // Part 6: Text Completion
-      7: 54   // Part 7: Reading Comprehension
-    }
-  });
 
   // Load tests
   useEffect(() => {
     loadTests();
+    // Debug auth state when component mounts
+    setTimeout(() => debugAuthState(), 1000);
   }, []);
+
+  // Check if user can create quick test
+  const canCreateQuickTest = () => {
+    if (!currentUser) {
+      console.log('❌ canCreateQuickTest: No currentUser');
+      return false;
+    }
+
+    const role = currentUser.role?.toLowerCase();
+    const membershipType = currentUser.membershipType?.toLowerCase();
+
+    console.log('🔍 canCreateQuickTest debug:', {
+      username: currentUser.username,
+      role: currentUser.role,
+      roleLower: role,
+      membershipType: currentUser.membershipType,
+      membershipTypeLower: membershipType,
+      isAdmin: role === 'admin',
+      isCollaborator: role === 'collaborator',
+      isVip: membershipType === 'vip',
+      isPremium: membershipType === 'premium'
+    });
+
+    const canCreate = (
+      role === 'admin' ||
+      role === 'collaborator' ||
+      membershipType === 'vip' ||
+      membershipType === 'premium'
+    );
+
+    console.log('🔍 Final permission result:', canCreate);
+    return canCreate;
+  };
 
   const loadTests = async () => {
     try {
@@ -57,133 +77,83 @@ const TestListPage: React.FC = () => {
     }
   };
 
-  // Handle create test
-  const handleCreateTest = async () => {
-    if (!currentUser) {
-      alert("Vui lòng đăng nhập để tạo bài thi");
-      return;
-    }
-
-    if (!newTest.title.trim()) {
-      alert("Vui lòng nhập tên bài thi");
-      return;
-    }
-
-    try {
-      setCreating(true);
-      
-      const request: TestGenerateRequest = {
-        userId: currentUser.id,
-        title: newTest.title,
-        description: newTest.description,
-        partQuestionCount: newTest.partQuestionCount
-      };
-
-      const result = await testService.generateTest(request);
-      
-      // Reload tests
-      await loadTests();
-      
-      // Close modal and reset form
-      setShowCreateModal(false);
-      setNewTest({
-        title: '',
-        description: '',
-        partQuestionCount: {
-          1: 6, 2: 25, 3: 39, 4: 30, 5: 30, 6: 16, 7: 54
-        }
-      });
-
-      alert("Tạo bài thi thành công!");
-      
-      // Navigate to the new test
-      navigate(`/tests/${result.testId}`);
-    } catch (err) {
-      console.error("Error creating test:", err);
-      alert("Có lỗi xảy ra khi tạo bài thi. Vui lòng thử lại.");
-    } finally {
-      setCreating(false);
-    }
-  };
-
   // Handle generate quick test
   const handleGenerateQuickTest = async () => {
+    console.log('🚀 handleGenerateQuickTest called');
+
+    // Check permissions first
+    if (!canCreateQuickTest()) {
+      const message = currentUser
+        ? `Tính năng tạo test nhanh chỉ dành cho Admin/Collaborator hoặc thành viên VIP/Premium. Hiện tại: Role=${currentUser.role}, MembershipType=${currentUser.membershipType}`
+        : "Vui lòng đăng nhập để sử dụng tính năng này!";
+      setError(message);
+      return;
+    }
+
     try {
       setCreating(true);
+      setError(null); // Clear previous errors
+      console.log('🎯 Calling testService.generateQuickTest()...');
+
       const result = await testService.generateQuickTest();
-      
+      console.log('✅ Quick test generated successfully:', result);
+
       // Reload tests to show the new one
+      console.log('🔄 Reloading tests...');
       await loadTests();
-      
-      alert("Tạo test nhanh thành công!");
-      
+
       // Navigate to the new test
+      console.log(`🎯 Navigating to test ${result.testId}...`);
       navigate(`/tests/${result.testId}`);
-    } catch (err) {
-      console.error("Error generating quick test:", err);
-      alert("Có lỗi xảy ra khi tạo test nhanh. Vui lòng thử lại.");
+    } catch (err: any) {
+      console.error('❌ Error generating quick test:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Không thể tạo bài thi. Vui lòng thử lại.";
+      setError(`Lỗi tạo test: ${errorMessage}`);
     } finally {
       setCreating(false);
     }
   };
 
-  // Handle take test
+  // Navigate to take test
   const handleTakeTest = (testId: number) => {
     navigate(`/tests/${testId}`);
   };
 
-  // Handle start demo test
-  const handleStartDemoTest = () => {
-    // Navigate to demo test with mock questions
-    navigate('/tests/demo');
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Bài Thi TOEIC
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            📋 Danh Sách Bài Thi TOEIC
           </h1>
-          <p className="text-gray-600">
-            Luyện tập với các bài thi TOEIC chuẩn quốc tế
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Chọn bài thi phù hợp với trình độ của bạn. Mỗi bài thi được thiết kế theo chuẩn TOEIC quốc tế.
           </p>
         </div>
 
-        {/* Action buttons */}
-        <div className="mb-8 flex flex-wrap gap-4">
+        {/* Quick Actions */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={handleStartDemoTest}
+            onClick={() => navigate('/tests/1')}
             className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-medium"
           >
-            🚀 Làm bài thi demo
+            🎯 Bài thi demo
           </button>
 
           <button
             onClick={handleGenerateQuickTest}
-            disabled={creating}
-            className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50"
+            disabled={creating || !currentUser}
+            className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!canCreateQuickTest() ? "Chỉ dành cho VIP/Premium/Cộng tác viên/Admin" : ""}
           >
             {creating ? "⏳ Đang tạo..." : "⚡ Tạo test nhanh"}
+            {!canCreateQuickTest() && currentUser && (
+              <span className="ml-1">🔒</span>
+            )}
           </button>
-          
-          {currentUser && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
-            >
-              ➕ Tạo bài thi tùy chỉnh
-            </button>
-          )}
         </div>
 
         {/* Error display */}
@@ -194,53 +164,24 @@ const TestListPage: React.FC = () => {
               onClick={loadTests}
               className="mt-2 text-red-700 hover:text-red-800 font-medium"
             >
-              Thử lại
+              🔄 Thử lại
             </button>
           </div>
         )}
 
-        {/* TOEIC Test Format Info */}
-        <div className="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-blue-800 mb-4">
-            📋 Cấu trúc bài thi TOEIC
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium text-blue-700 mb-2">🎧 LISTENING (45 phút)</h3>
-              <ul className="text-sm text-blue-600 space-y-1">
-                <li>Part 1: Photographs (6 câu)</li>
-                <li>Part 2: Question-Response (25 câu)</li>
-                <li>Part 3: Conversations (39 câu)</li>
-                <li>Part 4: Talks (30 câu)</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium text-blue-700 mb-2">📖 READING (75 phút)</h3>
-              <ul className="text-sm text-blue-600 space-y-1">
-                <li>Part 5: Incomplete Sentences (30 câu)</li>
-                <li>Part 6: Text Completion (16 câu)</li>
-                <li>Part 7: Reading Comprehension (54 câu)</li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-blue-600">
-            <strong>Tổng cộng:</strong> 200 câu hỏi trong 2 giờ (120 phút)
-          </div>
-        </div>
-
-        {/* Tests list */}
+        {/* Tests Grid */}
         {tests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-gray-400 text-6xl mb-4">📝</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <div className="text-6xl mb-4">📝</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
               Chưa có bài thi nào
             </h3>
-            <p className="text-gray-500 mb-4">
-              Hãy tạo bài thi đầu tiên hoặc thử bài thi demo
+            <p className="text-gray-500 mb-6">
+              Hãy tạo bài thi đầu tiên của bạn!
             </p>
             <button
-              onClick={handleStartDemoTest}
-              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+              onClick={() => navigate('/tests/1')}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
             >
               Làm bài thi demo
             </button>
@@ -264,92 +205,11 @@ const TestListPage: React.FC = () => {
                     onClick={() => handleTakeTest(test.testId)}
                     className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 font-medium"
                   >
-                    Làm bài thi
+                    📝 Làm bài thi
                   </button>
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Create Test Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h2 className="text-xl font-semibold mb-4">Tạo bài thi mới</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tên bài thi *
-                  </label>
-                  <input
-                    type="text"
-                    value={newTest.title}
-                    onChange={(e) => setNewTest(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập tên bài thi..."
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mô tả
-                  </label>
-                  <textarea
-                    value={newTest.description}
-                    onChange={(e) => setNewTest(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Mô tả về bài thi..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số câu hỏi theo Part
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {Object.entries(newTest.partQuestionCount).map(([part, count]) => (
-                      <div key={part} className="flex justify-between items-center">
-                        <span>Part {part}:</span>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={count}
-                          onChange={(e) => setNewTest(prev => ({
-                            ...prev,
-                            partQuestionCount: {
-                              ...prev.partQuestionCount,
-                              [parseInt(part)]: parseInt(e.target.value) || 0
-                            }
-                          }))}
-                          className="w-16 border border-gray-300 rounded px-2 py-1"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                  disabled={creating}
-                >
-                  Hủy
-                </button>
-                <button
-                  onClick={handleCreateTest}
-                  disabled={creating}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {creating ? 'Đang tạo...' : 'Tạo bài thi'}
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </div>

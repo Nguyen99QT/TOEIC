@@ -1,17 +1,22 @@
 import 'package:go_router/go_router.dart';
-import 'package:toeic_mobile/features/auth/pages/login_page.dart';
-import 'package:toeic_mobile/features/auth/pages/register_page.dart';
-import 'package:toeic_mobile/features/home/pages/home_page.dart';
-import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
-import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
-import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
-import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
-import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
-import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
-import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
-import 'package:toeic_mobile/core/services/auth_service.dart';
+import '../features/auth/pages/login_page.dart';
+import '../features/auth/pages/register_page.dart';
+import '../features/home/pages/home_page.dart';
+import '../features/dashboard/pages/dashboard_page.dart';
+import '../features/lessons/pages/lessons_page.dart';
+import '../features/lessons/pages/lesson_detail_page.dart';
+import '../features/exercises/pages/exercises_page.dart';
+import '../features/exercises/pages/exercise_detail_page.dart';
+import '../features/flashcards/pages/flashcards_page.dart';
+import '../features/flashcards/pages/flashcard_study_page.dart';
+import '../features/profile/pages/profile_page.dart';
+import '../features/settings/pages/settings_page.dart';
+import '../screens/tests_screen.dart';
+import '../screens/test_details_screen.dart';
+import '../screens/test_session_screen.dart';
+import '../screens/test_result_screen.dart';
+import '../screens/test_history_screen.dart';
+import '../core/services/auth_service.dart';
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -75,6 +80,35 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/settings',
       builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: '/tests',
+      builder: (context, state) => const TestsScreen(),
+    ),
+    GoRoute(
+      path: '/test-details/:testId',
+      builder: (context, state) {
+        final testId = int.parse(state.pathParameters['testId']!);
+        return TestDetailsScreen(testId: testId);
+      },
+    ),
+    GoRoute(
+      path: '/test-session/:testId',
+      builder: (context, state) {
+        final testId = int.parse(state.pathParameters['testId']!);
+        return TestSessionScreen(testId: testId);
+      },
+    ),
+    GoRoute(
+      path: '/test-result',
+      builder: (context, state) {
+        final result = state.extra as Map<String, dynamic>;
+        return TestResultScreen(result: result);
+      },
+    ),
+    GoRoute(
+      path: '/test-history',
+      builder: (context, state) => const TestHistoryScreen(),
     ),
   ],
   redirect: (context, state) {

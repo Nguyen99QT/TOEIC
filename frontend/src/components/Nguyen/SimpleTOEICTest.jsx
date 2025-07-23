@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import TestResultsReview from './TestResultsReview';
-import AudioDiagnostic from './AudioDiagnostic';
 
 const SimpleTOEICTest = () => {
   const { testId } = useParams();
@@ -718,11 +717,6 @@ const SimpleTOEICTest = () => {
               </h2>
               <p style={{color: '#6b7280', marginBottom: '15px'}}>{currentPart.description}</p>
               
-              {/* Temporary Audio Diagnostic Tool for Listening Parts */}
-              {isListeningPart(currentPart.partNumber) && (
-                <AudioDiagnostic testId={testId} partNumber={currentPart.partNumber} />
-              )}
-              
               {isListeningPart(currentPart.partNumber) && (
                 <div style={{backgroundColor: '#dbeafe', border: '1px solid #3b82f6', padding: '12px', borderRadius: '6px'}}>
                   <div style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
@@ -741,50 +735,6 @@ const SimpleTOEICTest = () => {
                       {currentAudioIndex < audioPlaylist.length && audioPlaylist[currentAudioIndex] && (
                         <div style={{marginTop: '4px', fontSize: '11px'}}>
                           🎵 Hiện tại: {audioPlaylist[currentAudioIndex].audioFileName || 'Unknown'}
-                        </div>
-                      )}
-                      
-                      {/* Manual audio controls for troubleshooting */}
-                      {isAudioPlaying && (
-                        <div style={{marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center'}}>
-                          <button
-                            onClick={() => {
-                              console.log('Manual skip requested');
-                              playAudioSequence(audioPlaylist, currentAudioIndex + 1, 0);
-                            }}
-                            style={{
-                              backgroundColor: '#f59e0b',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '4px 8px',
-                              fontSize: '11px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            ⏭️ Bỏ qua audio này
-                          </button>
-                          <button
-                            onClick={() => {
-                              console.log('Skip all audio requested');
-                              setIsAudioPlaying(false);
-                              setIsAudioCompleted(true);
-                              if (audioRef.current) {
-                                audioRef.current.pause();
-                              }
-                            }}
-                            style={{
-                              backgroundColor: '#dc2626',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '4px 8px',
-                              fontSize: '11px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            🚫 Bỏ qua tất cả
-                          </button>
                         </div>
                       )}
                     </div>

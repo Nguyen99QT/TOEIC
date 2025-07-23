@@ -80,7 +80,7 @@ class _LessonsPageState extends ConsumerState<LessonsPage> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -146,7 +146,7 @@ class _LessonsPageState extends ConsumerState<LessonsPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: lesson['color'].withOpacity(0.1),
+                      color: lesson['color'].withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -194,7 +194,7 @@ class _LessonsPageState extends ConsumerState<LessonsPage> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getDifficultyColor(lesson['difficulty'])
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

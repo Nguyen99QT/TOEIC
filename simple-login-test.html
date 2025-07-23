@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Login Test</title>
+  </head>
+  <body>
+    <h1>Simple Login Test</h1>
+    <button onclick="testLogin()">Login with teacher2</button>
+    <button onclick="checkStorage()">Check Storage</button>
+    <button onclick="clearAll()">Clear All</button>
+    <div id="output"></div>
+
+    <script>
+      async function testLogin() {
+        const output = document.getElementById("output");
+        output.innerHTML = "Testing login...";
+
+        try {
+          const response = await fetch("http://localhost:8080/api/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: "teacher2",
+              password: "password123",
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log("Login response:", data);
+
+          // Store with multiple keys for compatibility
+          const token = data.token || data.accessToken;
+
+          if (token) {
+            localStorage.setItem("toeic_access_token", token);
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("accessToken", token);
+
+            const userData = {
+              id: data.id,
+              username: data.username,
+              email: data.email,
+              role: data.roles[0].replace("ROLE_", ""),
+              fullName: data.username,
+              membershipType: "FREE",
+            };
+
+            localStorage.setItem(
+              "toeic_current_user",
+              JSON.stringify(userData)
+            );
+            localStorage.setItem("currentUser", JSON.stringify(userData));
+
+            output.innerHTML = `
+                        <p>✅ Login successful!</p>
+                        <p>Token stored with keys: toeic_access_token, authToken, accessToken</p>
+                        <p>User stored with keys: toeic_current_user, currentUser</p>
+                        <p>Username: ${data.username}</p>
+                        <p>Role: ${data.roles[0]}</p>
+                    `;
+          } else {
+            output.innerHTML = "❌ No token in response";
+          }
+        } catch (error) {
+          console.error("Login error:", error);
+          output.innerHTML = `❌ Login failed: ${error.message}`;
+        }
+      }
+
+      function checkStorage() {
+        const output = document.getElementById("output");
+        const keys = [
+          "toeic_access_token",
+          "authToken",
+          "accessToken",
+          "toeic_current_user",
+          "currentUser",
+        ];
+
+        let result = "<h3>Storage Check:</h3>";
+        keys.forEach((key) => {
+          const value = localStorage.getItem(key);
+          result += `<p><strong>${key}:</strong> ${
+            value ? "EXISTS (" + value.substring(0, 30) + "...)" : "MISSING"
+          }</p>`;
+        });
+
+        result += "<h3>All localStorage keys:</h3>";
+        result += "<p>" + Object.keys(localStorage).join(", ") + "</p>";
+
+        output.innerHTML = result;
+      }
+
+      function clearAll() {
+        localStorage.clear();
+        document.getElementById("output").innerHTML = "🧹 All storage cleared";
+      }
+    </script>
+  </body>
+</html>

@@ -69,6 +69,19 @@ public class JwtUtils {
 
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        
+        // Nếu là UserDetailsImpl, thêm thông tin bổ sung
+        if (userDetails instanceof UserDetailsImpl) {
+            UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+            claims.put("userId", userDetailsImpl.getId());
+            claims.put("email", userDetailsImpl.getEmail());
+        }
+        
+        // Thêm roles
+        claims.put("roles", userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
+                
         return createToken(claims, userDetails.getUsername());
     }
 
@@ -93,15 +106,31 @@ public class JwtUtils {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try {
+            final String username = extractUsername(token);
+            boolean isValid = (username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+            
+            System.out.println("JWT Validation Details:");
+            System.out.println("- Token username: " + username);
+            System.out.println("- UserDetails username: " + userDetails.getUsername());
+            System.out.println("- Username match: " + (username != null && username.equals(userDetails.getUsername())));
+            System.out.println("- Token expired: " + isTokenExpired(token));
+            System.out.println("- Final validation result: " + isValid);
+            
+            return isValid;
+        } catch (Exception e) {
+            System.err.println("JWT validation error: " + e.getMessage());
+            return false;
+        }
     }
 
     public String generateToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
         Map<String, Object> claims = new HashMap<>();
 
-        // Thêm roles vào claims
+        // Thêm thông tin quan trọng vào claims
+        claims.put("userId", userPrincipal.getId());
+        claims.put("email", userPrincipal.getEmail());
         claims.put("roles", userPrincipal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));

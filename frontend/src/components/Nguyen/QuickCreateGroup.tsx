@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getToken } from '../../services/auth';
 
 interface QuickCreateProps {
   onSuccess?: () => void;
@@ -23,11 +24,18 @@ const QuickCreateGroup: React.FC<QuickCreateProps> = ({ onSuccess }) => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
-        alert('No authentication token found');
+        alert('No authentication token found. Please login again.');
         return;
       }
+
+      console.log('🚀 Creating question group with data:', {
+        groupName,
+        description,
+        partId,
+        groupType
+      });
 
       const response = await fetch('http://localhost:8080/api/question-group', {
         method: 'POST',
@@ -43,19 +51,44 @@ const QuickCreateGroup: React.FC<QuickCreateProps> = ({ onSuccess }) => {
         }),
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        console.error('❌ Error status:', response.status);
+        console.error('❌ Error headers:', Object.fromEntries(response.headers.entries()));
+
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(`Server error: ${errorJson.message || errorText}`);
+        } catch (parseError) {
+          throw new Error(`HTTP ${response.status}: ${errorText || 'Unknown server error'}`);
+        }
       }
 
-      await response.json();
+      const result = await response.json();
+      console.log('✅ Group created successfully:', result);
       alert('Question group created successfully!');
       setShowForm(false);
       setGroupName('');
       setDescription('');
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error('Error creating group:', error);
-      alert('Failed to create group: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('❌ Error creating group:', error);
+
+      // Enhanced error logging
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.error('❌ Network error: Cannot connect to backend');
+        alert('Network error: Cannot connect to server. Please check if backend is running.');
+      } else if (error instanceof Error) {
+        console.error('❌ Error message:', error.message);
+        alert('Failed to create group: ' + error.message);
+      } else {
+        console.error('❌ Unknown error type:', typeof error, error);
+        alert('Failed to create group: Unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }

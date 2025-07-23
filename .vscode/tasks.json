@@ -16,6 +16,23 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "Start Backend with Hot Reload - DISABLED",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"Hot reload is disabled. Use 'Start Backend Server' instead."
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"isBackground": false,
+			"options": {
+				"cwd": "${workspaceFolder}/backend"
+			},
+			"problemMatcher": []
+		},
+		{
 			"label": "Start Backend Server",
 			"type": "shell",
 			"command": "mvn",

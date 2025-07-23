@@ -259,44 +259,50 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberPassword,
-                      onChanged: (value) {
-                        setState(() => _rememberPassword = value ?? false);
-                      },
-                      activeColor: const Color(0xFF667eea),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
+                Flexible(
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _rememberPassword,
+                        onChanged: (value) {
+                          setState(() => _rememberPassword = value ?? false);
+                        },
+                        activeColor: const Color(0xFF667eea),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
-                    ),
-                    const Text(
-                      'Remember me',
+                      const Flexible(
+                        child: Text(
+                          'Remember me',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF4A5568),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: TextButton(
+                    onPressed: () {
+                      // TODO: Implement forgot password
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Forgot password feature coming soon!'),
+                          backgroundColor: Color(0xFF667eea),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Forgot your password?',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF4A5568),
+                        color: Color(0xFF667eea),
                         fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () {
-                    // TODO: Implement forgot password
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Forgot password feature coming soon!'),
-                        backgroundColor: Color(0xFF667eea),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Forgot your password?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF667eea),
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),

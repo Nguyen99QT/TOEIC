@@ -571,12 +571,28 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         try {
-            if (authentication == null) {
+            System.out.println("=== /api/auth/me Debug Info ===");
+            System.out.println("Authentication parameter: " + authentication);
+            
+            // Thử lấy từ SecurityContextHolder
+            Authentication contextAuth = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println("SecurityContext Authentication: " + contextAuth);
+            
+            if (contextAuth != null) {
+                System.out.println("SecurityContext Principal: " + contextAuth.getPrincipal());
+                System.out.println("SecurityContext Authorities: " + contextAuth.getAuthorities());
+            }
+            
+            // Sử dụng authentication từ SecurityContext nếu parameter null
+            Authentication finalAuth = authentication != null ? authentication : contextAuth;
+            
+            if (finalAuth == null) {
+                System.out.println("Both authentication sources are null - returning 401");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Not authenticated"));
             }
 
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            UserDetailsImpl userDetails = (UserDetailsImpl) finalAuth.getPrincipal();
             
             Map<String, Object> response = new HashMap<>();
             response.put("id", userDetails.getId());
@@ -587,8 +603,11 @@ public class AuthController {
                     .collect(Collectors.toList()));
             response.put("isActive", userDetails.isEnabled());
 
+            System.out.println("Successfully returning user info for: " + userDetails.getUsername());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.out.println("Error in /me endpoint: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to get current user: " + e.getMessage()));
         }

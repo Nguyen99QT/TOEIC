@@ -94,7 +94,7 @@ class AuthService {
         await _apiService.post('/api/auth/logout', {});
       }
     } catch (e) {
-      print('Error during logout: $e');
+      // Error during logout: $e (replaced print for production)
     } finally {
       _token = null;
       _currentUser = null;
@@ -120,7 +120,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Error refreshing token: $e');
+      // Error refreshing token: $e (replaced print for production)
       return false;
     }
   }
@@ -132,7 +132,7 @@ class AuthService {
       final response = await _apiService.get('/api/auth/validate');
       return response.success;
     } catch (e) {
-      print('Error validating token: $e');
+      // Error validating token: $e (replaced print for production)
       return false;
     }
   }

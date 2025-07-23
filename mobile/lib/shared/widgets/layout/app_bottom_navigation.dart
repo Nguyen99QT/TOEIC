@@ -18,11 +18,6 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
       label: 'Home',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.dashboard_outlined),
-      activeIcon: Icon(Icons.dashboard),
-      label: 'Dashboard',
-    ),
-    const BottomNavigationBarItem(
       icon: Icon(Icons.book_outlined),
       activeIcon: Icon(Icons.book),
       label: 'Lessons',
@@ -30,12 +25,17 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     const BottomNavigationBarItem(
       icon: Icon(Icons.fitness_center_outlined),
       activeIcon: Icon(Icons.fitness_center),
-      label: 'Exercises',
+      label: 'Tests',
     ),
     const BottomNavigationBarItem(
       icon: Icon(Icons.credit_card_outlined),
       activeIcon: Icon(Icons.credit_card),
       label: 'Flashcards',
+    ),
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.person_outlined),
+      activeIcon: Icon(Icons.person),
+      label: 'Profile',
     ),
   ];
 
@@ -54,16 +54,16 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
             context.go('/dashboard');
             break;
           case 1:
-            context.go('/dashboard');
-            break;
-          case 2:
             context.go('/lessons');
             break;
+          case 2:
+            context.go('/tests');
+            break;
           case 3:
-            context.go('/exercises');
+            context.go('/flashcards');
             break;
           case 4:
-            context.go('/flashcards');
+            context.go('/profile');
             break;
         }
       },

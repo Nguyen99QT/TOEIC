@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toeic_mobile/core/theme/app_theme.dart';
-import 'package:toeic_mobile/core/router.dart';
+import 'package:toeic_mobile/core/routes/app_router.dart';
 import 'package:toeic_mobile/core/services/storage_service.dart';
 
 void main() async {
@@ -31,7 +31,7 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      routerConfig: appRouter,
+      routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
     );
   }

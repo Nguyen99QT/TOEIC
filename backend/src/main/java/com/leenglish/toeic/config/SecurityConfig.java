@@ -72,10 +72,30 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         // Specific TOEIC test endpoints - ORDER MATTERS!
-                        .requestMatchers(HttpMethod.POST, "/api/tests/*/review").authenticated() // Test review endpoint requires auth
-                        .requestMatchers(HttpMethod.GET, "/api/tests/**").permitAll() // Test generation endpoints (for testing)
-                        .requestMatchers("/api/question-bank/**").hasAnyRole("COLLABORATOR", "ADMIN") // Question bank endpoints require COLLABORATOR or ADMIN
-                        .requestMatchers("/api/question-group/**").hasAnyRole("COLLABORATOR", "ADMIN") // Question group endpoints require COLLABORATOR or ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/tests/*/review").authenticated() // Test review endpoint
+                                                                                                 // requires auth
+                        .requestMatchers(HttpMethod.GET, "/api/tests/**").permitAll() // Test generation endpoints (for
+                                                                                      // testing)
+
+                        // Question group public endpoints (must be before the general rule)
+                        .requestMatchers(HttpMethod.GET, "/api/question-group/test").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/question-group/debug-endpoint").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/question-group/test-json").permitAll()
+
+                        // Question group endpoints for COLLABORATOR testing
+                        .requestMatchers(HttpMethod.GET, "/api/question-group/test-collaborator")
+                        .hasAnyRole("COLLABORATOR", "ADMIN")
+
+                        .requestMatchers("/api/question-bank/**").hasAnyRole("COLLABORATOR", "ADMIN") // Question bank
+                                                                                                      // endpoints
+                                                                                                      // require
+                                                                                                      // COLLABORATOR or
+                                                                                                      // ADMIN
+                        .requestMatchers("/api/question-group/**").hasAnyRole("COLLABORATOR", "ADMIN") // Question group
+                                                                                                       // endpoints
+                                                                                                       // require
+                                                                                                       // COLLABORATOR
+                                                                                                       // or ADMIN
                         .requestMatchers("/api/test-data/**").permitAll() // Test data generation endpoints
                         .requestMatchers("/api/debug/**").permitAll() // Debug endpoints (for testing)
                         .requestMatchers("/audio/**").permitAll() // Audio files
@@ -91,7 +111,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/test-results/**").permitAll() // Test results and history
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        
+
                         // ================================================================
                         // PUBLIC LESSON ENDPOINTS
                         // ================================================================
@@ -189,23 +209,20 @@ public class SecurityConfig {
                         // QUESTION BANK ENDPOINTS (COLLABORATORS + ADMINS)
                         // ================================================================
                         .requestMatchers(HttpMethod.POST, "/api/question-bank/add").hasAnyRole("COLLABORATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/question-bank/add-test").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/question-bank/add-test")
+                        .hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/question-bank/**").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/question-bank/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/question-bank/list").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/question-bank/my").hasAnyRole("COLLABORATOR", "ADMIN")
-                        
-                        .requestMatchers(HttpMethod.POST, "/api/question-group/create-with-questions").hasAnyRole("COLLABORATOR", "ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/question-group").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/question-group/create-with-questions")
+                        .hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/question-group/**").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/question-group/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/question-group/list").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/question-group/my").hasAnyRole("COLLABORATOR", "ADMIN")
-
-                        // Public question endpoints (for taking tests)
-                        .requestMatchers(HttpMethod.GET, "/api/question-bank/test").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/question-bank/test-json").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/question-group/test").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/question-group/test-json").permitAll()
 
                         // ================================================================
                         // PREMIUM CONTENT ENDPOINTS
@@ -244,7 +261,7 @@ public class SecurityConfig {
                         // .requestMatchers("/api/flashcards/**").hasAnyRole("USER", "ADMIN")
 
                         // All other requests require authentication
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 

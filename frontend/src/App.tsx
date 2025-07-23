@@ -23,13 +23,12 @@ import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 
 // Page Components
+import AdminRoute from './components/auth/AdminRoute';
+import AdminPanel from './pages/admin/AdminPanel';
 import { ContentPage as AdminContentPage } from './pages/admin/content-page';
 import { UsersPage as AdminUsersPage } from './pages/admin/users-page';
-import AdminPanel from './pages/admin/AdminPanel';
-import AdminRoute from './components/auth/AdminRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
 import ExercisesPage from './pages/exercises/ExercisesPage';
@@ -45,31 +44,40 @@ import ProfilePage from './pages/user/ProfilePage';
 import SettingsPage from './pages/user/SettingsPage';
 
 // Loading Component
+import AuthStatus from './components/debug/AuthStatus';
+import DashboardDebug from './components/debug/DashboardDebug';
+import LogViewer from './components/debug/LogViewer';
+import TestAddQuestion from './components/debug/TestAddQuestion';
+import TestLogin from './components/debug/TestLogin';
+import AddQuestionGroupForm from './components/Nguyen/AddQuestionGroupForm';
+import BotpressChat from './components/Nguyen/BotpressChat';
+import ChatbotManager from './components/Nguyen/ChatbotManager';
+import GenerateTestForm from './components/Nguyen/GenerateTestForm';
+import QuickLogin from './components/Nguyen/QuickLogin';
+import TestToast from './components/Nguyen/TestToast';
+import TOEICDemo from './components/Nguyen/TOEICDemo';
+import TOEICQuestionGroupForm from './components/Nguyen/TOEICQuestionGroupForm';
+import TokenDebugger from './components/Nguyen/TokenDebugger';
+import HelpButton from './components/ui/HelpButton';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import ProtectedRoute from './contexts/ProtectRoute';
+import AuthDebugPage from './pages/AuthDebugPage';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';
+import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestionPage';
+import EditQuestionGroupPage from './pages/questions/EditQuestionGroupPage';
 import ModernAddQuestionPage from './pages/questions/ModernAddQuestionPage';
-import AddQuestionGroupForm from './components/Nguyen/AddQuestionGroupForm';
-import TestAddQuestion from './components/debug/TestAddQuestion';
-import TestToast from './components/Nguyen/TestToast';
 import MyQuestionsPage from './pages/questions/MyQuestionsPage';
 import SimpleMyQuestionsPage from './pages/questions/SimpleMyQuestionsPage';
 import ViewQuestionGroupPage from './pages/questions/ViewQuestionGroupPage';
-import EditQuestionGroupPage from './pages/questions/EditQuestionGroupPage';
-import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestionPage';
-import TokenDebugger from './components/Nguyen/TokenDebugger';
-import QuickLogin from './components/Nguyen/QuickLogin';
-import TOEICQuestionGroupForm from './components/Nguyen/TOEICQuestionGroupForm';
-import TOEICDemo from './components/Nguyen/TOEICDemo';
 
 // Nguyen's Test Pages
-import { TestListPage } from './pages/Nguyen';
-import TestSelectionPage from './components/TestSelectionPage';
-import Test from './components/Nguyen/Test';
+import AudioTest from './components/Nguyen/AudioTest';
+import DebugTOEIC from './components/Nguyen/DebugTOEIC';
 import SimpleTest from './components/Nguyen/SimpleTest';
 import SimpleTOEICTest from './components/Nguyen/SimpleTOEICTest';
-import DebugTOEIC from './components/Nguyen/DebugTOEIC';
-import AudioTest from './components/Nguyen/AudioTest';
+import Test from './components/Nguyen/Test';
+import TestSelectionPage from './components/TestSelectionPage';
+import { TestListPage } from './pages/Nguyen';
 import TestHistoryPage from './pages/test-results/TestHistoryPage';
 import TestResultDetailPage from './pages/test-results/TestResultDetailPage';
 
@@ -124,6 +132,15 @@ const AppContent: React.FC = () => {
         </footer>
         {/* Token refresh indicator for authenticated users */}
         {/* <TokenRefreshIndicator /> */}
+
+        {/* Botpress Chat Widget */}
+        <BotpressChat />
+
+        {/* Chatbot Manager for user interactions */}
+        <ChatbotManager />
+
+        {/* Help Button - only show if user doesn't see chatbot widget */}
+        <HelpButton />
       </div>
     );
   };
@@ -155,8 +172,9 @@ const AppContent: React.FC = () => {
           <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Layout><RegisterPage /></Layout>} />
           <Route path="/pricing" element={<Layout><PricingPage /></Layout>} />
           <Route path="/upgrade-premium" element={<Layout><UpgradePremiumPage /></Layout>} />
-          
+
           {/* ========== PUBLIC TEST ROUTE FOR DEBUGGING ========== */}
+          <Route path="/auth-debug" element={<Layout><AuthDebugPage /></Layout>} />
           <Route path="/test-selection" element={<Layout><TestSelectionPage /></Layout>} />
           <Route path="/test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
           <Route path="/test-debug/:testId" element={<Layout><SimpleTest /></Layout>} />
@@ -165,9 +183,11 @@ const AppContent: React.FC = () => {
           <Route path="/simple-toeic-test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
           <Route path="/debug-toeic/:testId" element={<Layout><DebugTOEIC /></Layout>} />
           <Route path="/audio-test" element={<Layout><AudioTest /></Layout>} />
-          
+
           {/* ========== PROTECTED ROUTES ========== */}
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute>
+            <Layout><TestListPage /></Layout>
+          </ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Layout><ProfilePage /></Layout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons" element={<ProtectedRoute><Layout><LessonsPage /></Layout></ProtectedRoute>} />
@@ -179,27 +199,28 @@ const AppContent: React.FC = () => {
           <Route path="/flashcards/study/:setId" element={<ProtectedRoute><Layout><FlashcardStudyPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons/:lessonId/exercises/:exerciseId/questions" element={<ProtectedRoute><Layout><QuestionPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons/:lessonId/exercises/:exerciseId" element={<ProtectedRoute><Layout><ExerciseQuestionsPage /></Layout></ProtectedRoute>} />
-          
-         {/* ========== TEST ROUTES BY NGUYEN ========== */}
+
+          {/* ========== TEST ROUTES BY NGUYEN ========== */}
           <Route path="/tests" element={<ProtectedRoute><Layout><TestListPage /></Layout></ProtectedRoute>} />
           <Route path="/tests/:testId" element={<ProtectedRoute><Layout><Test /></Layout></ProtectedRoute>} />
           <Route path="/tests/demo" element={<ProtectedRoute><Layout><Test /></Layout></ProtectedRoute>} />
-          
+
           {/* ========== TEST RESULTS AND HISTORY ========== */}
           <Route path="/test-history" element={<ProtectedRoute><Layout><TestHistoryPage /></Layout></ProtectedRoute>} />
           <Route path="/test-results/:resultId" element={<ProtectedRoute><Layout><TestResultDetailPage /></Layout></ProtectedRoute>} />
           <Route path="/results" element={<ProtectedRoute><Layout><TestHistoryPage /></Layout></ProtectedRoute>} />
-          
+
           {/* ========== ADMIN ROUTES ========== */}
           <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="/admin/*" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><Layout><AdminUsersPage /></Layout></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute><Layout><AdminContentPage /></Layout></ProtectedRoute>} />
-          
+
           {/* ========== QUESTION MANAGEMENT ROUTES ========== */}
           <Route path="/add/add-questions" element={<ProtectedRoute><Layout><ModernAddQuestionPage /></Layout></ProtectedRoute>} />
           <Route path="/add/add-group-questions" element={<ProtectedRoute><Layout><AddQuestionGroupForm /></Layout></ProtectedRoute>} />
           <Route path="/add/toeic-group" element={<ProtectedRoute><Layout><TOEICQuestionGroupForm /></Layout></ProtectedRoute>} />
+          <Route path="/tests/generate" element={<ProtectedRoute><Layout><GenerateTestForm /></Layout></ProtectedRoute>} />
           <Route path="/demo/toeic" element={<Layout><TOEICDemo /></Layout>} />
           <Route path="/questions/my" element={<ProtectedRoute><Layout><MyQuestionsPage /></Layout></ProtectedRoute>} />
           <Route path="/questions/simple" element={<ProtectedRoute><Layout><SimpleMyQuestionsPage /></Layout></ProtectedRoute>} />
@@ -208,10 +229,14 @@ const AppContent: React.FC = () => {
           <Route path="/questions/edit-individual/:id" element={<EditIndividualQuestionPage />} />
           <Route path="/debug/token" element={<Layout><TokenDebugger /></Layout>} />
           <Route path="/debug/quick-login" element={<Layout><QuickLogin /></Layout>} />
+          <Route path="/debug/test-login" element={<Layout><TestLogin /></Layout>} />
+          <Route path="/debug/dashboard" element={<Layout><DashboardDebug /></Layout>} />
+          <Route path="/debug/auth-status" element={<Layout><AuthStatus /></Layout>} />
+          <Route path="/debug/logs" element={<Layout><LogViewer /></Layout>} />
           <Route path="/debug/test-add" element={<ProtectedRoute><Layout><TestAddQuestion /></Layout></ProtectedRoute>} />
           <Route path="/debug/test-toast" element={<ProtectedRoute><Layout><TestToast /></Layout></ProtectedRoute>} />
-          
-          
+
+
           {/* 404 Route */}
           <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
         </Routes>

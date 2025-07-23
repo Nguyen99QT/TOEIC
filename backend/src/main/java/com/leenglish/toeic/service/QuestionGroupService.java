@@ -47,30 +47,32 @@ public class QuestionGroupService {
         }
 
         List<QuestionTest> questionList = new ArrayList<>();
-        for (QuestionRequestDTO qdto : dto.getQuestions()) {
-            QuestionTest q = new QuestionTest();
-            q.setQuestionText(qdto.getQuestionText());
-            q.setCorrectOption(qdto.getCorrectOption());
-            q.setQuestionOrder(qdto.getQuestionOrder());
-            q.setGroup(group);
-            q.setImageUrl(qdto.getImageUrl());
-            q.setAudioUrl(qdto.getAudioUrl());
-            // Nếu muốn gán part cho từng câu hỏi:
-            q.setPart(group.getPart());
+        if (dto.getQuestions() != null) {
+            for (QuestionRequestDTO qdto : dto.getQuestions()) {
+                QuestionTest q = new QuestionTest();
+                q.setQuestionText(qdto.getQuestionText());
+                q.setCorrectOption(qdto.getCorrectOption());
+                q.setQuestionOrder(qdto.getQuestionOrder());
+                q.setGroup(group);
+                q.setImageUrl(qdto.getImageUrl());
+                q.setAudioUrl(qdto.getAudioUrl());
+                // Nếu muốn gán part cho từng câu hỏi:
+                q.setPart(group.getPart());
 
-            // Tạo option
-            List<Option> optionList = new ArrayList<>();
-            if (qdto.getOptions() != null) {
-                for (OptionRequestDTO odto : qdto.getOptions()) {
-                    Option o = new Option();
-                    o.setLabel(odto.getOptionLabel());
-                    o.setContent(odto.getOptionText());
-                    o.setQuestion(q);
-                    optionList.add(o);
+                // Tạo option
+                List<Option> optionList = new ArrayList<>();
+                if (qdto.getOptions() != null) {
+                    for (OptionRequestDTO odto : qdto.getOptions()) {
+                        Option o = new Option();
+                        o.setLabel(odto.getOptionLabel());
+                        o.setContent(odto.getOptionText());
+                        o.setQuestion(q);
+                        optionList.add(o);
+                    }
                 }
+                q.setOptions(optionList);
+                questionList.add(q);
             }
-            q.setOptions(optionList);
-            questionList.add(q);
         }
 
         group.setQuestions(questionList);

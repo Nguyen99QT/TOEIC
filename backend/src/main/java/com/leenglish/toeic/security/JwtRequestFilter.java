@@ -78,7 +78,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            logger.debug("Loading user details for username: {}", username);
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            logger.debug("Loaded user details: username={}, authorities={}", 
+                userDetails.getUsername(), userDetails.getAuthorities());
 
             if (jwtUtils.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -86,10 +89,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                logger.debug("JWT Filter: Authenticated user = {}", username);
+                logger.info("JWT Filter: Successfully authenticated user = {} with authorities = {}", 
+                    username, userDetails.getAuthorities());
             } else {
                 logger.warn("JWT token validation failed for user: {}", username);
             }
+        } else if (username != null) {
+            logger.debug("User {} already authenticated in SecurityContext", username);
         }
 
         chain.doFilter(request, response);

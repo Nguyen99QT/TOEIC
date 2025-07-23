@@ -8,8 +8,8 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useToast } from '../../components/ui/SimpleToast';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useToast } from '../../components/ui/SimpleToast';
 import { useAuth } from '../../contexts/AuthContext';
 import { resendVerificationEmail } from '../../services/auth';
 
@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
   const [isResending, setIsResending] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
-  const { login } = useAuth();
+  const { login, refreshAuthState } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
 
@@ -44,28 +44,54 @@ const LoginPage: React.FC = () => {
       // Use AuthContext's login method
       await login(formData.username, formData.password);
 
+      // Set flag to indicate successful login for ProtectedRoute
+      localStorage.setItem('auth_just_logged_in', 'true');
+
+      // Wait for auth state to properly update
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Refresh auth state to ensure consistency
+      await refreshAuthState();
+
+      console.log('🔍 LoginPage: Login successful, checking redirect logic');
+
       // Get current user from auth context to check role
       const { getCurrentUser } = await import('../../services/auth');
       const currentUser = getCurrentUser();
 
+      console.log('🔍 LoginPage: Post-login user data:', currentUser);
+
       if (currentUser && currentUser.role === 'ADMIN') {
         success('Login successful! Redirecting to admin dashboard...');
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else {
-        success('Login successful!');
-        console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
+        success('Login successful! Redirecting to dashboard...');
+        navigate('/dashboard', { replace: true });
       }
 
     } catch (loginError: any) {
       console.error('❌ LoginPage: Login failed:', loginError);
-      
+      console.error('❌ Full error object:', JSON.stringify(loginError, null, 2));
+
+      // Clean up the just logged in flag on error
+      localStorage.removeItem('auth_just_logged_in');
+
+      // Log more details about the error
+      if (loginError.response) {
+        console.error('❌ Error response status:', loginError.response.status);
+        console.error('❌ Error response data:', loginError.response.data);
+        console.error('❌ Error response headers:', loginError.response.headers);
+      }
+
       // Check if it's an email verification error
       if (loginError.response?.status === 403 && loginError.response?.data?.needsVerification) {
         setNeedsVerification(true);
         setUnverifiedEmail(loginError.response.data.email);
         error('Please verify your email before logging in');
       } else {
-        error(loginError.message || 'Login failed');
+        const errorMessage = loginError.message || 'Login failed';
+        console.error('❌ Showing error message:', errorMessage);
+        error(errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -74,7 +100,7 @@ const LoginPage: React.FC = () => {
 
   const handleResendVerification = async () => {
     if (!unverifiedEmail) return;
-    
+
     setIsResending(true);
     try {
       await resendVerificationEmail(unverifiedEmail);
@@ -108,19 +134,19 @@ const LoginPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              
+
               <h3 className="mt-4 text-lg font-medium text-gray-900">
                 Verify Your Email
               </h3>
-              
+
               <p className="mt-2 text-sm text-gray-600">
                 Please verify your email address before logging in.
               </p>
-              
+
               <p className="mt-2 text-sm text-gray-600">
                 Email: <strong>{unverifiedEmail}</strong>
               </p>
-              
+
               <div className="mt-6 space-y-4">
                 <button
                   onClick={handleResendVerification}
@@ -240,11 +266,118 @@ const LoginPage: React.FC = () => {
             </button>
           </div>
 
+          {/* Quick Login for Testing */}
+          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+            <button
+              type="button"
+              onClick={async () => {
+                console.log('🔧 Quick login test starting...');
+                setFormData({ username: 'teacher2', password: 'password123' });
+
+                // Manually call the same login process
+                try {
+                  const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'teacher2', password: 'password123' })
+                  });
+
+                  const data = await response.json();
+                  console.log('🔧 Direct API response:', data);
+                  console.log('🔧 Response details:', {
+                    hasToken: !!data.token,
+                    hasAccessToken: !!data.accessToken,
+                    hasId: !!data.id,
+                    hasUsername: !!data.username,
+                    hasRoles: !!data.roles,
+                    roles: data.roles,
+                    fullData: data
+                  });
+
+                  const token = data.token || data.accessToken;
+                  if (token) {
+                    console.log('🔧 Storing token:', token.substring(0, 30) + '...');
+
+                    // Store manually with explicit verification
+                    localStorage.setItem('toeic_access_token', token);
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('accessToken', token);
+
+                    // Verify token was stored
+                    const storedToken = localStorage.getItem('toeic_access_token');
+                    console.log('🔧 Token verification:', {
+                      stored: !!storedToken,
+                      matches: storedToken === token,
+                      length: storedToken?.length
+                    });
+
+                    const userData = {
+                      id: data.id,
+                      username: data.username,
+                      email: data.email,
+                      role: data.roles[0].replace('ROLE_', ''),
+                      fullName: data.username,
+                      membershipType: 'FREE'
+                    };
+
+                    console.log('🔧 Storing user data:', userData);
+                    localStorage.setItem('toeic_current_user', JSON.stringify(userData));
+                    localStorage.setItem('currentUser', JSON.stringify(userData));
+
+                    // Verify user data was stored
+                    const storedUser = localStorage.getItem('toeic_current_user');
+                    console.log('🔧 User data verification:', {
+                      stored: !!storedUser,
+                      parsed: storedUser ? JSON.parse(storedUser) : null
+                    });
+
+                    // Set flag to prevent immediate auth check failure
+                    localStorage.setItem('auth_just_logged_in', 'true');
+
+                    console.log('🔧 Final localStorage check:');
+                    console.log('  - toeic_access_token:', localStorage.getItem('toeic_access_token') ? 'EXISTS' : 'MISSING');
+                    console.log('  - toeic_current_user:', localStorage.getItem('toeic_current_user') ? 'EXISTS' : 'MISSING');
+                    console.log('  - All keys:', Object.keys(localStorage));
+
+                    success('Manual login successful! Refreshing auth state...');
+
+                    // Force refresh auth state
+                    setTimeout(async () => {
+                      await refreshAuthState();
+                      console.log('🔧 Auth state refreshed, redirecting...');
+                      window.location.href = '/dashboard';
+                    }, 500);
+                  }
+                } catch (err) {
+                  console.error('🔧 Manual login failed:', err);
+                  error('Manual login failed');
+                }
+              }}
+              className="w-full text-sm bg-yellow-200 text-yellow-800 py-2 px-3 rounded hover:bg-yellow-300"
+            >
+              🔧 Quick Test Login (teacher2)
+            </button>
+          </div>
+
           {/* Test Accounts Section */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-medium text-blue-800 mb-2">Test Accounts:</h3>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
+                <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">teacher2</code></span>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, username: 'teacher2', password: 'password123' })}
+                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                >
+                  Use Account
+                </button>
+              </div>
+              <div className="text-xs text-blue-600">
+                Password: <code className="bg-blue-100 px-1 rounded">password123</code>
+              </div>
+
+              <div className="flex justify-between items-center mt-2">
                 <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">huyplum</code></span>
                 <button
                   type="button"

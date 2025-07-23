@@ -1,5 +1,5 @@
 enum FlashcardStatus {
-  new_card,
+  newCard,
   learning,
   reviewing,
   mastered,
@@ -132,7 +132,7 @@ class FlashcardProgress {
       flashcardId: json['flashcardId'] as String,
       status: FlashcardStatus.values.firstWhere(
         (e) => e.name == json['status'],
-        orElse: () => FlashcardStatus.new_card,
+        orElse: () => FlashcardStatus.newCard,
       ),
       reviewCount: json['reviewCount'] as int,
       correctCount: json['correctCount'] as int,

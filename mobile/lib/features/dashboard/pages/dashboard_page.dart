@@ -233,11 +233,11 @@ class DashboardPage extends ConsumerWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildQuickActionCard(
-                    'View Profile',
-                    Icons.person,
+                    'Take Tests',
+                    Icons.quiz,
                     Colors.purple,
                     () {
-                      Navigator.pushNamed(context, '/profile');
+                      context.push('/tests');
                     },
                   ),
                 ),
@@ -293,7 +293,7 @@ class DashboardPage extends ConsumerWidget {
       String title, String time, IconData icon, Color color) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         child: Icon(icon, color: color),
       ),
       title: Text(title),

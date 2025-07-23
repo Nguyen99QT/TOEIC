@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:toeic_mobile/core/services/auth_service.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Theme.of(context).primaryColor,
-                    Theme.of(context).primaryColor.withOpacity(0.8),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.8),
                   ],
                 ),
               ),
@@ -130,7 +131,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -346,7 +347,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             title: const Text('Settings'),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
-                              Navigator.pushNamed(context, '/settings');
+                              context.go('/settings');
                             },
                           ),
                           ListTile(
@@ -365,8 +366,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             onTap: () async {
                               await AuthService.instance.logout();
                               if (context.mounted) {
-                                Navigator.pushNamedAndRemoveUntil(
-                                    context, '/login', (route) => false);
+                                context.go('/login');
                               }
                             },
                           ),

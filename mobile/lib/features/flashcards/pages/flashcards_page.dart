@@ -86,7 +86,7 @@ class _FlashcardsPageState extends ConsumerState<FlashcardsPage> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                 ),
@@ -157,7 +157,7 @@ class _FlashcardsPageState extends ConsumerState<FlashcardsPage> {
                   _selectedCategory = category;
                 });
               },
-              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
+              selectedColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
               checkmarkColor: Theme.of(context).primaryColor,
             ),
           );
@@ -252,7 +252,7 @@ class _FlashcardsPageState extends ConsumerState<FlashcardsPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: set['color'].withOpacity(0.1),
+                      color: set['color'].withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -294,7 +294,7 @@ class _FlashcardsPageState extends ConsumerState<FlashcardsPage> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getDifficultyColor(set['difficulty'])
-                          .withOpacity(0.1),
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getToken } from '../../services/auth';
 import QuickCreateGroup from '../../components/Nguyen/QuickCreateGroup';
 
 interface Question {
@@ -17,12 +18,14 @@ interface QuestionGroup {
   groupId: number;
   title: string;
   content?: string;
-  partId: number;
   type: string;
   audioUrl?: string;
   imageUrl?: string;
-  questionCount?: number;
   createdAt?: string;
+  // Backend structure
+  part?: any; // Part object from backend
+  questions?: Question[]; // Questions array from backend
+  createdBy?: any; // Created by user object
 }
 
 const MyQuestionsPage = () => {
@@ -37,12 +40,13 @@ const MyQuestionsPage = () => {
   useEffect(() => {
     const fetchMyData = async () => {
       try {
-        // Try multiple token keys
-        const token = localStorage.getItem('token') || 
-                     localStorage.getItem('authToken') || 
-                     localStorage.getItem('accessToken');
+        // Get token using auth service
+        const token = getToken();
         
+        console.log('=== MyQuestionsPage Debug ===');
         console.log('Token found:', token ? 'Yes' : 'No');
+        console.log('Token preview:', token ? token.substring(0, 50) + '...' : 'None');
+        console.log('User from context:', user);
         
         if (!token) {
           setError('No authentication token found. Please login again.');
@@ -51,7 +55,7 @@ const MyQuestionsPage = () => {
 
         // Fetch question groups - try multiple endpoints
         try {
-          // Try the user-specific endpoint first
+          console.log('Fetching question groups from /api/question-group/my...');
           let groupsResponse = await fetch('http://localhost:8080/api/question-group/my', {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -60,19 +64,35 @@ const MyQuestionsPage = () => {
           });
 
           console.log('My Groups response status:', groupsResponse.status);
+          console.log('My Groups response headers:', Object.fromEntries(groupsResponse.headers.entries()));
           
           if (groupsResponse.ok) {
             const groupsData = await groupsResponse.json();
-            console.log('Groups data:', groupsData);
-            setQuestionGroups(groupsData || []);
+            console.log('Groups data received:', groupsData);
+            setQuestionGroups(Array.isArray(groupsData) ? groupsData : []);
           } else {
-            console.warn('Groups fetch failed with status:', groupsResponse.status);
             const errorText = await groupsResponse.text();
-            console.warn('Error response:', errorText);
+            console.warn('Groups fetch failed with status:', groupsResponse.status);
+            console.warn('Error response body:', errorText);
+            
+            // Try to parse error as JSON
+            try {
+              const errorJson = JSON.parse(errorText);
+              console.warn('Parsed error:', errorJson);
+              if (groupsResponse.status === 403) {
+                setError('Access denied. You may not have permission to view question groups.');
+              } else if (groupsResponse.status === 401) {
+                setError('Authentication failed. Please login again.');
+              } else {
+                setError(`API Error: ${errorJson.message || errorText}`);
+              }
+            } catch (e) {
+              setError(`HTTP ${groupsResponse.status}: ${errorText}`);
+            }
           }
         } catch (err) {
-          console.error('Groups fetch error:', err);
-          // Don't fail completely if groups fail - just set empty array
+          console.error('Groups fetch network error:', err);
+          setError(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`);
           setQuestionGroups([]);
         }
 
@@ -106,14 +126,14 @@ const MyQuestionsPage = () => {
     };
 
     fetchMyData();
-  }, []);
+  }, [user]); // Add user dependency
 
   const handleDeleteGroup = async (groupId: number, groupTitle: string) => {
     if (!window.confirm(`Are you sure you want to delete the group "${groupTitle}"? This action cannot be undone.`)) {
       return;
     }
     try {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
         alert('No authentication token found');
         return;
@@ -146,7 +166,7 @@ const MyQuestionsPage = () => {
       return;
     }
     try {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
         alert('No authentication token found');
         return;
@@ -201,7 +221,7 @@ const MyQuestionsPage = () => {
           <p>Questions loaded: {questions.length}</p>
           <p>Question Groups loaded: {questionGroups.length}</p>
           <p>User: {user?.username || 'Not found'}</p>
-          <p>Token: {localStorage.getItem('authToken') ? 'Present' : 'Missing'}</p>
+          <p>Token: {getToken() ? 'Present' : 'Missing'}</p>
         </div>
       </div>
 
@@ -340,7 +360,7 @@ const MyQuestionsPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            Part {group.partId}
+                            Part {group.part?.partNumber || 'N/A'}
                           </span>
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             group.type === 'PRACTICE' 
@@ -359,9 +379,9 @@ const MyQuestionsPage = () => {
                               Image
                             </span>
                           )}
-                          {(group.questionCount || 0) > 0 && (
+                          {(group.questions?.length || 0) > 0 && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {group.questionCount} questions
+                              {group.questions?.length || 0} questions
                             </span>
                           )}
                         </div>

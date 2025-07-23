@@ -1,48 +1,97 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import CommentSection from './CommentSection';
+import { AuthContext } from '../../contexts/AuthContext';
 
 const BACKEND_URL = 'http://localhost:8080';
 
 const BlogDetail = () => {
     const { id } = useParams();
+    const { currentUser, isAuthenticated } = useContext(AuthContext);
     const [blog, setBlog] = useState(null);
     const [likes, setLikes] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
 
     useEffect(() => {
+        // Get likes count
         axios.get(`${BACKEND_URL}/api/blog/${id}/likes`)
             .then(response => {
-                setLikes(response.data.likesCount);
-                setIsLiked(response.data.isLiked);
+                console.log("✅ Likes count response:", response.data);
+                setLikes(response.data); // response.data is just a number
             })
-            .catch(error => console.error("Lỗi khi lấy số lượt like:", error));
-    }, [id]);
+            .catch(error => {
+                console.error("❌ Lỗi khi lấy số lượt like:", error);
+                console.error("Error details:", error.response?.data, error.response?.status);
+            });
+
+        // Check if current user has liked this post (only if user is authenticated)
+        if (isAuthenticated && currentUser) {
+            const token = localStorage.getItem("toeic_access_token");
+
+            if (token && currentUser.id) {
+                console.log("🔍 Checking like status for user:", currentUser.id);
+                // Check if user has already liked this post
+                axios.get(`${BACKEND_URL}/api/blog/${id}/likes/check?userId=${currentUser.id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                })
+                    .then(response => {
+                        console.log("✅ Like status response:", response.data);
+                        setIsLiked(response.data);
+                    })
+                    .catch(error => {
+                        console.error("❌ Lỗi khi check trạng thái like:", error);
+                        console.error("Error details:", error.response?.data, error.response?.status);
+                        // Try alternative endpoint if check endpoint doesn't exist
+                        setIsLiked(false);
+                    });
+            }
+        }
+    }, [id, currentUser, isAuthenticated]);
 
     const handleLike = () => {
-        const userId = 1; // Thay bằng ID người dùng hiện tại
-        const token = localStorage.getItem("accessToken"); // Lấy token từ localStorage
-
-        if (!token) {
-            console.error("Token không tồn tại. Người dùng cần đăng nhập.");
+        // Check if user is authenticated
+        if (!isAuthenticated || !currentUser) {
+            console.error("❌ User not authenticated");
             alert("Bạn cần đăng nhập để thực hiện thao tác này.");
             return;
         }
 
-        axios.post(`${BACKEND_URL}/api/blog/${id}/likes`, { userId }, {
+        console.log("🔄 Attempting to toggle like for blog:", id, "user:", currentUser.id);
+
+        // Get token from localStorage
+        const token = localStorage.getItem("toeic_access_token");
+
+        if (!token) {
+            console.error("❌ Token không tồn tại. Người dùng cần đăng nhập.");
+            alert("Bạn cần đăng nhập để thực hiện thao tác này.");
+            return;
+        }
+
+        const userId = currentUser.id; // Use actual current user ID
+        console.log("📤 Making like request with userId:", userId);
+
+        axios.post(`${BACKEND_URL}/api/blog/${id}/likes?userId=${userId}`, {}, {
             headers: {
-                Authorization: `Bearer ${token}`, // Thêm token vào header
+                Authorization: `Bearer ${token}`, // Add token to header
             },
         })
             .then(res => {
-                setLikes(res.data.likesCount);
-                setIsLiked(res.data.isLiked);
+                console.log("✅ Like toggle success:", res.data);
+                // Update like count with the response data (which is just a number)
+                setLikes(res.data);
+                // Toggle the like status
+                setIsLiked(!isLiked);
             })
             .catch(error => {
-                console.error("Lỗi khi like:", error);
+                console.error("❌ Lỗi khi like:", error);
+                console.error("Error details:", error.response?.data, error.response?.status);
                 if (error.response && error.response.status === 401) {
                     alert("Bạn cần đăng nhập để thực hiện thao tác này.");
+                } else {
+                    alert("Có lỗi xảy ra khi thực hiện thao tác này.");
                 }
             });
     };
@@ -204,7 +253,7 @@ const BlogDetail = () => {
                         e.currentTarget.style.border = `2px solid ${isLiked ? "#f8b6d6" : "#d1d2ee"}`;
                     }}
                 >
-                    {isLiked ? "❤️ Đã thích" : "🤍 Thích"} ({likes})
+                    {isLiked ? "❤️ thích" : "🤍 Đã Thích"} ({likes})
                 </button>
                 <span style={{ color: "#555", fontSize: 16 }}>
                     💬 Bình luận dưới đây để chia sẻ ý kiến của bạn!

@@ -1,24 +1,27 @@
 package com.leenglish.toeic.blog;
 
-import com.leenglish.toeic.blog.BlogPost;
-import com.leenglish.toeic.blog.BlogPostService;
+import com.leenglish.toeic.dto.BlogPostWithStatsDTO;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @RestController
 @RequestMapping("/api/blog")
@@ -92,9 +95,57 @@ public class BlogPostController {
         return blogPostService.getAllBlogPosts();
     }
 
+    // Lấy tất cả blog với thống kê (cho admin)
+    @GetMapping("/admin/stats")
+    public List<BlogPostWithStatsDTO> getAllBlogPostsWithStats() {
+        return blogPostService.getAllBlogPostsWithStats();
+    }
+
     // Tìm kiếm blog theo tiêu đề
     @GetMapping("/search")
     public List<BlogPost> searchBlogPostsByTitle(@RequestParam("title") String title) {
         return blogPostService.searchByTitle(title);
+    }
+
+    // Sửa blog
+    @PutMapping("/{id}")
+    public ResponseEntity<BlogPost> updateBlogPost(@PathVariable Long id, @RequestBody BlogPost blogPost) {
+        BlogPost updatedBlog = blogPostService.updateBlogPost(id, blogPost);
+        if (updatedBlog != null) {
+            return ResponseEntity.ok(updatedBlog);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // Ẩn blog (thay vì xóa)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> hideBlogPost(@PathVariable Long id) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println("🔐 Hide Blog - User: " + auth.getName() + ", Roles: " + auth.getAuthorities());
+            blogPostService.hideBlogPost(id);
+            System.out.println("✅ Blog " + id + " hidden successfully");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Error hiding blog " + id + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Hiện lại blog
+    @PostMapping("/{id}/unhide")
+    public ResponseEntity<Void> unhideBlogPost(@PathVariable Long id) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            System.out.println("🔐 Unhide Blog - User: " + auth.getName() + ", Roles: " + auth.getAuthorities());
+            blogPostService.unhideBlogPost(id);
+            System.out.println("✅ Blog " + id + " unhidden successfully");
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("❌ Error unhiding blog " + id + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }
     }
 }

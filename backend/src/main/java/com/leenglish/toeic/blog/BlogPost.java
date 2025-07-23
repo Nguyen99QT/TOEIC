@@ -27,6 +27,9 @@ public class BlogPost {
     @Column(name = "video_url")
     private String videoUrl;
 
+    @Column(name = "hidden", columnDefinition = "boolean default false")
+    private Boolean hidden = false;
+
     // Getter & Setter
     public Long getId() {
         return id;
@@ -90,5 +93,13 @@ public class BlogPost {
 
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
+    }
+
+    public Boolean getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(Boolean hidden) {
+        this.hidden = hidden;
     }
 }

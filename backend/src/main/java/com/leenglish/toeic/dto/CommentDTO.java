@@ -1,38 +1,29 @@
-package com.leenglish.toeic.domain;
-
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
+package com.leenglish.toeic.dto;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "post_like", uniqueConstraints = @UniqueConstraint(columnNames = { "blog_post_id", "user_id" }))
-public class Like {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class CommentDTO {
     private Long id;
-
-    @Column(name = "blog_post_id", nullable = false)
     private Long blogPostId;
-
-    @Column(name = "user_id", nullable = false)
     private Long userId;
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    private String username;
+    private String content;
     private LocalDateTime createdAt;
 
-    // Default constructor
-    public Like() {
+    // Constructors
+    public CommentDTO() {
     }
 
-    // Constructor
-    public Like(Long blogPostId, Long userId) {
+    public CommentDTO(Long id, Long blogPostId, Long userId, String username, String content, LocalDateTime createdAt) {
+        this.id = id;
         this.blogPostId = blogPostId;
         this.userId = userId;
+        this.username = username;
+        this.content = content;
+        this.createdAt = createdAt;
     }
 
-    // Getter và Setter
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -55,6 +46,22 @@ public class Like {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public LocalDateTime getCreatedAt() {

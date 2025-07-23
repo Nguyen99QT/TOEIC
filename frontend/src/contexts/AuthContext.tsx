@@ -123,17 +123,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (response && (response.token || response.accessToken)) {
                 // Handle both role (string) and roles (array) from backend
                 let userRole: "ADMIN" | "USER" | "COLLABORATOR" = 'USER';
-                
+
                 if (response.role) {
                     userRole = response.role as "ADMIN" | "USER" | "COLLABORATOR";
                 } else if (response.roles && Array.isArray(response.roles) && response.roles.length > 0) {
-                    // Get the first role from the array
+                    // Get the first role from the array and handle ROLE_ prefix
                     const firstRole = response.roles[0];
-                    if (firstRole === 'ADMIN' || firstRole === 'USER' || firstRole === 'COLLABORATOR') {
-                        userRole = firstRole;
+                    if (firstRole === 'ROLE_ADMIN' || firstRole === 'ADMIN') {
+                        userRole = 'ADMIN';
+                    } else if (firstRole === 'ROLE_USER' || firstRole === 'USER') {
+                        userRole = 'USER';
+                    } else if (firstRole === 'ROLE_COLLABORATOR' || firstRole === 'COLLABORATOR') {
+                        userRole = 'COLLABORATOR';
                     }
                 }
-                
+
+                console.log('🔍 AuthContext: Processed role:', userRole, 'from response.roles:', response.roles);
+
                 const user: User = {
                     id: response.id || 0,
                     username: response.username || '',

@@ -56,8 +56,7 @@ import AdminRoute from './components/auth/AdminRoute';
 
 // Enhanced UI Components
 import { ToastProvider } from './components/ui/SimpleToast';
-import PaymentPage from './components/blog/PayPalButton'; // Thêm dòng này
-import MembershipPlans from './components/blog/MembershipPlans'; // Import MembershipPlans
+import MembershipPlans from './components/blog/MembershipPlans';
 
 // ========== MAIN APP COMPONENT ==========
 
@@ -214,6 +213,11 @@ const AppContent: React.FC = () => {
             <Route path="/pricing" element={
               <Layout>
                 <PricingPage />
+              </Layout>
+            } />
+            <Route path="/membership" element={
+              <Layout>
+                <MembershipPlans />
               </Layout>
             } />
             <Route path="/upgrade-premium" element={
@@ -510,6 +514,32 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/admin/blog"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/blog/create"
+              element={
+                <AdminRoute>
+                  <Layout showNavigation={false} showFooter={false}>
+                    <CreateBlog />
+                  </Layout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/blog/edit/:id"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
               path="/admin/settings"
               element={
                 <AdminRoute>
@@ -541,11 +571,6 @@ const App: React.FC = () => {
     <ToastProvider>
       <AuthProvider>
         <Router>
-          <Routes>
-            {/* Existing routes */}
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/membership" element={<MembershipPlans />} /> {/* Route cho MembershipPlans */}
-          </Routes>
           <AppContent />
         </Router>
       </AuthProvider>

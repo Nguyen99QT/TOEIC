@@ -8,4 +8,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByBlogPostId(Long blogPostId);
+
+    List<Comment> findByBlogPostIdOrderByCreatedAtDesc(Long blogPostId);
+
+    Long countByBlogPostId(Long blogPostId);
 }

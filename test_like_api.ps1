@@ -1,0 +1,39 @@
+# Test Blog Like API
+Write-Host "🔧 Testing Blog Like API..." -ForegroundColor Yellow
+
+$baseUrl = "http://localhost:8080"
+
+Write-Host "`n1. Testing get blog post..." -ForegroundColor Cyan
+try {
+    $response = Invoke-RestMethod -Uri "$baseUrl/api/blog/9" -Method GET
+    Write-Host "✅ Blog post 9 exists: $($response.title)" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Blog post 9 not found: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+Write-Host "`n2. Testing get like count..." -ForegroundColor Cyan
+try {
+    $response = Invoke-RestMethod -Uri "$baseUrl/api/blog/9/likes" -Method GET
+    Write-Host "✅ Like count for blog 9: $response" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Error getting like count: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Response: $($_.Exception.Response)" -ForegroundColor Red
+}
+
+Write-Host "`n3. Testing check like status..." -ForegroundColor Cyan
+try {
+    $response = Invoke-RestMethod -Uri "$baseUrl/api/blog/9/likes/check?userId=2" -Method GET
+    Write-Host "✅ User 2 like status for blog 9: $response" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Error checking like status: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+Write-Host "`n4. Testing toggle like (without auth)..." -ForegroundColor Cyan
+try {
+    $response = Invoke-RestMethod -Uri "$baseUrl/api/blog/9/likes?userId=2" -Method POST
+    Write-Host "✅ Toggle like response: $response" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Error toggling like: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+Write-Host "`nAPI tests completed!" -ForegroundColor Green

@@ -1,18 +1,31 @@
 import React, { useEffect, useRef } from "react";
 
-const PayPalButton = ({ amount, onSuccess }) => {
-    const paypalRef = useRef();
+interface PayPalButtonProps {
+    amount: number;
+    onSuccess: (order: any) => void;
+}
+
+declare global {
+    interface Window {
+        paypal: any;
+    }
+}
+
+const PayPalButton: React.FC<PayPalButtonProps> = ({ amount, onSuccess }) => {
+    const paypalRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (paypalRef.current) {
-            paypalRef.current.innerHTML = "";
+        const currentRef = paypalRef.current;
+
+        if (currentRef) {
+            currentRef.innerHTML = "";
         }
 
         const renderPayPal = async () => {
             try {
-                if (window.paypal && paypalRef.current) {
+                if (window.paypal && currentRef) {
                     await window.paypal.Buttons({
-                        createOrder: (data, actions) => {
+                        createOrder: (data: any, actions: any) => {
                             return actions.order.create({
                                 purchase_units: [
                                     {
@@ -23,15 +36,15 @@ const PayPalButton = ({ amount, onSuccess }) => {
                                 ],
                             });
                         },
-                        onApprove: async (data, actions) => {
+                        onApprove: async (data: any, actions: any) => {
                             const order = await actions.order.capture();
                             console.log("✅ Thanh toán thành công:", order);
                             onSuccess(order);
                         },
-                        onError: (err) => {
+                        onError: (err: any) => {
                             console.error("❌ Lỗi PayPal:", err);
                         },
-                    }).render(paypalRef.current);
+                    }).render(currentRef);
                 }
             } catch (err) {
                 console.error("❌ Không thể render PayPal:", err);
@@ -41,8 +54,8 @@ const PayPalButton = ({ amount, onSuccess }) => {
         renderPayPal();
 
         return () => {
-            if (paypalRef.current) {
-                paypalRef.current.innerHTML = "";
+            if (currentRef) {
+                currentRef.innerHTML = "";
             }
         };
     }, [amount, onSuccess]);
@@ -50,18 +63,4 @@ const PayPalButton = ({ amount, onSuccess }) => {
     return <div ref={paypalRef}></div>;
 };
 
-const PaymentPage = () => {
-    const handleSuccess = (order) => {
-        console.log("Thanh toán thành công:", order);
-        alert("Thanh toán thành công!");
-    };
-
-    return (
-        <div>
-            <h1>Thanh toán</h1>
-            <PayPalButton amount={10} onSuccess={handleSuccess} />
-        </div>
-    );
-};
-
-export default PaymentPage;
+export default PayPalButton;

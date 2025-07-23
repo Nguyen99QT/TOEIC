@@ -44,6 +44,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String requestPath = request.getRequestURI();
         final String method = request.getMethod();
 
+        // Debug logging for blog requests
+        if (requestPath.contains("/api/blog/")) {
+            System.out.println("🔍 JWT Filter: " + method + " " + requestPath);
+            System.out.println("🔍 Authorization Header: " + (authorizationHeader != null
+                    ? authorizationHeader.substring(0, Math.min(authorizationHeader.length(), 30)) + "..."
+                    : "null"));
+        }
+
         // Only log at debug level to prevent excessive logging
         if (logger.isDebugEnabled()) {
             logger.debug("JWT Filter processing: {} {}", method, requestPath);
@@ -75,6 +83,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             logger.debug("No Authorization header or invalid format for: {}", requestPath);
         }
 
+        // Debug for blog requests without token
+        if (requestPath.contains("/api/blog/") && authorizationHeader == null) {
+            System.out.println("❌ No Authorization header for blog request: " + method + " " + requestPath);
+        }
+
         // Add cache to avoid repeated database lookups for the same user
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // Use an in-memory cache or session attribute to avoid repeated lookups
@@ -86,12 +99,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
+                // Debug logging for blog requests
+                if (requestPath.contains("/api/blog/")) {
+                    System.out.println("✅ JWT Filter: Authentication successful for " + username);
+                    System.out.println("✅ Authorities: " + userDetails.getAuthorities());
+                }
+
                 // Only log at debug level to prevent excessive logging
                 if (logger.isDebugEnabled()) {
                     logger.debug("JWT Filter: Authenticated user = {}", username);
                 }
             } else {
                 logger.warn("JWT token validation failed for user: {}", username);
+                if (requestPath.contains("/api/blog/")) {
+                    System.out.println("❌ JWT token validation failed for user: " + username);
+                }
             }
         }
 

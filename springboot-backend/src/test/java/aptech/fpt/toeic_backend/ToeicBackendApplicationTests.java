@@ -8,6 +8,7 @@ class ToeicBackendApplicationTests {
 
 	@Test
 	void contextLoads() {
+		
 	}
 
 }

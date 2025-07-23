@@ -7,4 +7,10 @@ import java.util.List;
 @Repository
 public interface BlogPostRepository extends JpaRepository<BlogPost, Long> {
     List<BlogPost> findByTitleContainingIgnoreCase(String title);
+
+    List<BlogPost> findByHiddenFalseOrHiddenIsNullOrderByCreatedAtDesc();
+
+    List<BlogPost> findByTitleContainingIgnoreCaseAndHiddenFalseOrHiddenIsNull(String title);
+
+    List<BlogPost> findAllByOrderByCreatedAtDesc();
 }

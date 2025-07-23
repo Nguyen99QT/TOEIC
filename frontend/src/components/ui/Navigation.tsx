@@ -10,15 +10,24 @@ const Navigation: React.FC = () => {
     const navigate = useNavigate();
 
     const isActivePath = (path: string) => {
+        // Special handling for dashboard routes
+        if (path === '/dashboard' || path === '/admin/dashboard') {
+            return location.pathname === '/dashboard' || location.pathname === '/admin/dashboard';
+        }
         return location.pathname === path;
     };
 
+    // Dynamic navigation based on user role
+    const getDashboardPath = () => {
+        return currentUser?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+    };
+
     const navLinks = [
-        { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+        { path: getDashboardPath(), label: 'Dashboard', icon: '📊' },
         { path: '/lessons', label: 'Lessons', icon: '📚' },
         { path: '/exercises', label: 'Exercises', icon: '✏️' },
         { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
-        { path: '/progress', label: 'Progress', icon: '📈' },
+        { path: '/blogs', label: 'Blog', icon: '📈' },
         { path: '/feedback', label: 'Feedback', icon: '💬' },
     ];
 

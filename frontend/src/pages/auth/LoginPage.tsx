@@ -44,21 +44,23 @@ const LoginPage: React.FC = () => {
       // Use AuthContext's login method
       await login(formData.username, formData.password);
 
-      // Get current user from auth context to check role
-      const { getCurrentUser } = await import('../../services/auth');
-      const currentUser = getCurrentUser();
+      // Wait a bit for auth context to update, then check role from auth service
+      setTimeout(async () => {
+        const { getCurrentUser } = await import('../../services/auth');
+        const currentUser = getCurrentUser();
 
-      if (currentUser && currentUser.role === 'ADMIN') {
-        success('Login successful! Redirecting to admin dashboard...');
-        navigate('/admin/dashboard');
-      } else {
-        success('Login successful!');
-        console.log('✅ LoginPage: Login successful - AuthContext & App.tsx will handle redirect');
-      }
+        if (currentUser && currentUser.role === 'ADMIN') {
+          success('Login successful! Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
+        } else {
+          success('Login successful!');
+          navigate('/');
+        }
+      }, 100);
 
     } catch (loginError: any) {
       console.error('❌ LoginPage: Login failed:', loginError);
-      
+
       // Check if it's an email verification error
       if (loginError.response?.status === 403 && loginError.response?.data?.needsVerification) {
         setNeedsVerification(true);
@@ -74,7 +76,7 @@ const LoginPage: React.FC = () => {
 
   const handleResendVerification = async () => {
     if (!unverifiedEmail) return;
-    
+
     setIsResending(true);
     try {
       await resendVerificationEmail(unverifiedEmail);
@@ -108,19 +110,19 @@ const LoginPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              
+
               <h3 className="mt-4 text-lg font-medium text-gray-900">
                 Verify Your Email
               </h3>
-              
+
               <p className="mt-2 text-sm text-gray-600">
                 Please verify your email address before logging in.
               </p>
-              
+
               <p className="mt-2 text-sm text-gray-600">
                 Email: <strong>{unverifiedEmail}</strong>
               </p>
-              
+
               <div className="mt-6 space-y-4">
                 <button
                   onClick={handleResendVerification}

@@ -167,6 +167,27 @@ const HomePage: React.FC = () => {
                   Welcome back, <span className="font-bold text-yellow-300">{currentUser?.username}</span>!
                   Ready to improve your TOEIC score?
                 </motion.p>
+
+                {/* Premium Membership CTA */}
+                <motion.div
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-6 mb-6"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <h3 className="text-2xl font-bold text-white mb-2">🚀 Upgrade to Premium!</h3>
+                  <p className="text-white/90 mb-4">Unlock unlimited practice tests, advanced analytics, and exclusive content</p>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="secondary"
+                      size="lg"
+                      onClick={() => navigate('/membership')}
+                      className="w-full bg-white text-orange-600 hover:bg-gray-100 font-bold shadow-lg"
+                    >
+                      💎 Get Premium - Only $10/month
+                    </EnhancedButton>
+                  </motion.div>
+                </motion.div>
+
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <EnhancedButton
@@ -191,27 +212,49 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <EnhancedButton
-                    variant="secondary"
-                    size="lg"
-                    onClick={() => navigate('/register')}
-                    className="w-full sm:w-auto font-semibold"
-                  >
-                    🚀 Get Started Free
-                  </EnhancedButton>
+              <div className="space-y-6">
+                {/* Premium Membership CTA for Guest */}
+                <motion.div
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-6"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <h3 className="text-2xl font-bold text-white mb-2">🌟 Premium Membership Available!</h3>
+                  <p className="text-white/90 mb-4">Join thousands of successful TOEIC candidates with our premium features</p>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="secondary"
+                      size="lg"
+                      onClick={() => navigate('/membership')}
+                      className="w-full bg-white text-orange-600 hover:bg-gray-100 font-bold shadow-lg"
+                    >
+                      💎 View Premium Plans
+                    </EnhancedButton>
+                  </motion.div>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <EnhancedButton
-                    variant="ghost"
-                    size="lg"
-                    onClick={() => navigate('/pricing')}
-                    className="w-full sm:w-auto border-2 border-white/30"
-                  >
-                    💡 Learn More
-                  </EnhancedButton>
-                </motion.div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="secondary"
+                      size="lg"
+                      onClick={() => navigate('/register')}
+                      className="w-full sm:w-auto font-semibold"
+                    >
+                      🚀 Get Started Free
+                    </EnhancedButton>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <EnhancedButton
+                      variant="ghost"
+                      size="lg"
+                      onClick={() => navigate('/login')}
+                      className="w-full sm:w-auto border-2 border-white/30"
+                    >
+                      💡 Sign In
+                    </EnhancedButton>
+                  </motion.div>
+                </div>
               </div>
             )}
           </motion.div>

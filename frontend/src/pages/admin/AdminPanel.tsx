@@ -11,6 +11,8 @@ import { SettingsPage } from './settings-page'
 import { CoursesPage } from './courses-page'
 import { AnalyticsPage } from './analytics-page'
 import AdminFeedbackPage from './AdminFeedbackPage'
+import { BlogManagementPage } from './blog-management-page'
+import BlogEditPage from './blog-edit-page'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const AdminPanel: React.FC = () => {
@@ -22,9 +24,10 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     const path = location.pathname
     if (path.includes('/admin/')) {
-      const page = path.split('/admin/')[1]
+      const segments = path.split('/admin/')[1].split('/')
+      const page = segments[0]
       if (page && page !== currentPage) {
-        setCurrentPage(page)
+        setCurrentPage(path) // Store full path for complex routes
       }
     }
   }, [location.pathname, currentPage])
@@ -36,7 +39,17 @@ const AdminPanel: React.FC = () => {
   }
 
   const renderPage = () => {
-    switch (currentPage) {
+    const path = location.pathname
+
+    // Handle blog edit route
+    if (path.includes('/admin/blog/edit/')) {
+      return <BlogEditPage />
+    }
+
+    // Extract base page from path
+    const page = path.includes('/admin/') ? path.split('/admin/')[1].split('/')[0] : currentPage
+
+    switch (page) {
       case "dashboard":
         return <AdminDashboard />
       case "courses":
@@ -45,6 +58,8 @@ const AdminPanel: React.FC = () => {
         return <UsersPage />
       case "content":
         return <ContentPage />
+      case "blog":
+        return <BlogManagementPage />
       case "analytics":
         return <AnalyticsPage />
       case "settings":

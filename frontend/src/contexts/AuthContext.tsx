@@ -1,6 +1,6 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from '../types';
-import { persistentLogger } from '../utils/persistentLogger';
+import { clearCompletedExercises } from '../services/exerciseProgress';
 
 export interface AuthContextType {
     user: User | null;
@@ -10,7 +10,6 @@ export interface AuthContextType {
     logout: () => void;
     signOut: () => void;
     updateCurrentUser: (user: User) => void;
-    refreshAuthState: () => void; // New method to force refresh
     isAuthenticated: boolean;
     loading: boolean;
     isRefreshing: boolean;
@@ -28,7 +27,6 @@ export const AuthContext = React.createContext<AuthContextType>({
     logout: () => { },
     signOut: () => { },
     updateCurrentUser: () => { },
-    refreshAuthState: () => { },
     refreshToken: async () => { },
 });
 
@@ -45,56 +43,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initRef.current = true;
 
         console.log('🔍 AuthProvider: Starting authentication initialization...');
-        console.log('🔍 Current browser location:', window.location.href);
 
         const initAuth = async () => {
             try {
-                // Add a small delay to ensure localStorage is ready
-                await new Promise(resolve => setTimeout(resolve, 100));
-
                 // Use auth service functions to check authentication
                 const { getToken, getCurrentUser, isAuthenticated: checkAuth, startAutoRefresh } = await import('../services/auth');
-
-                console.log('🔍 AuthProvider: Checking existing auth...');
-                console.log('🔍 Current localStorage contents:', Object.keys(localStorage));
-                console.log('🔍 Direct localStorage access:');
-                console.log('  - toeic_access_token:', localStorage.getItem('toeic_access_token'));
-                console.log('  - authToken:', localStorage.getItem('authToken'));
-                console.log('  - accessToken:', localStorage.getItem('accessToken'));
-                console.log('  - toeic_current_user:', localStorage.getItem('toeic_current_user'));
 
                 const token = getToken();
                 const user = getCurrentUser();
 
+                console.log('🔍 AuthProvider: Checking existing auth...');
                 console.log('🔍 Token exists:', !!token);
                 console.log('🔍 User exists:', !!user);
-                console.log('🔍 Token preview:', token ? token.substring(0, 30) + '...' : 'null');
-                console.log('🔍 User preview:', user ? user.username : 'null');
-                console.log('🔍 isAuthenticated check result:', checkAuth());
+                console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'null');
+                console.log('🔍 User info:', user ? { id: user.id, username: user.username } : 'null');
 
                 if (token && user && checkAuth()) {
                     console.log('✅ Found valid auth for:', user.username);
-                    console.log('✅ Setting currentUser and isAuthenticated to true');
                     setCurrentUser(user);
                     setIsAuthenticated(true);
                     startAutoRefresh();
-
-                    // Store timestamp for debugging
-                    localStorage.setItem('auth_last_verified', new Date().toISOString());
-
-                    console.log('✅ AuthProvider state after auth setup:', {
-                        user: user.username,
-                        authenticated: true,
-                        location: window.location.pathname
-                    });
                 } else {
                     console.log('ℹ️ No valid authentication found - user is guest');
-                    console.log('ℹ️ Auth check details:', {
-                        hasToken: !!token,
-                        hasUser: !!user,
-                        authCheck: checkAuth(),
-                        location: window.location.pathname
-                    });
+                    console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
+
+                    // If checkAuth failed but we have token/user, it might be expired
+                    if (token && user && !checkAuth()) {
+                        console.warn('🚨 Token/user exists but authentication check failed - likely expired');
+                        // Clear potentially invalid data
+                        const { removeToken } = await import('../services/auth');
+                        removeToken();
+                    }
+
                     setCurrentUser(null);
                     setIsAuthenticated(false);
                 }
@@ -132,39 +112,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (usernameOrEmail: string, password: string): Promise<void> => {
         try {
-            persistentLogger.info(`🔍 AuthContext login: Starting login process for: ${usernameOrEmail}`);
-            console.log('🔍 AuthContext login: Starting login process for:', usernameOrEmail);
-
             const { login: authLogin, startAutoRefresh } = await import('../services/auth');
-
-            persistentLogger.info('🔍 AuthContext login: Calling auth service login...');
-            console.log('🔍 AuthContext login: Calling auth service login...');
             const response = await authLogin({
                 username: usernameOrEmail,
                 password: password
             });
 
-            persistentLogger.info('🔍 AuthContext: Login response received');
-            persistentLogger.info(`🔍 AuthContext: Response has token? ${!!(response.token || response.accessToken)}`);
             console.log('🔍 AuthContext: Login response received:', response);
-            console.log('🔍 AuthContext: Response has token?', !!(response.token || response.accessToken));
-            console.log('🔍 AuthContext: Response structure:', Object.keys(response));
 
             if (response && (response.token || response.accessToken)) {
                 // Handle both role (string) and roles (array) from backend
                 let userRole: "ADMIN" | "USER" | "COLLABORATOR" = 'USER';
 
                 if (response.role) {
-                    // Strip ROLE_ prefix if present
-                    const cleanRole = response.role.replace(/^ROLE_/, '');
-                    userRole = cleanRole as "ADMIN" | "USER" | "COLLABORATOR";
+                    userRole = response.role as "ADMIN" | "USER" | "COLLABORATOR";
                 } else if (response.roles && Array.isArray(response.roles) && response.roles.length > 0) {
-                    // Get the first role from the array and strip ROLE_ prefix
-                    const firstRole = response.roles[0].replace(/^ROLE_/, '');
-                    if (firstRole === 'ADMIN' || firstRole === 'USER' || firstRole === 'COLLABORATOR') {
-                        userRole = firstRole;
+                    // Get the first role from the array and handle ROLE_ prefix
+                    const firstRole = response.roles[0];
+                    if (firstRole === 'ROLE_ADMIN' || firstRole === 'ADMIN') {
+                        userRole = 'ADMIN';
+                    } else if (firstRole === 'ROLE_USER' || firstRole === 'USER') {
+                        userRole = 'USER';
+                    } else if (firstRole === 'ROLE_COLLABORATOR' || firstRole === 'COLLABORATOR') {
+                        userRole = 'COLLABORATOR';
                     }
                 }
+
+                console.log('🔍 AuthContext: Processed role:', userRole, 'from response.roles:', response.roles);
 
                 const user: User = {
                     id: response.id || 0,
@@ -175,63 +149,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     membershipType: "FREE"
                 };
 
-                persistentLogger.info(`✅ AuthContext: Setting user data for ${user.username}`);
                 console.log('✅ AuthContext: Setting user data:', user);
 
                 // ⚡ FIX: Use React's state batching to ensure updates happen together
                 setCurrentUser(user);
                 setIsAuthenticated(true);
 
-                // ⚡ ENHANCED: Verify state persistence immediately
-                console.log('🔍 AuthContext: Checking localStorage after auth service...');
+                // ⚡ ADD: Force state update with a small delay to ensure DOM updates
+                setTimeout(() => {
+                    console.log('🔍 Post-login state verification:', {
+                        isAuthenticated: true,
+                        currentUser: user.username
+                    });
+                }, 100);
 
-                // Wait a bit for localStorage to be written
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                const storedToken = localStorage.getItem('toeic_access_token');
-                const storedUser = localStorage.getItem('toeic_current_user');
-
-                persistentLogger.info(`🔍 Login state verification: token=${!!storedToken}, user=${!!storedUser}`);
-                console.log('🔍 Login state verification:', {
-                    userSet: !!user,
-                    authSet: true,
-                    tokenStored: !!storedToken,
-                    userStored: !!storedUser,
-                    username: user.username,
-                    tokenPreview: storedToken ? storedToken.substring(0, 20) + '...' : 'NO TOKEN'
-                });
-
-                // Only start auto-refresh if everything is properly stored
-                if (storedToken && storedUser) {
-                    startAutoRefresh();
-                    persistentLogger.info(`✅ AuthContext: Login completed successfully for ${user.username}`);
-                    console.log('✅ AuthContext: Login completed successfully for', user.username);
-
-                    // Set a longer-lasting flag for ProtectedRoute
-                    localStorage.setItem('auth_just_logged_in', 'true');
-                    localStorage.setItem('auth_login_timestamp', Date.now().toString());
-
-                } else {
-                    persistentLogger.error('❌ AuthContext: Failed to persist auth data properly');
-                    persistentLogger.error(`❌ Token stored: ${!!storedToken}, User stored: ${!!storedUser}`);
-                    console.error('❌ AuthContext: Failed to persist auth data properly');
-                    console.error('❌ Token stored:', !!storedToken);
-                    console.error('❌ User stored:', !!storedUser);
-                    throw new Error('Failed to save authentication data');
-                }
+                startAutoRefresh();
+                console.log('✅ AuthContext: Login state updated successfully');
             } else {
-                persistentLogger.error('❌ AuthContext: Invalid login response structure');
                 console.error('❌ AuthContext: Invalid login response structure:', response);
-                console.error('❌ Expected token or accessToken field, got:', Object.keys(response));
                 throw new Error('Invalid login response');
             }
         } catch (error: any) {
-            persistentLogger.error(`❌ AuthContext: Login error: ${error.message}`);
             console.error('❌ AuthContext: Login error:', error);
-            console.error('❌ AuthContext: Full error details:', JSON.stringify(error, null, 2));
-
-            // Don't clear auth state immediately on error
-            // Let the error propagate to LoginPage for proper handling
             throw error;
         }
     };
@@ -261,9 +200,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             keys.forEach(key => localStorage.removeItem(key));
         }
 
-        // Clear exercise completion data for user separation
-        const { clearCompletedExercises } = await import('../services/exerciseProgress');
-        clearCompletedExercises();
+        // Clear exercise completion data from localStorage
+        try {
+            clearCompletedExercises();
+            console.log('✅ Exercise completion data cleared');
+        } catch (error) {
+            console.warn('⚠️ Could not clear exercise completion data:', error);
+            // Fallback to manual cleanup
+            localStorage.removeItem('completed_exercises');
+            localStorage.removeItem('completedExercises');
+        }
 
         setCurrentUser(null);
         setIsAuthenticated(false);
@@ -332,42 +278,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [loading, isAuthenticated, currentUser]);
 
-    // Add refresh function to manually re-check auth state
-    const refreshAuthState = useCallback(async () => {
-        console.log('🔄 Manually refreshing auth state...');
-        setLoading(true);
-
-        try {
-            const { getToken, getCurrentUser, isAuthenticated: checkAuth, startAutoRefresh } = await import('../services/auth');
-
-            const token = getToken();
-            const user = getCurrentUser();
-
-            console.log('🔄 Refresh check:', {
-                hasToken: !!token,
-                hasUser: !!user,
-                authCheck: checkAuth()
-            });
-
-            if (token && user && checkAuth()) {
-                console.log('✅ Refresh successful - user authenticated');
-                setCurrentUser(user);
-                setIsAuthenticated(true);
-                startAutoRefresh();
-            } else {
-                console.log('❌ Refresh failed - user not authenticated');
-                setCurrentUser(null);
-                setIsAuthenticated(false);
-            }
-        } catch (error) {
-            console.error('❌ Refresh auth state error:', error);
-            setCurrentUser(null);
-            setIsAuthenticated(false);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     return (
         <AuthContext.Provider
             value={{
@@ -381,7 +291,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 logout,
                 signOut,
                 updateCurrentUser,
-                refreshAuthState,
                 refreshToken,
             }}
         >

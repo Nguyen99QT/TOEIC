@@ -44,6 +44,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String requestPath = request.getRequestURI();
         final String method = request.getMethod();
 
+<<<<<<< HEAD
         // Log request for debugging
         logger.debug("JWT Filter processing: {} {}", method, requestPath);
 
@@ -52,6 +53,19 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             logger.debug("Skipping JWT filter for public endpoint: {}", requestPath);
             chain.doFilter(request, response);
             return;
+=======
+        // Debug logging for blog requests
+        if (requestPath.contains("/api/blog/")) {
+            System.out.println("🔍 JWT Filter: " + method + " " + requestPath);
+            System.out.println("🔍 Authorization Header: " + (authorizationHeader != null
+                    ? authorizationHeader.substring(0, Math.min(authorizationHeader.length(), 30)) + "..."
+                    : "null"));
+        }
+
+        // Only log at debug level to prevent excessive logging
+        if (logger.isDebugEnabled()) {
+            logger.debug("JWT Filter processing: {} {}", method, requestPath);
+>>>>>>> DuyAnh
         }
 
         String username = null;
@@ -77,6 +91,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             logger.debug("No Authorization header or invalid format for: {}", requestPath);
         }
 
+<<<<<<< HEAD
+=======
+        // Debug for blog requests without token
+        if (requestPath.contains("/api/blog/") && authorizationHeader == null) {
+            System.out.println("❌ No Authorization header for blog request: " + method + " " + requestPath);
+        }
+
+        // Add cache to avoid repeated database lookups for the same user
+>>>>>>> DuyAnh
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             logger.debug("Loading user details for username: {}", username);
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
@@ -89,10 +112,26 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
+<<<<<<< HEAD
                 logger.info("JWT Filter: Successfully authenticated user = {} with authorities = {}", 
                     username, userDetails.getAuthorities());
+=======
+                // Debug logging for blog requests
+                if (requestPath.contains("/api/blog/")) {
+                    System.out.println("✅ JWT Filter: Authentication successful for " + username);
+                    System.out.println("✅ Authorities: " + userDetails.getAuthorities());
+                }
+
+                // Only log at debug level to prevent excessive logging
+                if (logger.isDebugEnabled()) {
+                    logger.debug("JWT Filter: Authenticated user = {}", username);
+                }
+>>>>>>> DuyAnh
             } else {
                 logger.warn("JWT token validation failed for user: {}", username);
+                if (requestPath.contains("/api/blog/")) {
+                    System.out.println("❌ JWT token validation failed for user: " + username);
+                }
             }
         } else if (username != null) {
             logger.debug("User {} already authenticated in SecurityContext", username);

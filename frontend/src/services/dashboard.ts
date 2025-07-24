@@ -31,15 +31,15 @@ export interface UserActivity {
   id: number;
   userId: number;
   type:
-    | "LESSON_COMPLETED"
-    | "PRACTICE_TEST"
-    | "FLASHCARD_STUDY"
-    | "EXERCISE_COMPLETED"
-    | "ACHIEVEMENT_EARNED"
-    | "LOGIN"
-    | "STREAK_MILESTONE"
-    | "SCORE_IMPROVEMENT"
-    | "QUESTION_ANSWERED";
+  | "LESSON_COMPLETED"
+  | "PRACTICE_TEST"
+  | "FLASHCARD_STUDY"
+  | "EXERCISE_COMPLETED"
+  | "ACHIEVEMENT_EARNED"
+  | "LOGIN"
+  | "STREAK_MILESTONE"
+  | "SCORE_IMPROVEMENT"
+  | "QUESTION_ANSWERED";
   title: string;
   description: string;
   score?: number;
@@ -216,42 +216,48 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const dashboardData = await getDashboardData();
 
+    // Check if dashboardData and required properties exist
+    if (!dashboardData || !dashboardData.userStats) {
+      console.warn("Dashboard data is incomplete, using fallback");
+      throw new Error("Dashboard data is incomplete");
+    }
+
     // Convert new format to legacy format for compatibility
     return {
-      lessonsCompleted: dashboardData.userStats.lessonsCompleted,
-      practiceTests: dashboardData.userStats.practiceTests,
-      averageScore: dashboardData.userStats.averageScore,
+      lessonsCompleted: dashboardData.userStats.lessonsCompleted || 0,
+      practiceTests: dashboardData.userStats.practiceTests || 0,
+      averageScore: dashboardData.userStats.averageScore || 0,
       weeklyProgress: {
-        lessonsThisWeek: dashboardData.weeklyProgress.weeklyProgress.reduce(
-          (sum: number, day: any) => sum + day.activitiesCount,
+        lessonsThisWeek: dashboardData.weeklyProgress?.weeklyProgress?.reduce(
+          (sum: number, day: any) => sum + (day.activitiesCount || 0),
           0
-        ),
-        testsThisWeek: dashboardData.userStats.practiceTests,
+        ) || 0,
+        testsThisWeek: dashboardData.userStats.practiceTests || 0,
         scoreImprovement: Math.max(
           0,
-          dashboardData.userStats.averageScore - 70
+          (dashboardData.userStats.averageScore || 70) - 70
         ),
       },
-      recentActivity: dashboardData.recentActivities.activities.map(
+      recentActivity: dashboardData.recentActivities?.activities?.map(
         (activity: UserActivity) => ({
           id: activity.id,
           type:
             activity.type === "LESSON_COMPLETED"
               ? "lesson"
               : activity.type === "PRACTICE_TEST"
-              ? "test"
-              : activity.type === "FLASHCARD_STUDY"
-              ? "flashcard"
-              : "achievement",
-          title: activity.title,
-          description: activity.description,
+                ? "test"
+                : activity.type === "FLASHCARD_STUDY"
+                  ? "flashcard"
+                  : "achievement",
+          title: activity.title || "Unknown Activity",
+          description: activity.description || "",
           timestamp: activity.createdAt,
           score: activity.score,
           duration: activity.durationMinutes,
         })
-      ),
-      studyStreak: dashboardData.userStats.studyStreak,
-      totalStudyTime: dashboardData.userStats.totalStudyTime,
+      ) || [],
+      studyStreak: dashboardData.userStats.studyStreak || 0,
+      totalStudyTime: dashboardData.userStats.totalStudyTime || 0,
     };
   } catch (error) {
     console.error("Failed to fetch dashboard stats:", error);
@@ -369,10 +375,10 @@ export const getRecentActivities = async (
         activity.type === "LESSON_COMPLETED"
           ? "lesson"
           : activity.type === "PRACTICE_TEST"
-          ? "test"
-          : activity.type === "FLASHCARD_STUDY"
-          ? "flashcard"
-          : "achievement",
+            ? "test"
+            : activity.type === "FLASHCARD_STUDY"
+              ? "flashcard"
+              : "achievement",
       title: activity.title,
       description: activity.description,
       timestamp: activity.createdAt,

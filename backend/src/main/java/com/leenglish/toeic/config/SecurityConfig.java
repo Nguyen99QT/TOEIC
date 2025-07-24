@@ -66,11 +66,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        // ================================================================
-                        // BASIC PUBLIC ENDPOINTS
-                        // ================================================================
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+<<<<<<< HEAD
                         // Specific TOEIC test endpoints - ORDER MATTERS!
                         .requestMatchers(HttpMethod.POST, "/api/tests/*/review").authenticated() // Test review endpoint
                                                                                                  // requires auth
@@ -108,6 +106,11 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll() // Upload files (audio/images)
                         .requestMatchers("/static/**").permitAll() // Static files
                         // ✅ MEDIA FILES - Make them public
+=======
+                        .requestMatchers("/audio/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
+                        .requestMatchers("/static/**").permitAll()
+>>>>>>> DuyAnh
                         .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/files/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/files/**").permitAll()
@@ -116,47 +119,18 @@ public class SecurityConfig {
                         .requestMatchers("/api/test-results/**").permitAll() // Test results and history
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-
-                        // ================================================================
-                        // PUBLIC LESSON ENDPOINTS
-                        // ================================================================
-                        .requestMatchers(HttpMethod.GET, "/api/lessons/free").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/lessons/free/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/lessons/*/exercises/*/questions/free").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/questions/free").permitAll()
-
-                        // ================================================================
-                        // PUBLIC FLASHCARD ENDPOINTS (UPDATED)
-                        // ================================================================
-                        // Public flashcard set endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/public").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/*/public").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/category/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/difficulty/**").permitAll()
-
-                        // Public flashcards endpoints
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/free").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/free/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/sets").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/sets/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/test").permitAll()
-
-                        // Public flashcard-sets endpoints - OPEN FOR PUBLIC ACCESS
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/**").permitAll()
-
-                        // Legacy public endpoints (for backward compatibility)
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/sets").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/sets/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/set/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/level/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcards/category/**").permitAll()
-
-                        // ================================================================
-                        // AUTHENTICATED LESSON ENDPOINTS
-                        // ================================================================
+                        .requestMatchers(HttpMethod.GET, "/Upload/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/admin/stats").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/blog/upload").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/blog/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/blog/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/blog/{id}/unhide").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/blog/{id}/likes").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/{id}/likes").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/{id}/likes/check").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/blog/{id}/comments").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/{id}/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lessons").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/lessons/{lessonId}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/lessons/{lessonId}/exercises").authenticated()
@@ -167,13 +141,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/lessons/{lessonId}/exercises/{exerciseId}/questions/{questionId}")
                         .authenticated()
-
-                        // Submit answers
                         .requestMatchers(HttpMethod.POST,
                                 "/api/lessons/{lessonId}/exercises/{exerciseId}/questions/submit")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/lessons/{lessonId}/exercises/{exerciseId}/submit")
                         .authenticated()
+<<<<<<< HEAD
 
                         // ================================================================
                         // AUTHENTICATED FLASHCARD ENDPOINTS (SPECIFIC ACTIONS ONLY)
@@ -239,33 +212,13 @@ public class SecurityConfig {
                         // ================================================================
                         // ADMIN ENDPOINTS
                         // ================================================================
+=======
+                        .requestMatchers("/api/dashboard").authenticated()
+                        .requestMatchers("/api/users/{userId}/lessons/progress").authenticated()
+                        .requestMatchers("/api/users/{userId}/**").authenticated()
+>>>>>>> DuyAnh
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
-
-                        // Admin content management
-                        .requestMatchers("/api/admin/lessons/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/exercises/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/flashcard-sets/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/flashcards/**").hasRole("ADMIN")
-
-                        // ================================================================
-                        // OTHER PROTECTED ENDPOINTS
-                        // ================================================================
-                        .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/progress/**").hasAnyRole("USER", "ADMIN")
-
-                        // Exercise submission and feedback endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/exercises/{id}/submit").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/exercises/feedback").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/exercises/{id}/results").authenticated()
-
-                        // Legacy catch-all patterns (maintain backward compatibility)
-                        // .requestMatchers("/api/lessons/**").hasAnyRole("USER", "ADMIN")
-                        // .requestMatchers("/api/exercises/**").hasAnyRole("USER", "ADMIN")
-                        // .requestMatchers("/api/questions/**").hasAnyRole("USER", "ADMIN")
-                        // .requestMatchers("/api/flashcards/**").hasAnyRole("USER", "ADMIN")
-
-                        // All other requests require authentication
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

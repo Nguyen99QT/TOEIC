@@ -18,6 +18,16 @@ const apiClient = axios.create({
   },
 });
 
+// Thêm interceptor để tự động gửi token
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("accessToken"); // Lấy token từ localStorage
+  console.log(token);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // Helper function to ensure proper URL formatting for direct API calls
 export const formatApiUrl = (path: string): string => {
   // Remove leading slash if present

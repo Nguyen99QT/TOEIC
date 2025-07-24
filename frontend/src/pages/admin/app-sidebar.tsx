@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Bell,
   MessageCircle,
+  Edit3,
 } from "lucide-react"
 
 import {
@@ -46,6 +47,11 @@ const menuItems = [
     title: "Nội dung",
     icon: FileText,
     id: "content",
+  },
+  {
+    title: "Blog",
+    icon: Edit3,
+    id: "blog",
   },
   {
     title: "Thống kê",
@@ -112,15 +118,13 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                   <SidebarMenuButton
                     isActive={currentPage === item.id}
                     onClick={() => setCurrentPage(item.id)}
-                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
-                      currentPage === item.id
+                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === item.id
                         ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                         : "text-sky-100 hover:bg-white/15 hover:text-white"
-                    }`}
+                      }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${
-                      currentPage === item.id ? "scale-110" : "group-hover:scale-110"
-                    }`} />
+                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${currentPage === item.id ? "scale-110" : "group-hover:scale-110"
+                      }`} />
                     <span className="font-medium">{item.title}</span>
                     {currentPage === item.id && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
@@ -141,15 +145,13 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                   <SidebarMenuButton
                     isActive={currentPage === item.id}
                     onClick={() => setCurrentPage(item.id)}
-                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
-                      currentPage === item.id
+                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === item.id
                         ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                         : "text-sky-100 hover:bg-white/15 hover:text-white"
-                    }`}
+                      }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${
-                      currentPage === item.id ? "scale-110" : "group-hover:scale-110"
-                    }`} />
+                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${currentPage === item.id ? "scale-110" : "group-hover:scale-110"
+                      }`} />
                     <span className="font-medium">{item.title}</span>
                     {currentPage === item.id && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
@@ -169,15 +171,13 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                 <SidebarMenuButton
                   isActive={currentPage === "settings"}
                   onClick={() => setCurrentPage("settings")}
-                  className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
-                    currentPage === "settings"
+                  className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === "settings"
                       ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                       : "text-sky-100 hover:bg-white/15 hover:text-white"
-                  }`}
+                    }`}
                 >
-                  <Settings className={`h-4 w-4 transition-transform duration-200 ${
-                    currentPage === "settings" ? "scale-110" : "group-hover:scale-110"
-                  }`} />
+                  <Settings className={`h-4 w-4 transition-transform duration-200 ${currentPage === "settings" ? "scale-110" : "group-hover:scale-110"
+                    }`} />
                   <span className="font-medium">Cài đặt</span>
                   {currentPage === "settings" && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />

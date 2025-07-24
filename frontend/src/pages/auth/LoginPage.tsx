@@ -8,8 +8,8 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../components/ui/SimpleToast';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { resendVerificationEmail } from '../../services/auth';
 
@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
   const [isResending, setIsResending] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
-  const { login, refreshAuthState } = useAuth();
+  const { login } = useAuth();
   const { success, error } = useToast();
   const navigate = useNavigate();
 
@@ -39,33 +39,27 @@ const LoginPage: React.FC = () => {
     setNeedsVerification(false);
 
     try {
+      console.log('🔍 LoginPage: Attempting login for:', formData.username);
+
       // Use AuthContext's login method
       await login(formData.username, formData.password);
 
-      // Set flag to indicate successful login for ProtectedRoute
-      localStorage.setItem('auth_just_logged_in', 'true');
+      // Wait a bit for auth context to update, then check role from auth service
+      setTimeout(async () => {
+        const { getCurrentUser } = await import('../../services/auth');
+        const currentUser = getCurrentUser();
 
-      // Wait for auth state to properly update
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Refresh auth state to ensure consistency
-      await refreshAuthState();
-
-      // Get current user from auth context to check role
-      const { getCurrentUser } = await import('../../services/auth');
-      const currentUser = getCurrentUser();
-
-      if (currentUser && currentUser.role === 'ADMIN') {
-        success('Login successful! Redirecting to admin dashboard...');
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        success('Login successful! Redirecting to dashboard...');
-        navigate('/dashboard', { replace: true });
-      }
+        if (currentUser && currentUser.role === 'ADMIN') {
+          success('Login successful! Redirecting to admin dashboard...');
+          navigate('/admin/dashboard');
+        } else {
+          success('Login successful!');
+          navigate('/');
+        }
+      }, 100);
 
     } catch (loginError: any) {
-      // Clean up the just logged in flag on error
-      localStorage.removeItem('auth_just_logged_in');
+      console.error('❌ LoginPage: Login failed:', loginError);
 
       // Check if it's an email verification error
       if (loginError.response?.status === 403 && loginError.response?.data?.needsVerification) {
@@ -73,8 +67,7 @@ const LoginPage: React.FC = () => {
         setUnverifiedEmail(loginError.response.data.email);
         error('Please verify your email before logging in');
       } else {
-        const errorMessage = loginError.message || 'Login failed';
-        error(errorMessage);
+        error(loginError.message || 'Login failed');
       }
     } finally {
       setIsLoading(false);
@@ -247,6 +240,26 @@ const LoginPage: React.FC = () => {
                 'Sign in'
               )}
             </button>
+          </div>
+
+          {/* Test Accounts Section */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-medium text-blue-800 mb-2">Test Accounts:</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">huyplum</code></span>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, username: 'huyplum', password: 'password' })}
+                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                >
+                  Use Account
+                </button>
+              </div>
+              <div className="text-xs text-blue-600">
+                Password: <code className="bg-blue-100 px-1 rounded">password</code>
+              </div>
+            </div>
           </div>
         </form>
       </div>

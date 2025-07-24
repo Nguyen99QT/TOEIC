@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CollaboratorLayout from '../../components/layouts/CollaboratorLayout';
 import ContentModal from '../../components/collaborator/ContentModal';
-import { Lesson } from '../../types/lesson';
+import { Lesson } from '../../types/index';
 import flashcardService from '../../services/flashcardService';
 import lessonService from '../../services/lessons';
 import ContentTable from '../../components/collaborator/ContentTable';

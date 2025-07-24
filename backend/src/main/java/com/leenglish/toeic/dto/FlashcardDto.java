@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlashcardDto {
-    
+
     private Long id;
     private String frontText;
     private String backText;
-    
+
     // Add fields for backward compatibility
     private String frontContent;
     private String backContent;
@@ -22,7 +22,7 @@ public class FlashcardDto {
     private String audioUrl;
     private String imageUrl;
     private String level;
-    
+
     private Long flashcardSetId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

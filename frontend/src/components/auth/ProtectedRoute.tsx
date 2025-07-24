@@ -131,7 +131,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Handle routes that require authentication
   if (requireAuth && !isAuthenticated) {
-    console.log('🔒 ProtectedRoute: Authentication required');
+    console.log('🔒 ProtectedRoute: Authentication required, redirecting to login');
+    console.log('🔍 Current auth state:', { 
+      isAuthenticated, 
+      loading, 
+      hasCurrentUser: !!currentUser,
+      currentPath: location.pathname 
+    });
 
     // Show login prompt for better UX
     if (showLoginPrompt) {

@@ -67,6 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('ℹ️ No valid authentication found - user is guest');
                     console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
 
+                    // Check if we have a recent login success flag
+                    const loginSuccess = localStorage.getItem('toeic_login_success');
+                    if (loginSuccess === 'true' && token && user) {
+                        console.log('🔧 Found recent login success flag, restoring authentication');
+                        setCurrentUser(user);
+                        setIsAuthenticated(true);
+                        startAutoRefresh();
+                        localStorage.removeItem('toeic_login_success'); // Clear flag after use
+                        return;
+                    }
+
                     // If checkAuth failed but we have token/user, it might be expired
                     if (token && user && !checkAuth()) {
                         console.warn('🚨 Token/user exists but authentication check failed - likely expired');
@@ -151,17 +162,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 console.log('✅ AuthContext: Setting user data:', user);
 
-                // ⚡ FIX: Use React's state batching to ensure updates happen together
+                // Use React's state batching to ensure updates happen together
                 setCurrentUser(user);
                 setIsAuthenticated(true);
 
-                // ⚡ ADD: Force state update with a small delay to ensure DOM updates
+                // Set a flag to indicate successful login for persistence
+                localStorage.setItem('toeic_login_success', 'true');
+
+                // Add a verification step to ensure state updates properly
                 setTimeout(() => {
                     console.log('🔍 Post-login state verification:', {
                         isAuthenticated: true,
-                        currentUser: user.username
+                        currentUser: user.username,
+                        localStorage: {
+                            token: !!localStorage.getItem('toeic_access_token'),
+                            user: !!localStorage.getItem('toeic_current_user'),
+                            loginFlag: localStorage.getItem('toeic_login_success')
+                        }
                     });
-                }, 100);
+                }, 200);
 
                 startAutoRefresh();
                 console.log('✅ AuthContext: Login state updated successfully');
@@ -171,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         } catch (error: any) {
             console.error('❌ AuthContext: Login error:', error);
+            localStorage.removeItem('toeic_login_success');
             throw error;
         }
     };
@@ -193,10 +213,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { removeToken, stopAutoRefresh } = await import('../services/auth');
             removeToken();
             stopAutoRefresh();
+            
+            // Clear login success flag
+            localStorage.removeItem('toeic_login_success');
         } catch (error) {
             console.error('Error during logout:', error);
             // Fallback to manual cleanup
-            const keys = ['toeic_current_user', 'toeic_access_token', 'toeic_refresh_token', 'currentUser', 'authToken'];
+            const keys = ['toeic_current_user', 'toeic_access_token', 'toeic_refresh_token', 'currentUser', 'authToken', 'toeic_login_success'];
             keys.forEach(key => localStorage.removeItem(key));
         }
 
@@ -275,6 +298,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 username: currentUser.username,
                 id: currentUser.id
             });
+        }
+
+        // If user was authenticated but now is not, warn about potential false logout
+        if (!isAuthenticated && currentUser) {
+            console.warn('⚠️ Potential false logout detected! Current user exists but isAuthenticated is false');
+            
+            // Check if we still have valid token/user in localStorage
+            const { getToken, getCurrentUser } = require('../services/auth');
+            const token = getToken();
+            const storedUser = getCurrentUser();
+            
+            if (token && storedUser) {
+                console.warn('🔧 Found valid token/user in localStorage, restoring authentication');
+                setCurrentUser(storedUser);
+                setIsAuthenticated(true);
+                return;
+            }
         }
     }, [loading, isAuthenticated, currentUser]);
 

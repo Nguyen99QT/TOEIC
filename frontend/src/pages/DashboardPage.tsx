@@ -30,8 +30,14 @@ const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   // const [lessonProgress, setLessonProgress] = useState<LessonProgress[]>([]); // TODO: Implement backend endpoint
 
+  // Debug authentication state
+  console.log('🔍 DashboardPage: Auth state:', { isAuthenticated, currentUser: currentUser?.username });
+
   useEffect(() => {
-    if (!isAuthenticated) return; // Chỉ fetch khi đã đăng nhập
+    if (!isAuthenticated) {
+      console.log('⚠️ DashboardPage: User not authenticated, skipping data fetch');
+      return; // Chỉ fetch khi đã đăng nhập
+    }
 
     const fetchDashboardData = async () => {
       try {
@@ -151,7 +157,26 @@ const DashboardPage: React.FC = () => {
   }
 
   if (!stats) {
-    return null;
+    // Add fallback content while stats are loading or if user is not authenticated
+    if (!isAuthenticated) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Authentication Required</h2>
+            <p className="text-gray-600">Please log in to view your dashboard.</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

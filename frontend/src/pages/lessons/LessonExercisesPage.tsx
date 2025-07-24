@@ -45,11 +45,9 @@ const LessonExercisesPage: React.FC = () => {
             try {
                 // Bắt đầu loading
                 setLoading(true);
-                console.log(`🔍 Fetching lesson ${id} and its exercises...`);
 
                 // Fetch lesson details
                 const lessonData = await lessonService.getLessonById(parseInt(id));
-                console.log('✅ Lesson data:', lessonData);
                 setLesson(lessonData);
 
                 // Check access permissions
@@ -68,16 +66,13 @@ const LessonExercisesPage: React.FC = () => {
                 // Fetch exercises for this lesson
                 try {
                     const exercisesData = await lessonService.getLessonExercises(parseInt(id));
-                    console.log('✅ Exercises data:', exercisesData);
                     setExercises(exercisesData || []);
                 } catch (exerciseError) {
-                    console.warn('⚠️ Could not fetch exercises, using empty array');
                     setExercises([]);
                 }
 
                 setError(null);
             } catch (err: any) {
-                console.error('❌ Error fetching lesson/exercises:', err);
 
                 if (err.response?.status === 404) {
                     setError('Lesson not found');
@@ -115,7 +110,6 @@ const LessonExercisesPage: React.FC = () => {
 
     // Cập nhật hàm handleStartExercise
     const handleStartExercise = (exercise: Exercise) => {
-        console.log(`🎯 Starting exercise ${exercise.id}: ${exercise.title}`);
 
         // Navigate to exercise questions page
         navigate(`/lessons/${id}/exercises/${exercise.id}/questions`);

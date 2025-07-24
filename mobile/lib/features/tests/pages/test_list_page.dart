@@ -27,6 +27,16 @@ class QuickTestNotifier extends StateNotifier<AsyncValue<QuickTestResult?>> {
     }
   }
 
+  Future<void> generateFullTOEICTest() async {
+    state = const AsyncValue.loading();
+    try {
+      final result = await TestService.generateFullTOEICTest();
+      state = AsyncValue.data(result);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
   void reset() {
     state = const AsyncValue.data(null);
   }
@@ -104,17 +114,36 @@ class TestListPage extends ConsumerWidget {
                               ref.read(quickTestProvider.notifier).reset();
                             });
                           }
-                          return ElevatedButton.icon(
-                            onPressed: () {
-                              ref.read(quickTestProvider.notifier).generateQuickTest();
-                            },
-                            icon: const Icon(Icons.play_arrow),
-                            label: const Text('Tạo Quick Test'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
+                          return Column(
+                            children: [
+                              // Quick Test Button
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  ref.read(quickTestProvider.notifier).generateQuickTest();
+                                },
+                                icon: const Icon(Icons.play_arrow),
+                                label: const Text('Tạo Quick Test (45 câu)'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Full TOEIC Test Button
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  ref.read(quickTestProvider.notifier).generateFullTOEICTest();
+                                },
+                                icon: const Icon(Icons.quiz),
+                                label: const Text('Tạo Full TOEIC Test (200 câu)'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ],
                           );
                         },
                         loading: () => ElevatedButton.icon(

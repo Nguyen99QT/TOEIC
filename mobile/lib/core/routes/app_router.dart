@@ -16,6 +16,8 @@ import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
 import 'package:toeic_mobile/features/tests/pages/test_list_page.dart';
 import 'package:toeic_mobile/features/tests/pages/test_page.dart';
 import 'package:toeic_mobile/features/tests/pages/test_result_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_simple_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_detail_page.dart';
 import 'package:toeic_mobile/features/tests/pages/test_history_page.dart';
 import 'package:toeic_mobile/shared/widgets/layout/main_layout.dart';
 import 'package:toeic_mobile/shared/widgets/layout/auth_layout.dart' as auth;
@@ -177,10 +179,40 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: '/test-result-simple',
+        pageBuilder: (context, state) {
+          final message = state.uri.queryParameters['message'];
+          final scoreStr = state.uri.queryParameters['score'];
+          final resultIdStr = state.uri.queryParameters['resultId'];
+          final score = scoreStr != null ? int.tryParse(scoreStr) : null;
+          final resultId = resultIdStr != null ? int.tryParse(resultIdStr) : null;
+          
+          return MaterialPage(
+            child: MainLayout(
+              child: TestResultSimplePage(
+                message: message,
+                score: score,
+                resultId: resultId,
+              ),
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '/test-history',
         pageBuilder: (context, state) => const MaterialPage(
           child: MainLayout(
             child: TestHistoryPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-result-detail/:resultId',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestResultDetailPage(
+              resultId: int.parse(state.pathParameters['resultId']!),
+            ),
           ),
         ),
       ),

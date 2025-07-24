@@ -92,6 +92,22 @@ class TestQuestion {
   });
 
   factory TestQuestion.fromJson(Map<String, dynamic> json) {
+    // Parse options from backend format (optionA, optionB, optionC, optionD)
+    List<TestOption> options = [];
+    
+    if (json['optionA'] != null && json['optionA'].toString().isNotEmpty) {
+      options.add(TestOption(label: 'A', content: json['optionA']));
+    }
+    if (json['optionB'] != null && json['optionB'].toString().isNotEmpty) {
+      options.add(TestOption(label: 'B', content: json['optionB']));
+    }
+    if (json['optionC'] != null && json['optionC'].toString().isNotEmpty) {
+      options.add(TestOption(label: 'C', content: json['optionC']));
+    }
+    if (json['optionD'] != null && json['optionD'].toString().isNotEmpty) {
+      options.add(TestOption(label: 'D', content: json['optionD']));
+    }
+
     return TestQuestion(
       questionId: json['questionId'] ?? 0,
       questionText: json['questionText'] ?? '',
@@ -99,9 +115,7 @@ class TestQuestion {
       questionOrder: json['questionOrder'] ?? 0,
       audioUrl: json['audioUrl'],
       imageUrl: json['imageUrl'],
-      options: (json['options'] as List<dynamic>?)
-          ?.map((option) => TestOption.fromJson(option))
-          .toList() ?? [],
+      options: options,
     );
   }
 
@@ -145,11 +159,72 @@ class TestOption {
 class TestDetail {
   final Test test;
   final List<TestQuestion> questions;
+  final Map<int, List<TestQuestion>> questionsByPart;
+  final List<int> availableParts;
 
   TestDetail({
     required this.test,
     required this.questions,
-  });
+  }) : questionsByPart = _groupQuestionsByPart(questions),
+       availableParts = _getAvailableParts(questions);
+
+  static Map<int, List<TestQuestion>> _groupQuestionsByPart(List<TestQuestion> questions) {
+    Map<int, List<TestQuestion>> grouped = {};
+    for (var question in questions) {
+      if (!grouped.containsKey(question.partNumber)) {
+        grouped[question.partNumber] = [];
+      }
+      grouped[question.partNumber]!.add(question);
+    }
+    
+    // Sort questions within each part by questionOrder
+    for (var part in grouped.keys) {
+      grouped[part]!.sort((a, b) => a.questionOrder.compareTo(b.questionOrder));
+    }
+    
+    return grouped;
+  }
+
+  static List<int> _getAvailableParts(List<TestQuestion> questions) {
+    Set<int> parts = questions.map((q) => q.partNumber).toSet();
+    List<int> sortedParts = parts.toList()..sort();
+    return sortedParts;
+  }
+
+  // Get part info for display
+  String getPartTitle(int partNumber) {
+    switch (partNumber) {
+      case 1: return 'Part 1: Photographs';
+      case 2: return 'Part 2: Question-Response';
+      case 3: return 'Part 3: Conversations';
+      case 4: return 'Part 4: Talks';
+      case 5: return 'Part 5: Incomplete Sentences';
+      case 6: return 'Part 6: Text Completion';
+      case 7: return 'Part 7: Reading Comprehension';
+      default: return 'Part $partNumber';
+    }
+  }
+
+  String getPartDescription(int partNumber) {
+    switch (partNumber) {
+      case 1: return 'Look at the picture and select the best description.';
+      case 2: return 'Listen to the question and select the best response.';
+      case 3: return 'Listen to the conversation and answer questions.';
+      case 4: return 'Listen to the talk and answer questions.';
+      case 5: return 'Select the word or phrase that best completes the sentence.';
+      case 6: return 'Read the text and select the best word or phrase for each blank.';
+      case 7: return 'Read the passage and answer the questions.';
+      default: return 'Answer the questions for this part.';
+    }
+  }
+
+  int getPartQuestionCount(int partNumber) {
+    return questionsByPart[partNumber]?.length ?? 0;
+  }
+
+  int getTotalQuestions() {
+    return questions.length;
+  }
 
   factory TestDetail.fromJson(Map<String, dynamic> json) {
     return TestDetail(
@@ -480,6 +555,180 @@ class TestHistory {
       'totalQuestions': totalQuestions,
       'correctAnswers': correctAnswers,
       'scorePercentage': scorePercentage,
+    };
+  }
+}
+
+class TestResultDetail {
+  final int resultId;
+  final String testTitle;
+  final int totalScore;
+  final int listeningScore;
+  final int readingScore;
+  final int totalQuestions;
+  final int correctAnswers;
+  final double percentage;
+  final String? startedAt;
+  final String? finishedAt;
+  final List<QuestionAnswerDetail> answers;
+
+  TestResultDetail({
+    required this.resultId,
+    required this.testTitle,
+    required this.totalScore,
+    required this.listeningScore,
+    required this.readingScore,
+    required this.totalQuestions,
+    required this.correctAnswers,
+    required this.percentage,
+    this.startedAt,
+    this.finishedAt,
+    required this.answers,
+  });
+
+  factory TestResultDetail.fromJson(Map<String, dynamic> json) {
+    return TestResultDetail(
+      resultId: json['resultId'] ?? 0,
+      testTitle: json['testTitle'] ?? '',
+      totalScore: json['totalScore'] ?? 0,
+      listeningScore: json['listeningScore'] ?? 0,
+      readingScore: json['readingScore'] ?? 0,
+      totalQuestions: json['totalQuestions'] ?? 0,
+      correctAnswers: json['correctAnswers'] ?? 0,
+      percentage: (json['percentage'] ?? 0.0).toDouble(),
+      startedAt: json['startedAt'],
+      finishedAt: json['finishedAt'],
+      answers: (json['answers'] as List<dynamic>?)
+          ?.map((answer) => QuestionAnswerDetail.fromJson(answer))
+          .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'resultId': resultId,
+      'testTitle': testTitle,
+      'totalScore': totalScore,
+      'listeningScore': listeningScore,
+      'readingScore': readingScore,
+      'totalQuestions': totalQuestions,
+      'correctAnswers': correctAnswers,
+      'percentage': percentage,
+      'startedAt': startedAt,
+      'finishedAt': finishedAt,
+      'answers': answers.map((answer) => answer.toJson()).toList(),
+    };
+  }
+
+  Map<int, List<QuestionAnswerDetail>> get answersByPart {
+    Map<int, List<QuestionAnswerDetail>> grouped = {};
+    for (var answer in answers) {
+      int part = answer.partNumber;
+      if (!grouped.containsKey(part)) {
+        grouped[part] = [];
+      }
+      grouped[part]!.add(answer);
+    }
+    return grouped;
+  }
+
+  List<PartScore> getPartScores() {
+    var byPart = answersByPart;
+    return byPart.entries.map((entry) {
+      int part = entry.key;
+      var partAnswers = entry.value;
+      int correct = partAnswers.where((a) => a.isCorrect).length;
+      int total = partAnswers.length;
+      double percentage = total > 0 ? (correct / total) * 100 : 0.0;
+      
+      return PartScore(
+        partNumber: part,
+        totalQuestions: total,
+        correctAnswers: correct,
+        scorePercentage: percentage,
+      );
+    }).toList()..sort((a, b) => a.partNumber.compareTo(b.partNumber));
+  }
+}
+
+class QuestionAnswerDetail {
+  final int questionId;
+  final String questionText;
+  final String selectedOption;
+  final String correctOption;
+  final bool isCorrect;
+  final int partNumber;
+  final String? answeredAt;
+  final String? imageUrl;
+  final String? audioUrl;
+  final List<OptionDetail> options;
+
+  QuestionAnswerDetail({
+    required this.questionId,
+    required this.questionText,
+    required this.selectedOption,
+    required this.correctOption,
+    required this.isCorrect,
+    required this.partNumber,
+    this.answeredAt,
+    this.imageUrl,
+    this.audioUrl,
+    required this.options,
+  });
+
+  factory QuestionAnswerDetail.fromJson(Map<String, dynamic> json) {
+    return QuestionAnswerDetail(
+      questionId: json['questionId'] ?? 0,
+      questionText: json['questionText'] ?? '',
+      selectedOption: json['userAnswer'] ?? '',
+      correctOption: json['correctAnswer'] ?? '',
+      isCorrect: json['isCorrect'] ?? false,
+      partNumber: json['partNumber'] ?? 1,
+      answeredAt: json['answeredAt'],
+      imageUrl: json['imageUrl'],
+      audioUrl: json['audioUrl'],
+      options: (json['options'] as List<dynamic>?)
+          ?.map((option) => OptionDetail.fromJson(option))
+          .toList() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'questionId': questionId,
+      'questionText': questionText,
+      'selectedOption': selectedOption,
+      'correctOption': correctOption,
+      'isCorrect': isCorrect,
+      'partNumber': partNumber,
+      'answeredAt': answeredAt,
+      'imageUrl': imageUrl,
+      'audioUrl': audioUrl,
+      'options': options.map((option) => option.toJson()).toList(),
+    };
+  }
+}
+
+class OptionDetail {
+  final String label;
+  final String content;
+
+  OptionDetail({
+    required this.label,
+    required this.content,
+  });
+
+  factory OptionDetail.fromJson(Map<String, dynamic> json) {
+    return OptionDetail(
+      label: json['label'] ?? '',
+      content: json['content'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'label': label,
+      'content': content,
     };
   }
 }

@@ -21,33 +21,51 @@ class TestHistoryPage extends ConsumerWidget {
         title: const Text('Lịch sử làm bài'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: () {
+              ref.invalidate(testHistoryProvider);
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: testHistoryAsync.when(
         data: (history) {
           if (history.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.history,
                     size: 64,
                     color: Colors.grey,
                   ),
-                  SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 16),
+                  const Text(
                     'Chưa có bài test nào được hoàn thành',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     'Hãy thử làm một bài test!',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go('/tests'),
+                    icon: const Icon(Icons.quiz),
+                    label: const Text('Làm bài test'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ],
@@ -63,30 +81,46 @@ class TestHistoryPage extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: history.length,
               itemBuilder: (context, index) {
-                final test = history[index];
+                final result = history[index];
                 return Card(
-                  elevation: 2,
                   margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 2,
                   child: InkWell(
                     onTap: () {
-                      context.go('/test-result/${test.resultId}');
+                      context.go('/test-result-detail/${result.resultId}');
                     },
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Test title and score
+                          // Header với test title và điểm
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Text(
-                                  test.testTitle,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      result.testTitle.isNotEmpty 
+                                          ? result.testTitle 
+                                          : 'TOEIC Test',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'ID: ${result.resultId}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               Container(
@@ -95,88 +129,84 @@ class TestHistoryPage extends ConsumerWidget {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _getScoreColor(test.totalScore.toDouble()).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: _getScoreColor(result.totalScore).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: _getScoreColor(test.totalScore.toDouble()),
+                                    color: _getScoreColor(result.totalScore),
+                                    width: 1,
                                   ),
                                 ),
                                 child: Text(
-                                  '${test.totalScore}',
+                                  '${result.totalScore}',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: _getScoreColor(test.totalScore.toDouble()),
+                                    color: _getScoreColor(result.totalScore),
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           
-                          if (test.testTitle.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              'Mô tả: ${test.testTitle}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-
-                          const SizedBox(height: 12),
-
-                          // Score details
+                          const SizedBox(height: 16),
+                          
+                          // Điểm số chi tiết
                           Row(
                             children: [
                               Expanded(
                                 child: _buildScoreItem(
-                                  icon: Icons.check_circle,
-                                  label: 'Đúng',
-                                  value: '${test.questions.where((q) => q.isCorrect).length}/${test.questions.length}',
-                                  color: Colors.green,
+                                  'Listening',
+                                  result.scoreListen.toString(),
+                                  Colors.blue,
                                 ),
                               ),
                               Expanded(
                                 child: _buildScoreItem(
-                                  icon: Icons.percent,
-                                  label: 'Tỷ lệ',
-                                  value: '${_calculateAccuracy(test).toStringAsFixed(1)}%',
-                                  color: _getScoreColor(_calculateAccuracy(test)),
+                                  'Reading',
+                                  result.scoreRead.toString(),
+                                  Colors.green,
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildScoreItem(
+                                  'Tổng điểm',
+                                  result.totalScore.toString(),
+                                  _getScoreColor(result.totalScore),
                                 ),
                               ),
                             ],
                           ),
-
+                          
                           const SizedBox(height: 12),
-
-                          // Completion date and view result button
+                          
+                          // Footer
                           Row(
                             children: [
                               Icon(
-                                Icons.access_time,
+                                Icons.person,
                                 size: 16,
                                 color: Colors.grey[600],
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Hôm nay',
+                                result.user,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey[600],
                                 ),
                               ),
                               const Spacer(),
-                              TextButton.icon(
-                                onPressed: () {
-                                  context.go('/test-result/${test.resultId}');
-                                },
-                                icon: const Icon(Icons.visibility, size: 16),
-                                label: const Text('Xem chi tiết'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Theme.of(context).colorScheme.primary,
+                              Icon(
+                                Icons.touch_app,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Nhấn để xem chi tiết',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -195,97 +225,51 @@ class TestHistoryPage extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text(
-                'Lỗi: $error',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.red,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text('Lỗi: $error'),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref.invalidate(testHistoryProvider);
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Thử lại'),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(testHistoryProvider),
+                child: const Text('Thử lại'),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.go('/tests');
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Làm bài mới'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+    );
+  }
+
+  Widget _buildScoreItem(String label, String score, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            score,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildScoreItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Color _getScoreColor(double percentage) {
-    if (percentage >= 80) return Colors.green;
-    if (percentage >= 60) return Colors.orange;
+  Color _getScoreColor(int score) {
+    if (score >= 80) return Colors.green;
+    if (score >= 60) return Colors.orange;
     return Colors.red;
-  }
-
-  double _calculateAccuracy(TestResult result) {
-    if (result.questions.isEmpty) return 0.0;
-    final correct = result.questions.where((q) => q.isCorrect).length;
-    return (correct / result.questions.length) * 100;
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return dateString;
-    }
   }
 }

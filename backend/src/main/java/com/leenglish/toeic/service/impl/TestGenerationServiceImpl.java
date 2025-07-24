@@ -56,6 +56,11 @@ public class TestGenerationServiceImpl implements TestGenerationService {
 
             Pageable pageable = PageRequest.of(0, count);
             List<QuestionTest> questions = questionRepo.findRandomByPartNumber(part, pageable);
+            
+            // Log warning if not enough questions
+            if (questions.size() < count) {
+                System.out.println("WARNING: Part " + part + " requested " + count + " questions but only " + questions.size() + " available");
+            }
 
             for (int i = 0; i < questions.size(); i++) {
                 QuestionTest q = questions.get(i);

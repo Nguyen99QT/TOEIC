@@ -44,24 +44,15 @@ import ProfilePage from './pages/user/ProfilePage';
 import SettingsPage from './pages/user/SettingsPage';
 
 // Loading Component
-import AuthStatus from './components/debug/AuthStatus';
-import DashboardDebug from './components/debug/DashboardDebug';
-import LogViewer from './components/debug/LogViewer';
-import TestAddQuestion from './components/debug/TestAddQuestion';
-import TestLogin from './components/debug/TestLogin';
 import AddQuestionGroupForm from './components/Nguyen/AddQuestionGroupForm';
 import BotpressChat from './components/Nguyen/BotpressChat';
 import ChatbotManager from './components/Nguyen/ChatbotManager';
 import GenerateTestForm from './components/Nguyen/GenerateTestForm';
-import QuickLogin from './components/Nguyen/QuickLogin';
-import TestToast from './components/Nguyen/TestToast';
 import TOEICDemo from './components/Nguyen/TOEICDemo';
 import TOEICQuestionGroupForm from './components/Nguyen/TOEICQuestionGroupForm';
-import TokenDebugger from './components/Nguyen/TokenDebugger';
 import HelpButton from './components/ui/HelpButton';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import ProtectedRoute from './contexts/ProtectRoute';
-import AuthDebugPage from './pages/AuthDebugPage';
 import FlashcardStudyPage from './pages/flashcards/FlashcardStudyPage';
 import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestionPage';
 import EditQuestionGroupPage from './pages/questions/EditQuestionGroupPage';
@@ -72,8 +63,6 @@ import ViewQuestionGroupPage from './pages/questions/ViewQuestionGroupPage';
 
 // Nguyen's Test Pages
 import AudioTest from './components/Nguyen/AudioTest';
-import DebugTOEIC from './components/Nguyen/DebugTOEIC';
-import SimpleTest from './components/Nguyen/SimpleTest';
 import SimpleTOEICTest from './components/Nguyen/SimpleTOEICTest';
 import Test from './components/Nguyen/Test';
 import TestSelectionPage from './components/TestSelectionPage';
@@ -174,14 +163,11 @@ const AppContent: React.FC = () => {
           <Route path="/upgrade-premium" element={<Layout><UpgradePremiumPage /></Layout>} />
 
           {/* ========== PUBLIC TEST ROUTE FOR DEBUGGING ========== */}
-          <Route path="/auth-debug" element={<Layout><AuthDebugPage /></Layout>} />
           <Route path="/test-selection" element={<Layout><TestSelectionPage /></Layout>} />
           <Route path="/test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
-          <Route path="/test-debug/:testId" element={<Layout><SimpleTest /></Layout>} />
           <Route path="/test-full/:testId" element={<Layout><Test /></Layout>} />
           <Route path="/toeic-test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
           <Route path="/simple-toeic-test/:testId" element={<Layout><SimpleTOEICTest /></Layout>} />
-          <Route path="/debug-toeic/:testId" element={<Layout><DebugTOEIC /></Layout>} />
           <Route path="/audio-test" element={<Layout><AudioTest /></Layout>} />
 
           {/* ========== PROTECTED ROUTES ========== */}
@@ -227,15 +213,6 @@ const AppContent: React.FC = () => {
           <Route path="/questions/view/:groupId" element={<ProtectedRoute><Layout><ViewQuestionGroupPage /></Layout></ProtectedRoute>} />
           <Route path="/questions/edit/:groupId" element={<ProtectedRoute><Layout><EditQuestionGroupPage /></Layout></ProtectedRoute>} />
           <Route path="/questions/edit-individual/:id" element={<EditIndividualQuestionPage />} />
-          <Route path="/debug/token" element={<Layout><TokenDebugger /></Layout>} />
-          <Route path="/debug/quick-login" element={<Layout><QuickLogin /></Layout>} />
-          <Route path="/debug/test-login" element={<Layout><TestLogin /></Layout>} />
-          <Route path="/debug/dashboard" element={<Layout><DashboardDebug /></Layout>} />
-          <Route path="/debug/auth-status" element={<Layout><AuthStatus /></Layout>} />
-          <Route path="/debug/logs" element={<Layout><LogViewer /></Layout>} />
-          <Route path="/debug/test-add" element={<ProtectedRoute><Layout><TestAddQuestion /></Layout></ProtectedRoute>} />
-          <Route path="/debug/test-toast" element={<ProtectedRoute><Layout><TestToast /></Layout></ProtectedRoute>} />
-
 
           {/* 404 Route */}
           <Route path="*" element={<Layout><NotFoundPage /></Layout>} />

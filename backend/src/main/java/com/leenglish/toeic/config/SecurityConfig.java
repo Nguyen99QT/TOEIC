@@ -74,6 +74,11 @@ public class SecurityConfig {
                         // Specific TOEIC test endpoints - ORDER MATTERS!
                         .requestMatchers(HttpMethod.POST, "/api/tests/*/review").authenticated() // Test review endpoint
                                                                                                  // requires auth
+                                                .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/tests/debug/**").permitAll() // Debug endpoints first
+                        
+                        // Test generation endpoints
                         .requestMatchers(HttpMethod.GET, "/api/tests/**").permitAll() // Test generation endpoints (for
                                                                                       // testing)
 

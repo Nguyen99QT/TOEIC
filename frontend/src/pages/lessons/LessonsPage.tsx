@@ -108,9 +108,7 @@ const LessonsPage: React.FC = () => {
               progress: newProgressMap.get(lesson.id) || 0
             }));
 
-            console.log('📊 Progress data loaded:', progressData.length, 'entries');
           } catch (progressError) {
-            console.warn('⚠️ Failed to load progress data:', progressError);
             // Don't throw - continue without progress data
           }
         }
@@ -130,7 +128,6 @@ const LessonsPage: React.FC = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated && currentUser?.id) {
-        console.log('🔄 Page became visible, refreshing progress data...');
         // Refresh only progress data without showing loading
         progressService.getUserProgress(currentUser.id)
           .then(progressData => {
@@ -144,10 +141,9 @@ const LessonsPage: React.FC = () => {
                 progress: newProgressMap.get(lesson.id) || 0
               }))
             );
-            console.log('✅ Progress data refreshed');
           })
           .catch(error => {
-            console.warn('⚠️ Failed to refresh progress data:', error);
+            // Failed to refresh progress data
           });
       }
     };

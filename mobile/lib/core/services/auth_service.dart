@@ -46,10 +46,32 @@ class AuthService {
 
         return LoginResult(success: true, user: _currentUser);
       } else {
-        return LoginResult(success: false, error: response.message);
+        // Handle specific error messages from backend
+        String errorMessage = response.message.isNotEmpty ? response.message : 'Đăng nhập thất bại';
+        if (errorMessage.toLowerCase().contains('invalid credentials') || 
+            errorMessage.toLowerCase().contains('unauthorized')) {
+          errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng';
+        } else if (errorMessage.toLowerCase().contains('user not found')) {
+          errorMessage = 'Tài khoản không tồn tại';
+        } else if (errorMessage.toLowerCase().contains('password')) {
+          errorMessage = 'Mật khẩu không chính xác';
+        } else if (errorMessage.toLowerCase().contains('disabled') || 
+                   errorMessage.toLowerCase().contains('blocked')) {
+          errorMessage = 'Tài khoản đã bị khóa';
+        }
+        return LoginResult(success: false, error: errorMessage);
       }
     } catch (e) {
-      return LoginResult(success: false, error: e.toString());
+      String errorMessage = 'Lỗi kết nối. Vui lòng kiểm tra internet và thử lại';
+      if (e.toString().contains('Connection refused') || 
+          e.toString().contains('No route to host')) {
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Kết nối bị timeout. Vui lòng thử lại';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet';
+      }
+      return LoginResult(success: false, error: errorMessage);
     }
   }
 
@@ -81,10 +103,32 @@ class AuthService {
 
         return RegisterResult(success: true, user: user);
       } else {
-        return RegisterResult(success: false, error: response.message);
+        // Handle specific error messages from backend
+        String errorMessage = response.message.isNotEmpty ? response.message : 'Đăng ký thất bại';
+        if (errorMessage.toLowerCase().contains('username already exists') || 
+            errorMessage.toLowerCase().contains('username') && errorMessage.toLowerCase().contains('taken')) {
+          errorMessage = 'Tên đăng nhập đã tồn tại';
+        } else if (errorMessage.toLowerCase().contains('email already exists') || 
+                   errorMessage.toLowerCase().contains('email') && errorMessage.toLowerCase().contains('taken')) {
+          errorMessage = 'Email đã được sử dụng';
+        } else if (errorMessage.toLowerCase().contains('password') && errorMessage.toLowerCase().contains('weak')) {
+          errorMessage = 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn';
+        } else if (errorMessage.toLowerCase().contains('validation')) {
+          errorMessage = 'Thông tin không hợp lệ. Vui lòng kiểm tra lại';
+        }
+        return RegisterResult(success: false, error: errorMessage);
       }
     } catch (e) {
-      return RegisterResult(success: false, error: e.toString());
+      String errorMessage = 'Lỗi kết nối. Vui lòng kiểm tra internet và thử lại';
+      if (e.toString().contains('Connection refused') || 
+          e.toString().contains('No route to host')) {
+        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau';
+      } else if (e.toString().contains('timeout')) {
+        errorMessage = 'Kết nối bị timeout. Vui lòng thử lại';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet';
+      }
+      return RegisterResult(success: false, error: errorMessage);
     }
   }
 

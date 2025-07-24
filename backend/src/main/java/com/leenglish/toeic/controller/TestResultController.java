@@ -560,8 +560,16 @@ public class TestResultController {
                     if (question != null) {
                         answerDetail.put("questionId", question.getQuestionId());
                         answerDetail.put("questionText", question.getQuestionText());
-                        answerDetail.put("audioUrl", question.getAudioUrl());
-                        answerDetail.put("imageUrl", question.getImageUrl());
+                        
+                        String audioUrl = question.getAudioUrl();
+                        String imageUrl = question.getImageUrl();
+                        
+                        // Debug logging for audio URLs
+                        System.out.println("Result Detail - Question " + question.getQuestionId() + " audioUrl: " + audioUrl);
+                        System.out.println("Result Detail - Question " + question.getQuestionId() + " imageUrl: " + imageUrl);
+                        
+                        answerDetail.put("audioUrl", audioUrl);
+                        answerDetail.put("imageUrl", imageUrl);
                         answerDetail.put("partNumber", answer.getPartNumber() != null ? answer.getPartNumber() : question.getPartNumber());
                         answerDetail.put("correctAnswer", answer.getCorrectOption());
                         answerDetail.put("userAnswer", answer.getSelectedOption());

@@ -58,7 +58,9 @@ public class SubmitController {
         result.setTest(test);
         result.setStartedAt(Timestamp.valueOf(LocalDateTime.now()));
 
-        int correctCount = 0;
+        int listeningCorrect = 0;
+        int readingCorrect = 0;
+        
         for (Map<String, Object> a : answers) {
             Long qid = Long.valueOf(a.get("questionId").toString());
             String selected = a.get("selectedOption").toString();
@@ -69,13 +71,18 @@ public class SubmitController {
             }
 
             if (selected.equalsIgnoreCase(q.getCorrectOption())) {
-                correctCount++;
+                // Parts 1-4 are Listening, Parts 5-7 are Reading
+                if (q.getPartNumber() <= 4) {
+                    listeningCorrect++;
+                } else {
+                    readingCorrect++;
+                }
             }
         }
 
-        // TOEIC scoring can be adjusted later
-        result.setScoreListen(correctCount * 5); // example
-        result.setScoreRead(0); // you may calculate separately
+        // TOEIC scoring - scale to 495 max per section
+        result.setScoreListen(listeningCorrect * 5); // Listening score based on listening questions
+        result.setScoreRead(readingCorrect * 5); // Reading score based on reading questions
         result.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
         resultRepo.save(result);
 
@@ -97,7 +104,12 @@ public class SubmitController {
             answerRepo.save(ua);
         }
 
-        return ResponseEntity.ok(Map.of("score", result.getScoreListen()));
+        return ResponseEntity.ok(Map.of(
+            "scoreListen", result.getScoreListen(),
+            "scoreRead", result.getScoreRead(),
+            "resultId", result.getResultId(),
+            "message", "Test submitted successfully"
+        ));
     }
 
     @GetMapping("/submit/result/{resultId}")
@@ -182,6 +194,11 @@ public class SubmitController {
 
             // Calculate score
             int correctCount = 0;
+            int listeningCorrect = 0;
+            int readingCorrect = 0;
+            int totalListeningQuestions = 0;
+            int totalReadingQuestions = 0;
+            
             for (Map<String, Object> a : answers) {
                 Long qid = Long.valueOf(a.get("questionId").toString());
                 String selected = a.get("selectedOption").toString();
@@ -191,14 +208,30 @@ public class SubmitController {
                     continue;
                 }
 
-                if (selected.equalsIgnoreCase(q.getCorrectOption())) {
-                    correctCount++;
+                // Count questions by part (Parts 1-4 are listening, Parts 5-7 are reading)
+                if (q.getPartNumber() <= 4) {
+                    totalListeningQuestions++;
+                    if (selected.equalsIgnoreCase(q.getCorrectOption())) {
+                        listeningCorrect++;
+                        correctCount++;
+                    }
+                } else {
+                    totalReadingQuestions++;
+                    if (selected.equalsIgnoreCase(q.getCorrectOption())) {
+                        readingCorrect++;
+                        correctCount++;
+                    }
                 }
             }
 
-            // TOEIC scoring calculation
-            result.setScoreListen(correctCount * 5); 
-            result.setScoreRead(0);
+            // TOEIC scoring calculation (each section max 495 points)
+            int listeningScore = totalListeningQuestions > 0 ? 
+                Math.min(495, (int) ((double) listeningCorrect / totalListeningQuestions * 495)) : 0;
+            int readingScore = totalReadingQuestions > 0 ? 
+                Math.min(495, (int) ((double) readingCorrect / totalReadingQuestions * 495)) : 0;
+            
+            result.setScoreListen(listeningScore); 
+            result.setScoreRead(readingScore);
             result.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
             result = resultRepo.save(result);
 

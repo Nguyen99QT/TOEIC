@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../models/test_models.dart';
 import '../../../services/test_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../widgets/audio_player_widget.dart';
+import '../../../widgets/question_image_widget.dart';
 
 // Provider cho test detail
 final testDetailProvider = FutureProvider.family<TestDetail, int>((ref, testId) async {
@@ -17,14 +19,16 @@ final testStateProvider = StateNotifierProvider.family<TestStateNotifier, TestSt
 });
 
 class TestState {
-  final int currentQuestionIndex;
+  final int currentPartIndex;
+  final int currentQuestionIndexInPart;
   final Map<int, String> userAnswers;
   final Duration timeRemaining;
   final bool isSubmitting;
   final TestSubmissionResult? submissionResult;
 
   TestState({
-    this.currentQuestionIndex = 0,
+    this.currentPartIndex = 0,
+    this.currentQuestionIndexInPart = 0,
     this.userAnswers = const {},
     this.timeRemaining = const Duration(hours: 2),
     this.isSubmitting = false,
@@ -32,14 +36,16 @@ class TestState {
   });
 
   TestState copyWith({
-    int? currentQuestionIndex,
+    int? currentPartIndex,
+    int? currentQuestionIndexInPart,
     Map<int, String>? userAnswers,
     Duration? timeRemaining,
     bool? isSubmitting,
     TestSubmissionResult? submissionResult,
   }) {
     return TestState(
-      currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
+      currentPartIndex: currentPartIndex ?? this.currentPartIndex,
+      currentQuestionIndexInPart: currentQuestionIndexInPart ?? this.currentQuestionIndexInPart,
       userAnswers: userAnswers ?? this.userAnswers,
       timeRemaining: timeRemaining ?? this.timeRemaining,
       isSubmitting: isSubmitting ?? this.isSubmitting,
@@ -75,19 +81,48 @@ class TestStateNotifier extends StateNotifier<TestState> {
     state = state.copyWith(userAnswers: newAnswers);
   }
 
-  void goToQuestion(int index) {
-    state = state.copyWith(currentQuestionIndex: index);
+  void goToPart(int partIndex) {
+    state = state.copyWith(
+      currentPartIndex: partIndex,
+      currentQuestionIndexInPart: 0,
+    );
   }
 
-  void nextQuestion(int totalQuestions) {
-    if (state.currentQuestionIndex < totalQuestions - 1) {
-      state = state.copyWith(currentQuestionIndex: state.currentQuestionIndex + 1);
+  void goToQuestionInPart(int questionIndex) {
+    state = state.copyWith(currentQuestionIndexInPart: questionIndex);
+  }
+
+  void nextQuestionInPart(int questionsInPart) {
+    if (state.currentQuestionIndexInPart < questionsInPart - 1) {
+      state = state.copyWith(
+        currentQuestionIndexInPart: state.currentQuestionIndexInPart + 1,
+      );
     }
   }
 
-  void previousQuestion() {
-    if (state.currentQuestionIndex > 0) {
-      state = state.copyWith(currentQuestionIndex: state.currentQuestionIndex - 1);
+  void previousQuestionInPart() {
+    if (state.currentQuestionIndexInPart > 0) {
+      state = state.copyWith(
+        currentQuestionIndexInPart: state.currentQuestionIndexInPart - 1,
+      );
+    }
+  }
+
+  void nextPart(List<int> availableParts) {
+    if (state.currentPartIndex < availableParts.length - 1) {
+      state = state.copyWith(
+        currentPartIndex: state.currentPartIndex + 1,
+        currentQuestionIndexInPart: 0,
+      );
+    }
+  }
+
+  void previousPart() {
+    if (state.currentPartIndex > 0) {
+      state = state.copyWith(
+        currentPartIndex: state.currentPartIndex - 1,
+        currentQuestionIndexInPart: 0,
+      );
     }
   }
 
@@ -112,7 +147,10 @@ class TestStateNotifier extends StateNotifier<TestState> {
         answers: answers,
       );
 
+      print('Submitting test: ${submission.toJson()}');
       final result = await TestService.submitTest(submission);
+      print('Submission result: ${result.toJson()}');
+      
       state = state.copyWith(
         submissionResult: result,
         isSubmitting: false,
@@ -121,6 +159,7 @@ class TestStateNotifier extends StateNotifier<TestState> {
       // Stop timer when submitted
       _timer?.cancel();
     } catch (e) {
+      print('Submit error: $e');
       state = state.copyWith(isSubmitting: false);
       rethrow;
     }
@@ -172,40 +211,116 @@ class TestPage extends ConsumerWidget {
       ),
       body: testDetailAsync.when(
         data: (testDetail) {
-          if (testState.submissionResult != null) {
-            return _buildResultView(context, testState.submissionResult!);
-          }
-
-          final questions = testDetail.questions;
-          if (questions.isEmpty) {
+          if (testDetail.availableParts.isEmpty) {
             return const Center(
-              child: Text('Không có câu hỏi nào trong bài test này'),
+              child: Text('Không có parts nào trong bài test này'),
             );
           }
 
-          final currentQuestion = questions[testState.currentQuestionIndex];
+          final currentPartNumber = testDetail.availableParts[testState.currentPartIndex];
+          final questionsInCurrentPart = testDetail.questionsByPart[currentPartNumber] ?? [];
+          
+          if (questionsInCurrentPart.isEmpty) {
+            return const Center(
+              child: Text('Không có câu hỏi nào trong part này'),
+            );
+          }
+
+          final currentQuestion = questionsInCurrentPart[testState.currentQuestionIndexInPart];
 
           return Column(
             children: [
-              // Question progress
+              // Part and question progress
               Container(
                 padding: const EdgeInsets.all(16),
                 color: Colors.grey[100],
-                child: Row(
+                child: Column(
                   children: [
-                    Text(
-                      'Câu ${testState.currentQuestionIndex + 1}/${questions.length}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    // Part info
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                testDetail.getPartTitle(currentPartNumber),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                testDetail.getPartDescription(currentPartNumber),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    Text(
-                      'Part ${currentQuestion.partNumber}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                    const SizedBox(height: 12),
+                    
+                    // Question progress
+                    Row(
+                      children: [
+                        Text(
+                          'Câu ${testState.currentQuestionIndexInPart + 1}/${questionsInCurrentPart.length}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Part ${testState.currentPartIndex + 1}/${testDetail.availableParts.length}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    // Parts navigation
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: testDetail.availableParts.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final partNumber = entry.value;
+                          final isCurrentPart = index == testState.currentPartIndex;
+                          
+                          return GestureDetector(
+                            onTap: () {
+                              ref.read(testStateProvider(testId).notifier).goToPart(index);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isCurrentPart ? Theme.of(context).colorScheme.primary : Colors.white,
+                                border: Border.all(
+                                  color: isCurrentPart ? Theme.of(context).colorScheme.primary : Colors.grey[300]!,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                'P$partNumber',
+                                style: TextStyle(
+                                  color: isCurrentPart ? Colors.white : Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ],
@@ -220,58 +335,19 @@ class TestPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Audio player if available
-                      if (currentQuestion.audioUrl != null) ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue[200]!),
-                          ),
-                          child: Column(
-                            children: [
-                              const Icon(Icons.headphones, size: 32, color: Colors.blue),
-                              const SizedBox(height: 8),
-                              const Text('Audio Question'),
-                              const SizedBox(height: 8),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  // TODO: Implement audio player
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Audio player chưa được implement')),
-                                  );
-                                },
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Phát âm thanh'),
-                              ),
-                            ],
-                          ),
+                      if (currentQuestion.audioUrl != null && currentQuestion.audioUrl!.isNotEmpty) ...[
+                        Builder(
+                          builder: (context) {
+                            print('Test Page - Audio URL: ${currentQuestion.audioUrl}'); // Debug log
+                            return AudioPlayerWidget(audioUrl: currentQuestion.audioUrl!);
+                          },
                         ),
                         const SizedBox(height: 16),
                       ],
 
                       // Image if available
-                      if (currentQuestion.imageUrl != null) ...[
-                        Container(
-                          width: double.infinity,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.image, size: 48, color: Colors.grey),
-                                SizedBox(height: 8),
-                                Text('Hình ảnh câu hỏi'),
-                              ],
-                            ),
-                          ),
-                        ),
+                      if (currentQuestion.imageUrl != null && currentQuestion.imageUrl!.isNotEmpty) ...[
+                        QuestionImageWidget(imageUrl: currentQuestion.imageUrl!),
                         const SizedBox(height: 16),
                       ],
 
@@ -376,54 +452,77 @@ class TestPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    // Previous button
-                    if (testState.currentQuestionIndex > 0)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ref.read(testStateProvider(testId).notifier).previousQuestion();
-                          },
-                          icon: const Icon(Icons.arrow_back),
-                          label: const Text('Câu trước'),
-                        ),
-                      ),
-                    
-                    if (testState.currentQuestionIndex > 0) const SizedBox(width: 16),
-
-                    // Next/Submit button
-                    Expanded(
-                      child: testState.currentQuestionIndex < questions.length - 1
-                          ? ElevatedButton.icon(
+                    // Question navigation
+                    Row(
+                      children: [
+                        // Previous question
+                        if (testState.currentQuestionIndexInPart > 0 || testState.currentPartIndex > 0)
+                          Expanded(
+                            child: OutlinedButton.icon(
                               onPressed: () {
-                                ref.read(testStateProvider(testId).notifier)
-                                    .nextQuestion(questions.length);
+                                if (testState.currentQuestionIndexInPart > 0) {
+                                  ref.read(testStateProvider(testId).notifier).previousQuestionInPart();
+                                } else {
+                                  ref.read(testStateProvider(testId).notifier).previousPart();
+                                }
                               },
-                              icon: const Icon(Icons.arrow_forward),
-                              label: const Text('Câu tiếp'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                                foregroundColor: Colors.white,
-                              ),
-                            )
-                          : ElevatedButton.icon(
-                              onPressed: testState.isSubmitting 
-                                  ? null
-                                  : () => _showSubmitDialog(context, ref, questions),
-                              icon: testState.isSubmitting 
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
-                                  : const Icon(Icons.check),
-                              label: Text(testState.isSubmitting ? 'Đang nộp...' : 'Nộp bài'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                              ),
+                              icon: const Icon(Icons.arrow_back),
+                              label: const Text('Câu trước'),
                             ),
+                          ),
+                        
+                        if (testState.currentQuestionIndexInPart > 0 || testState.currentPartIndex > 0) 
+                          const SizedBox(width: 16),
+
+                        // Next question or next part
+                        Expanded(
+                          child: testState.currentQuestionIndexInPart < questionsInCurrentPart.length - 1
+                              ? ElevatedButton.icon(
+                                  onPressed: () {
+                                    ref.read(testStateProvider(testId).notifier)
+                                        .nextQuestionInPart(questionsInCurrentPart.length);
+                                  },
+                                  icon: const Icon(Icons.arrow_forward),
+                                  label: const Text('Câu tiếp'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                )
+                              : testState.currentPartIndex < testDetail.availableParts.length - 1
+                                  ? ElevatedButton.icon(
+                                      onPressed: () {
+                                        ref.read(testStateProvider(testId).notifier)
+                                            .nextPart(testDetail.availableParts);
+                                      },
+                                      icon: const Icon(Icons.arrow_forward),
+                                      label: const Text('Part tiếp'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.orange,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    )
+                                  : ElevatedButton.icon(
+                                      onPressed: testState.isSubmitting 
+                                          ? null
+                                          : () => _showSubmitDialog(context, ref, testDetail.questions),
+                                      icon: testState.isSubmitting 
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            )
+                                          : const Icon(Icons.check),
+                                      label: Text(testState.isSubmitting ? 'Đang nộp...' : 'Nộp bài'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -488,6 +587,12 @@ class TestPage extends ConsumerWidget {
               Navigator.pop(context);
               try {
                 await ref.read(testStateProvider(testId).notifier).submitTest(questions);
+                final result = ref.read(testStateProvider(testId)).submissionResult;
+                if (result != null && context.mounted) {
+                  // Navigate to simple result page with actual resultId
+                  final resultId = result.submissionId; // This is now the actual resultId from backend
+                  context.go('/test-result-simple?message=${Uri.encodeComponent(result.message)}&resultId=$resultId');
+                }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -500,64 +605,6 @@ class TestPage extends ConsumerWidget {
               }
             },
             child: const Text('Nộp bài'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResultView(BuildContext context, TestSubmissionResult result) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.check_circle,
-            size: 80,
-            color: Colors.green,
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Nộp bài thành công!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            result.message,
-            style: const TextStyle(fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                context.go('/test-result/${result.submissionId}');
-              },
-              icon: const Icon(Icons.assessment),
-              label: const Text('Xem kết quả'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                context.go('/tests');
-              },
-              icon: const Icon(Icons.list),
-              label: const Text('Về danh sách test'),
-            ),
           ),
         ],
       ),

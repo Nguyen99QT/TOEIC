@@ -45,6 +45,7 @@ dependencies:
   just_audio: ^0.9.34
   audioplayers: ^5.0.0
   flutter_sound: ^9.2.13
+  path_provider: ^2.1.1
 
   # Utils
   intl: ^0.18.1

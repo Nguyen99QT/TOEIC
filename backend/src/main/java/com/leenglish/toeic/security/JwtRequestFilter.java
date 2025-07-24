@@ -138,10 +138,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // Check prefix matches
         for (String publicPath : publicPaths) {
             if (requestPath.startsWith(publicPath)) {
+                logger.info("🟢 Request {} matches public path {} - skipping JWT filter", requestPath, publicPath);
                 return true;
             }
         }
         
+        logger.info("🔴 Request {} requires authentication", requestPath);
         return false;
     }
 }

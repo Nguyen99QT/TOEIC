@@ -39,8 +39,6 @@ const LoginPage: React.FC = () => {
     setNeedsVerification(false);
 
     try {
-      console.log('🔍 LoginPage: Attempting login for:', formData.username);
-
       // Use AuthContext's login method
       await login(formData.username, formData.password);
 
@@ -53,13 +51,9 @@ const LoginPage: React.FC = () => {
       // Refresh auth state to ensure consistency
       await refreshAuthState();
 
-      console.log('🔍 LoginPage: Login successful, checking redirect logic');
-
       // Get current user from auth context to check role
       const { getCurrentUser } = await import('../../services/auth');
       const currentUser = getCurrentUser();
-
-      console.log('🔍 LoginPage: Post-login user data:', currentUser);
 
       if (currentUser && currentUser.role === 'ADMIN') {
         success('Login successful! Redirecting to admin dashboard...');
@@ -70,18 +64,8 @@ const LoginPage: React.FC = () => {
       }
 
     } catch (loginError: any) {
-      console.error('❌ LoginPage: Login failed:', loginError);
-      console.error('❌ Full error object:', JSON.stringify(loginError, null, 2));
-
       // Clean up the just logged in flag on error
       localStorage.removeItem('auth_just_logged_in');
-
-      // Log more details about the error
-      if (loginError.response) {
-        console.error('❌ Error response status:', loginError.response.status);
-        console.error('❌ Error response data:', loginError.response.data);
-        console.error('❌ Error response headers:', loginError.response.headers);
-      }
 
       // Check if it's an email verification error
       if (loginError.response?.status === 403 && loginError.response?.data?.needsVerification) {
@@ -90,7 +74,6 @@ const LoginPage: React.FC = () => {
         error('Please verify your email before logging in');
       } else {
         const errorMessage = loginError.message || 'Login failed';
-        console.error('❌ Showing error message:', errorMessage);
         error(errorMessage);
       }
     } finally {
@@ -264,133 +247,6 @@ const LoginPage: React.FC = () => {
                 'Sign in'
               )}
             </button>
-          </div>
-
-          {/* Quick Login for Testing */}
-          <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <button
-              type="button"
-              onClick={async () => {
-                console.log('🔧 Quick login test starting...');
-                setFormData({ username: 'teacher2', password: 'password123' });
-
-                // Manually call the same login process
-                try {
-                  const response = await fetch('http://localhost:8080/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: 'teacher2', password: 'password123' })
-                  });
-
-                  const data = await response.json();
-                  console.log('🔧 Direct API response:', data);
-                  console.log('🔧 Response details:', {
-                    hasToken: !!data.token,
-                    hasAccessToken: !!data.accessToken,
-                    hasId: !!data.id,
-                    hasUsername: !!data.username,
-                    hasRoles: !!data.roles,
-                    roles: data.roles,
-                    fullData: data
-                  });
-
-                  const token = data.token || data.accessToken;
-                  if (token) {
-                    console.log('🔧 Storing token:', token.substring(0, 30) + '...');
-
-                    // Store manually with explicit verification
-                    localStorage.setItem('toeic_access_token', token);
-                    localStorage.setItem('authToken', token);
-                    localStorage.setItem('accessToken', token);
-
-                    // Verify token was stored
-                    const storedToken = localStorage.getItem('toeic_access_token');
-                    console.log('🔧 Token verification:', {
-                      stored: !!storedToken,
-                      matches: storedToken === token,
-                      length: storedToken?.length
-                    });
-
-                    const userData = {
-                      id: data.id,
-                      username: data.username,
-                      email: data.email,
-                      role: data.roles[0].replace('ROLE_', ''),
-                      fullName: data.username,
-                      membershipType: 'FREE'
-                    };
-
-                    console.log('🔧 Storing user data:', userData);
-                    localStorage.setItem('toeic_current_user', JSON.stringify(userData));
-                    localStorage.setItem('currentUser', JSON.stringify(userData));
-
-                    // Verify user data was stored
-                    const storedUser = localStorage.getItem('toeic_current_user');
-                    console.log('🔧 User data verification:', {
-                      stored: !!storedUser,
-                      parsed: storedUser ? JSON.parse(storedUser) : null
-                    });
-
-                    // Set flag to prevent immediate auth check failure
-                    localStorage.setItem('auth_just_logged_in', 'true');
-
-                    console.log('🔧 Final localStorage check:');
-                    console.log('  - toeic_access_token:', localStorage.getItem('toeic_access_token') ? 'EXISTS' : 'MISSING');
-                    console.log('  - toeic_current_user:', localStorage.getItem('toeic_current_user') ? 'EXISTS' : 'MISSING');
-                    console.log('  - All keys:', Object.keys(localStorage));
-
-                    success('Manual login successful! Refreshing auth state...');
-
-                    // Force refresh auth state
-                    setTimeout(async () => {
-                      await refreshAuthState();
-                      console.log('🔧 Auth state refreshed, redirecting...');
-                      window.location.href = '/dashboard';
-                    }, 500);
-                  }
-                } catch (err) {
-                  console.error('🔧 Manual login failed:', err);
-                  error('Manual login failed');
-                }
-              }}
-              className="w-full text-sm bg-yellow-200 text-yellow-800 py-2 px-3 rounded hover:bg-yellow-300"
-            >
-              🔧 Quick Test Login (teacher2)
-            </button>
-          </div>
-
-          {/* Test Accounts Section */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-medium text-blue-800 mb-2">Test Accounts:</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">teacher2</code></span>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, username: 'teacher2', password: 'password123' })}
-                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
-                >
-                  Use Account
-                </button>
-              </div>
-              <div className="text-xs text-blue-600">
-                Password: <code className="bg-blue-100 px-1 rounded">password123</code>
-              </div>
-
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm text-blue-700">Username: <code className="bg-blue-100 px-1 rounded">huyplum</code></span>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, username: 'huyplum', password: 'password' })}
-                  className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
-                >
-                  Use Account
-                </button>
-              </div>
-              <div className="text-xs text-blue-600">
-                Password: <code className="bg-blue-100 px-1 rounded">password</code>
-              </div>
-            </div>
           </div>
         </form>
       </div>

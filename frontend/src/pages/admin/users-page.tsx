@@ -72,8 +72,15 @@ export function UsersPage() {
         totalPages: response.totalPages,
         hasContent: !!response.content
       })
+      
+      // Check if response has the expected structure
+      if (!response.content || !Array.isArray(response.content)) {
+        console.error("❌ Invalid response structure:", response)
+        throw new Error("API response không có định dạng mong đợi")
+      }
+      
       setUsers(response.content)
-      setTotalUsers(response.totalElements)
+      setTotalUsers(response.totalElements || 0)
       
       // Calculate stats
       const students = response.content.filter(user => user.role === 'USER')
@@ -103,6 +110,24 @@ export function UsersPage() {
     } catch (error: any) {
       console.error("🐛 [DEBUG] User count error:", error)
       toast.error('Debug failed: ' + error.message)
+    }
+  }
+
+  // Debug function to test main users endpoint
+  const debugUsersAPI = async () => {
+    try {
+      console.log("🐛 [DEBUG] Testing main users endpoint...")
+      console.log("🐛 [DEBUG] Auth token:", localStorage.getItem('toeic_access_token') ? 'Present' : 'Missing')
+      console.log("🐛 [DEBUG] Current user:", localStorage.getItem('toeic_current_user'))
+      
+      const response = await apiClient.get('/api/users?page=0&size=5')
+      console.log("🐛 [DEBUG] Main users API response:", response.data)
+      toast.success('Debug users API logged to console')
+    } catch (error: any) {
+      console.error("🐛 [DEBUG] Main users API error:", error)
+      console.error("🐛 [DEBUG] Error response:", error.response?.data)
+      console.error("🐛 [DEBUG] Error status:", error.response?.status)
+      toast.error('Debug users API failed: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -161,6 +186,14 @@ export function UsersPage() {
           >
             <Bug className="mr-2 h-4 w-4" />
             Debug User Count
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={debugUsersAPI}
+            className="border-yellow-200 hover:bg-yellow-50 hover:text-yellow-600"
+          >
+            <Bug className="mr-2 h-4 w-4" />
+            Debug Users API
           </Button>
         </div>
       </div>

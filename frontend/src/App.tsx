@@ -50,7 +50,6 @@ import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
-import { AdminDashboard } from './pages/admin/AdminDashboard';
 import AdminPanel from './pages/admin/AdminPanel';
 import AdminRoute from './components/auth/AdminRoute';
 
@@ -68,7 +67,6 @@ import TestHistoryPage from './pages/test-results/TestHistoryPage';
 import TestResultDetailPage from './pages/test-results/TestResultDetailPage';
 
 // Question Management Components
-import AddQuestionGroupForm from './components/Nguyen/AddQuestionGroupForm';
 import ModernAddQuestionPage from './pages/questions/ModernAddQuestionPage';
 import MyQuestionsPage from './pages/questions/MyQuestionsPage';
 import SimpleMyQuestionsPage from './pages/questions/SimpleMyQuestionsPage';

@@ -77,6 +77,33 @@ const TestListPage: React.FC = () => {
     }
   };
 
+  // Check if user can access full test
+  const canAccessFullTest = () => {
+    if (!currentUser) return false;
+    
+    const role = currentUser.role?.toLowerCase();
+    const membershipType = currentUser.membershipType?.toLowerCase();
+    
+    return role === 'admin' || role === 'collaborator' || 
+           membershipType === 'premium' || membershipType === 'vip';
+  };
+
+  // Check if user is basic member (for locked UI)
+  const isBasicMember = () => {
+    if (!currentUser) return true;
+    
+    const role = currentUser.role?.toLowerCase();
+    const membershipType = currentUser.membershipType?.toLowerCase();
+    
+    return (membershipType === 'basic' || !membershipType) && 
+           role !== 'admin' && role !== 'collaborator';
+  };
+
+  // Handle upgrade prompt
+  const handleUpgradePrompt = () => {
+    navigate('/upgrade-premium');
+  };
+
   // Handle generate quick test
   const handleGenerateQuickTest = async () => {
     console.log('🚀 handleGenerateQuickTest called');
@@ -109,6 +136,46 @@ const TestListPage: React.FC = () => {
       console.error('❌ Error generating quick test:', err);
       const errorMessage = err?.response?.data?.message || err?.message || "Không thể tạo bài thi. Vui lòng thử lại.";
       setError(`Lỗi tạo test: ${errorMessage}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Handle generate full test
+  const handleGenerateFullTest = async () => {
+    console.log('🚀 handleGenerateFullTest called');
+
+    // Check permissions first
+    if (!canAccessFullTest()) {
+      setError("⚠️ Tính năng tạo Full Test (200 câu) chỉ dành cho thành viên Premium/VIP. Vui lòng nâng cấp tài khoản!");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setError(null);
+      console.log('🎯 Calling testService.generateRandomTest() for full test...');
+
+      const result = await testService.generateRandomTest({
+        title: "Full TOEIC Test (200 câu)",
+        description: "Bài thi TOEIC đầy đủ 200 câu hỏi (120 phút)",
+        useFullTOEICStructure: true
+      });
+      console.log('✅ Full test generated successfully:', result);
+
+      // Reload tests after generation
+      await loadTests();
+
+      // Navigate to the test if testId is provided
+      if (result?.testId) {
+        navigate(`/tests/${result.testId}`);
+      } else {
+        console.warn('⚠️ No testId returned from generateRandomTest');
+      }
+    } catch (err: any) {
+      console.error('❌ Error generating full test:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || "Không thể tạo bài thi full. Vui lòng thử lại.";
+      setError(`Lỗi tạo full test: ${errorMessage}`);
     } finally {
       setCreating(false);
     }
@@ -154,6 +221,31 @@ const TestListPage: React.FC = () => {
               <span className="ml-1">🔒</span>
             )}
           </button>
+
+          {/* Full Test Button - with membership restriction */}
+          {canAccessFullTest() ? (
+            <button
+              onClick={handleGenerateFullTest}
+              disabled={creating || !currentUser}
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Tạo bài thi TOEIC đầy đủ 200 câu (120 phút)"
+            >
+              {creating ? "⏳ Đang tạo..." : "🚀 Tạo Full Test"}
+            </button>
+          ) : (
+            <button
+              onClick={handleUpgradePrompt}
+              className="bg-gray-400 text-white px-6 py-3 rounded-lg font-medium relative group"
+              title="Nâng cấp để sử dụng tính năng này"
+            >
+              🚀 Tạo Full Test 🔒
+              {isBasicMember() && (
+                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  Chỉ dành cho Premium/VIP
+                </div>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Error display */}

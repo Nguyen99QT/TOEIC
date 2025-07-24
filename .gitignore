@@ -124,12 +124,9 @@ frontend/out/
 # Temporary folders
 tmp/
 temp/
-<<<<<<< HEAD
-=======
 
 *.log
 .DS_Store
 *.swp
 *.tmp
 node_modules/
->>>>>>> DuyAnh

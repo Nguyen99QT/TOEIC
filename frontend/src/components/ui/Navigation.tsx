@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation} from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import EnhancedButton from './EnhancedButton';
 
@@ -7,7 +7,6 @@ const Navigation: React.FC = () => {
     const { isAuthenticated, currentUser } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const location = useLocation();
-    const navigate = useNavigate();
 
     const isActivePath = (path: string) => {
         return location.pathname === path;
@@ -20,6 +19,18 @@ const Navigation: React.FC = () => {
         { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
         { path: '/progress', label: 'Progress', icon: '📈' },
     ];
+
+    // Add collaborator-specific navigation
+    const collaboratorLinks = [
+        { path: '/collaborator/dashboard', label: 'Collaborator Dashboard', icon: '⚙️' },
+        { path: '/collaborator/content', label: 'Manage Content', icon: '📋' },
+        { path: '/collaborator/analytics', label: 'Analytics', icon: '📊' },
+    ];
+
+    // Combine nav links based on user role
+    const allNavLinks = isAuthenticated && (currentUser?.role === 'COLLABORATOR' || currentUser?.role === 'ADMIN')
+        ? [...navLinks, ...collaboratorLinks]
+        : navLinks;
 
     return (
         <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -40,7 +51,7 @@ const Navigation: React.FC = () => {
                     {/* Desktop Navigation */}
                     {isAuthenticated && (
                         <div className="hidden md:flex items-center space-x-6">
-                            {navLinks.map((link) => (
+                            {allNavLinks.map((link) => (
                                 <Link
                                     key={link.path}
                                     to={link.path}

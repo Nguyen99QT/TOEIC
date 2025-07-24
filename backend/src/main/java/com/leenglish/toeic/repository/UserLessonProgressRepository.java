@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,18 @@ public interface UserLessonProgressRepository extends JpaRepository<UserLessonPr
 
     @Query("SELECT SUM(ulp.timeSpentMinutes) FROM UserLessonProgress ulp WHERE ulp.user.id = :userId")
     Long getTotalTimeSpentByUser(@Param("userId") Long userId);
+
+    // ========== DASHBOARD ANALYTICS METHODS ==========
+
+    @Query("SELECT COUNT(DISTINCT ulp.user.id) FROM UserLessonProgress ulp WHERE ulp.lastAccessedAt > :weekAgo")
+    Long countActiveUsers(@Param("weekAgo") LocalDateTime weekAgo);
+
+    @Query("SELECT AVG(ulp.progressPercentage) FROM UserLessonProgress ulp")
+    Double getGlobalAverageProgress();
+
+    @Query("SELECT COUNT(ulp) FROM UserLessonProgress ulp WHERE ulp.status = 'COMPLETED'")
+    Long countAllCompletedLessons();
+
+    @Query("SELECT COUNT(DISTINCT ulp.user.id) FROM UserLessonProgress ulp WHERE ulp.status = 'IN_PROGRESS'")
+    Long countUsersInProgress();
 }

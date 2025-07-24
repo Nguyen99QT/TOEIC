@@ -167,6 +167,10 @@ public class SecurityConfig {
                         // ================================================================
                         // CONTENT CREATION ENDPOINTS (COLLABORATORS + ADMINS)
                         // ================================================================
+                        .requestMatchers(HttpMethod.POST, "/api/lessons").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/lessons/**").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/lessons/**").hasRole("ADMIN")
+
                         .requestMatchers(HttpMethod.POST, "/api/flashcard-sets").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/flashcard-sets/**").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/flashcard-sets/**").hasRole("ADMIN")

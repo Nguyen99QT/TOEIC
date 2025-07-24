@@ -295,7 +295,10 @@ public class LessonService {
             existingLesson.setAudioUrl(lessonDto.getAudioUrl());
             existingLesson.setImageUrl(lessonDto.getImageUrl());
             existingLesson.setDuration(lessonDto.getDuration());
-            existingLesson.setIsActive(lessonDto.getIsActive());
+            // Ensure boolean fields are never null
+            existingLesson.setIsActive(lessonDto.getIsActive() != null ? lessonDto.getIsActive() : true);
+            existingLesson.setIsPublic(lessonDto.getIsPublic() != null ? lessonDto.getIsPublic() : true);
+            existingLesson.setIsPremium(lessonDto.getIsPremium() != null ? lessonDto.getIsPremium() : false);
             existingLesson.setUpdatedAt(LocalDateTime.now());
 
             Lesson savedLesson = lessonRepository.save(existingLesson);

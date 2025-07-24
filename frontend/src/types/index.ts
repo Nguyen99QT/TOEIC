@@ -249,22 +249,13 @@ export interface UserQuestionAnswer {
 
 export interface Flashcard {
   id: number;
-  setId: number; // flashcardSet ID (match với backend)
-  frontText: string;
-  backText: string;
-  hint?: string; // ✅ Add hint property
-  imageUrl?: string;
-  audioUrl?: string;
-  orderIndex: number;
-  difficulty?: "EASY" | "MEDIUM" | "HARD";
-  difficultyLevel?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"; // ✅ Add for compatibility
-  tags?: string; // ✅ Add tags as comma-separated string
-  isActive: boolean;
+  front: string; // Thay vì 'word' hoặc 'term'
+  back: string; // Thay vì 'meaning' hoặc 'definition'
+  example?: string; // Optional example field
+  pronunciation?: string; // Optional pronunciation field
+  flashcardSetId: number;
   createdAt: string;
   updatedAt: string;
-
-  // Legacy support (might be used in some places)
-  flashcardSetId?: number; // Alias for setId
 }
 
 export interface FlashcardSet {
@@ -289,6 +280,34 @@ export interface FlashcardSet {
   totalCards?: number;
   completedCards?: number;
   progress?: number;
+  canAccess?: boolean; // For frontend access control
+}
+
+// ========== FLASHCARD STUDY TYPES ==========
+
+export interface FlashcardStudyProgress {
+  flashcardId: number;
+  isKnown: boolean;
+  reviewCount: number;
+  lastReviewedAt: string;
+  nextReviewAt: string;
+  difficulty: number; // Spaced repetition difficulty
+}
+
+export interface StudySession {
+  id?: number;
+  setId: number;
+  currentCardIndex: number;
+  totalCards: number;
+  correctAnswers: number;
+  wrongAnswers: number; // FIX: Add wrongAnswers field
+  studiedCards: Set<number>; // FIX: Add studiedCards field
+  startedAt: string;
+  endedAt?: string;
+  studyMode: "STUDY" | "QUIZ" | "REVIEW";
+  isCompleted: boolean;
+  accuracy?: number;
+  timeSpent?: number;
 }
 
 export interface Comment {
@@ -505,3 +524,6 @@ export interface ProgressStats {
   totalTimeSpent: number;
   lastActivity: string;
 }
+
+// ========== LESSON TYPES ==========
+export * from "./lesson";

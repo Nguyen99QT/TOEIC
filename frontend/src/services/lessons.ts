@@ -220,6 +220,47 @@ export const lessonService = {
     const res = await apiClient.get(`/users/${userId}/lessons/progress`);
     return res.data;
   },
+
+  /**
+   * Create a new lesson (collaborator/admin)
+   */
+  createLesson: async (lessonData: Partial<Lesson>): Promise<Lesson> => {
+    try {
+      const response = await api.post("/lessons", lessonData);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error creating lesson:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing lesson (collaborator/admin)
+   */
+  updateLesson: async (
+    id: number,
+    lessonData: Partial<Lesson>
+  ): Promise<Lesson> => {
+    try {
+      const response = await api.put(`/lessons/${id}`, lessonData);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error updating lesson:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a lesson (collaborator/admin)
+   */
+  deleteLesson: async (id: number): Promise<void> => {
+    try {
+      await api.delete(`/lessons/${id}`);
+    } catch (error: any) {
+      console.error("❌ Error deleting lesson:", error);
+      throw error;
+    }
+  },
 };
 
 export default lessonService;

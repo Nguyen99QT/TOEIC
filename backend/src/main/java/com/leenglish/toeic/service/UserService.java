@@ -380,7 +380,7 @@ public class UserService {
      * Get active users with pagination
      */
     public Page<User> findActiveUsers(Pageable pageable) {
-        return userRepository.findByIsActiveTrue(pageable);
+        return userRepository.findAll(pageable); // Use findAll since no isActive field
     }
 
     /**

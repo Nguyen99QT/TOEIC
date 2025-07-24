@@ -1,5 +1,8 @@
 import { Flashcard, FlashcardSet } from "../types";
-import { mapBackendFlashcardSet } from "../utils/flashcards";
+import {
+  mapBackendFlashcardSet,
+  mapBackendFlashcard,
+} from "../utils/flashcards";
 import api from "./api";
 
 /**
@@ -67,7 +70,7 @@ const flashcardService = {
         return cache.allSets.data!;
       }
 
-      const response = await api.get("/flashcard-sets");
+      const response = await api.get("/api/flashcard-sets");
       console.log("✅ Raw all sets API response:", response.data);
 
       // Map backend response to frontend type
@@ -106,10 +109,16 @@ const flashcardService = {
       }
 
       console.log("🌐 Fetching public flashcard sets...");
-      const response = await api.get("/flashcard-sets/public");
+      console.log(
+        "🔗 API URL will be:",
+        `${api.defaults.baseURL}/api/flashcard-sets/public`
+      );
+      const response = await api.get("/api/flashcard-sets/public");
       console.log("✅ Raw public sets API response:", response.data);
 
-      const mappedSets = response.data.map(mapBackendFlashcardSet);
+      // Extract data from ApiResponse format
+      const setsData = response.data.data || response.data;
+      const mappedSets = setsData.map(mapBackendFlashcardSet);
       console.log("✅ Mapped public flashcard sets:", mappedSets.length);
 
       // Update cache
@@ -139,7 +148,7 @@ const flashcardService = {
       }
 
       console.log(`🔄 Fetching flashcard set ${id}...`);
-      const response = await api.get(`/flashcard-sets/${id}`);
+      const response = await api.get(`/api/flashcard-sets/${id}`);
       console.log("✅ Raw flashcard set API response:", response.data);
 
       const mappedSet = mapBackendFlashcardSet(response.data);
@@ -171,16 +180,20 @@ const flashcardService = {
       }
 
       console.log(`🔄 Fetching flashcards for set ${setId}...`);
-      const response = await api.get(`/flashcards/by-set/${setId}`);
+      const response = await api.get(`/api/flashcards/set/${setId}`);
       console.log("✅ Raw flashcards API response:", response.data);
+
+      // Map backend format to frontend format
+      const mappedFlashcards = response.data.map(mapBackendFlashcard);
+      console.log("🔄 Mapped flashcards:", mappedFlashcards);
 
       // Update cache
       cache.sets[cacheKey] = {
-        data: response.data,
+        data: mappedFlashcards,
         timestamp: Date.now(),
       };
 
-      return response.data;
+      return mappedFlashcards;
     } catch (error: any) {
       console.error(`❌ Error fetching flashcards for set ${setId}:`, error);
       throw error;
@@ -495,8 +508,9 @@ const flashcardService = {
       );
       console.log("✅ Featured sets API response:", response.data);
 
-      // Map backend response to frontend type
-      const mappedSets = response.data.map(mapBackendFlashcardSet);
+      // Extract data from ApiResponse format
+      const setsData = response.data.data || response.data;
+      const mappedSets = setsData.map(mapBackendFlashcardSet);
       console.log("✅ Mapped featured flashcard sets:", mappedSets.length);
 
       return mappedSets;

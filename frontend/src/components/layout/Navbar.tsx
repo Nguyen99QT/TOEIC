@@ -117,6 +117,26 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuCli
             >
               Progress
             </Link>
+
+            {/* Collaborator Navigation */}
+            {currentUser && (currentUser.role === 'COLLABORATOR' || currentUser.role === 'ADMIN') && (
+              <>
+                <Link
+                  to="/collaborator/dashboard"
+                  className={`text-purple-700 hover:text-purple-800 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/collaborator') ? 'text-purple-800 bg-purple-50' : ''
+                    }`}
+                >
+                  ⚙️ Collaborator
+                </Link>
+                <Link
+                  to="/collaborator/content"
+                  className={`text-purple-700 hover:text-purple-800 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/collaborator/content') ? 'text-purple-800 bg-purple-50' : ''
+                    }`}
+                >
+                  📋 Manage Content
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Search and user menu */}

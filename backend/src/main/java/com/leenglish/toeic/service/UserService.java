@@ -15,6 +15,7 @@ import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.UserDto;
 import com.leenglish.toeic.dto.UpdateUserProfileRequest;
 import com.leenglish.toeic.enums.Gender;
+import com.leenglish.toeic.enums.MembershipType;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.repository.UserRepository;
 import com.leenglish.toeic.exception.UnauthorizedException;
@@ -105,6 +106,7 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setFullName(fullName);
         user.setRole(role != null ? role : Role.USER);
+        user.setMembershipType(MembershipType.BASIC); // Set default membership type to BASIC
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setIsActive(true); // Đảm bảo user luôn active khi tạo mới

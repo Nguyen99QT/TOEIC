@@ -40,8 +40,8 @@ public class MembershipExpiryScheduler {
                 System.out.println("🕐 Found " + expiredUsers.size() + " expired premium memberships");
 
                 for (User user : expiredUsers) {
-                    // Reset to FREE membership
-                    user.setMembershipType(MembershipType.FREE);
+                    // Reset to BASIC membership
+                    user.setMembershipType(MembershipType.BASIC);
                     user.setIsPremium(false);
                     user.setPremiumExpiresAt(null);
 

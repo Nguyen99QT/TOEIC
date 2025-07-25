@@ -126,7 +126,7 @@ public class MembershipController {
             // Check if membership expired
             if (user.getPremiumExpiresAt() != null && user.getPremiumExpiresAt().isBefore(now)) {
                 // Auto-expire if needed
-                user.setMembershipType(MembershipType.FREE);
+                user.setMembershipType(MembershipType.BASIC);
                 user.setIsPremium(false);
                 user.setPremiumExpiresAt(null);
                 userRepository.save(user);

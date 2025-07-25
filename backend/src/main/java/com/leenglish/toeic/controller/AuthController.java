@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.leenglish.toeic.dto.JwtResponse;
 import com.leenglish.toeic.dto.LoginRequest;
-import com.leenglish.toeic.dto.RegisterRequest;
 import com.leenglish.toeic.dto.RegistrationResponse;
 import com.leenglish.toeic.service.EmailVerificationService;
 import com.leenglish.toeic.security.UserDetailsImpl;
@@ -102,8 +101,11 @@ public class AuthController {
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
 
-            // Lấy membershipType từ user đã có
-            MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(MembershipType.FREE);
+            // Lấy membershipType từ user đã có - temporary fix for compilation
+            MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(null);
+            if (membershipType == null) {
+                membershipType = MembershipType.BASIC; // Using BASIC as default
+            }
 
             // Tạo và trả về response với JwtResponse
             System.out.println("✅ Login successful for user: " + loginRequest.getUsername() + " with membership: "
@@ -374,8 +376,8 @@ public class AuthController {
     @PutMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> passwordRequest) {
         try {
-            String currentPassword = passwordRequest.get("currentPassword");
-            String newPassword = passwordRequest.get("newPassword");
+            // String currentPassword = passwordRequest.get("currentPassword");
+            // String newPassword = passwordRequest.get("newPassword");
 
             // TODO: Implement password change logic
             Map<String, Object> response = new HashMap<>();

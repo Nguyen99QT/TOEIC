@@ -219,6 +219,17 @@ const AppRoutes: React.FC = () => {
           }
         />
         <Route
+          path="/create-blog"
+          element={
+            <ProtectedRoute
+              promptTitle="Đăng nhập để tạo Blog"
+              promptMessage="Bạn cần phải đăng nhập để tạo bài viết Blog mới"
+            >
+              <CreateBlog />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/blog/:id"
           element={
             <ProtectedRoute

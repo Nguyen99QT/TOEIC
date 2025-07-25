@@ -176,7 +176,7 @@ public class SubmitController {
                 user.setFullName("Anonymous User");
                 user.setIsActive(true);
                 user.setRole(Role.USER);
-                user.setMembershipType(MembershipType.FREE);
+                user.setMembershipType(MembershipType.BASIC);
                 user.setCreatedAt(LocalDateTime.now());
                 user = userRepo.save(user);
             }

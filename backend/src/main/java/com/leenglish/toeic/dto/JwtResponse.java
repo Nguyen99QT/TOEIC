@@ -38,6 +38,6 @@ public class JwtResponse {
         this.username = username;
         this.email = email;
         this.roles = roles;
-        this.membershipType = MembershipType.FREE; // Default to FREE
+        this.membershipType = MembershipType.BASIC; // Default to BASIC
     }
 }

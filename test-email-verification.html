@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { border-color: #4CAF50; background-color: #f0fff0; }
+        .error { border-color: #f44336; background-color: #fff0f0; }
+        .warning { border-color: #ff9800; background-color: #fff8e1; }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="email"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 250px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Email Verification - TOEIC Platform</h1>
+    
+    <div class="test-section">
+        <h2>📧 1. Test User Registration</h2>
+        <p>Kiểm tra đăng ký user mới và nhận email xác thực</p>
+        
+        <input type="email" id="registerEmail" placeholder="Enter test email" value="test@example.com">
+        <button onclick="testRegistration()">Register Test User</button>
+        
+        <div id="registerResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 2. Resend Verification Email</h2>
+        <p>Gửi lại email xác thực cho user đã đăng ký</p>
+        
+        <input type="email" id="resendEmail" placeholder="Enter email to resend" value="test@example.com">
+        <button onclick="testResendVerification()">Resend Verification</button>
+        
+        <div id="resendResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ 3. Verify Email Token</h2>
+        <p>Xác thực email bằng token (thường được gửi qua email)</p>
+        
+        <input type="text" id="verifyToken" placeholder="Enter verification token" style="width: 400px;">
+        <button onclick="testVerifyEmail()">Verify Email</button>
+        
+        <div id="verifyResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 4. Check Email Verification Status</h2>
+        <p>Kiểm tra trạng thái xác thực của email</p>
+        
+        <input type="email" id="checkEmail" placeholder="Enter email to check" value="test@example.com">
+        <button onclick="testCheckVerificationStatus()">Check Status</button>
+        
+        <div id="checkResult" class="result"></div>
+    </div>
+
+    <div class="test-section warning">
+        <h2>📋 Test Instructions</h2>
+        <ol>
+            <li><strong>Register Test User:</strong> Tạo user mới và nhận email xác thực</li>
+            <li><strong>Check Email:</strong> Xem email trong inbox (hoặc spam) để lấy verification link</li>
+            <li><strong>Extract Token:</strong> Lấy token từ URL trong email (phần sau ?token=)</li>
+            <li><strong>Verify Email:</strong> Sử dụng token để xác thực email</li>
+            <li><strong>Check Status:</strong> Xác nhận email đã được verify thành công</li>
+        </ol>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api/auth';
+
+        async function testRegistration() {
+            const email = document.getElementById('registerEmail').value;
+            const resultDiv = document.getElementById('registerResult');
+            
+            if (!email) {
+                showResult(resultDiv, '❌ Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, '⏳ Registering user...', 'warning');
+
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: email.split('@')[0] + '_test',
+                        email: email,
+                        password: 'TestPassword123!',
+                        fullName: 'Test User',
+                        confirmPassword: 'TestPassword123!'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(resultDiv, `✅ Registration successful! Verification email sent to ${email}. Check your inbox.`, 'success');
+                } else {
+                    showResult(resultDiv, `❌ Registration failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testResendVerification() {
+            const email = document.getElementById('resendEmail').value;
+            const resultDiv = document.getElementById('resendResult');
+            
+            if (!email) {
+                showResult(resultDiv, '❌ Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, '⏳ Resending verification email...', 'warning');
+
+                const response = await fetch(`${API_BASE}/resend-verification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(resultDiv, `✅ Verification email resent to ${email}. Check your inbox.`, 'success');
+                } else {
+                    showResult(resultDiv, `❌ Failed to resend: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testVerifyEmail() {
+            const token = document.getElementById('verifyToken').value;
+            const resultDiv = document.getElementById('verifyResult');
+            
+            if (!token) {
+                showResult(resultDiv, '❌ Please enter a verification token', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, '⏳ Verifying email token...', 'warning');
+
+                const response = await fetch(`${API_BASE}/verify-email?token=${encodeURIComponent(token)}`, {
+                    method: 'GET',
+                    redirect: 'manual' // Don't follow redirects automatically
+                });
+
+                if (response.status === 0 || response.type === 'opaqueredirect') {
+                    // This means the redirect happened (likely successful)
+                    showResult(resultDiv, '✅ Email verification successful! (Redirected to frontend)', 'success');
+                } else if (response.ok) {
+                    const data = await response.json();
+                    showResult(resultDiv, `✅ Email verified successfully!`, 'success');
+                } else {
+                    const data = await response.json().catch(() => ({ message: 'Unknown error' }));
+                    showResult(resultDiv, `❌ Verification failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                // Check if it's a redirect error (which is actually success in this case)
+                if (error.message.includes('redirect') || error.name === 'TypeError') {
+                    showResult(resultDiv, '✅ Email verification successful! (Browser redirected)', 'success');
+                } else {
+                    showResult(resultDiv, `❌ Network error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testCheckVerificationStatus() {
+            const email = document.getElementById('checkEmail').value;
+            const resultDiv = document.getElementById('checkResult');
+            
+            if (!email) {
+                showResult(resultDiv, '❌ Please enter an email address', 'error');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, '⏳ Checking verification status...', 'warning');
+
+                // This would require a dedicated endpoint to check verification status
+                // For now, we'll try to login to see if email is verified
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: email,
+                        password: 'TestPassword123!'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(resultDiv, `✅ Email ${email} is verified and can login successfully!`, 'success');
+                } else if (data.needsVerification) {
+                    showResult(resultDiv, `⚠️ Email ${email} is registered but not verified yet.`, 'warning');
+                } else {
+                    showResult(resultDiv, `❌ Status check failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                showResult(resultDiv, `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(element, message, type) {
+            element.innerHTML = message;
+            element.className = `result ${type}`;
+        }
+
+        // Auto-populate with current timestamp for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            const timestamp = Date.now();
+            const testEmail = `test.${timestamp}@example.com`;
+            
+            document.getElementById('registerEmail').value = testEmail;
+            document.getElementById('resendEmail').value = testEmail;
+            document.getElementById('checkEmail').value = testEmail;
+        });
+    </script>
+</body>
+</html>

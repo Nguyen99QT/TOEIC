@@ -40,15 +40,15 @@ class AuthService {
         final data = response['data'];
         _token = data['accessToken'] ?? data['token'];
 
-        // Create user object from response data
-        _currentUser = User(
-          id: int.tryParse(data['id']?.toString() ?? '0') ?? 0,
-          username: data['username'] ?? username,
-          email: data['email'] ?? '',
-          fullName: data['fullName'] ?? data['username'] ?? username,
-          role: 'USER', // Default role from backend
-          membershipType: 'free', // Default membership type
-        );
+        // Create user object from response data using fromMap to handle roles properly
+        _currentUser = User.fromMap({
+          'id': data['id'],
+          'username': data['username'] ?? username,
+          'email': data['email'] ?? '',
+          'fullName': data['fullName'] ?? data['username'] ?? username,
+          'roles': data['roles'], // This will handle the roles array properly
+          'membershipType': data['membershipType'] ?? 'free',
+        });
 
         // Save authentication data securely
         await _storageService.saveAuthToken(_token!);

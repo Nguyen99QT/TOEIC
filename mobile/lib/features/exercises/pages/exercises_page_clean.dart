@@ -15,6 +15,7 @@ class ExercisesPage extends ConsumerStatefulWidget {
 class _ExercisesPageState extends ConsumerState<ExercisesPage> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedDifficulty;
+  String? _selectedCategory;
 
   @override
   void dispose() {

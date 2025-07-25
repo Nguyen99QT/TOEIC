@@ -60,9 +60,14 @@ class User {
         map['roles'] is List &&
         (map['roles'] as List).isNotEmpty) {
       userRole = (map['roles'] as List).first.toString();
+      print(
+          '🔧 User.fromMap - roles array: ${map['roles']}, parsed role: $userRole');
     } else if (map['role'] != null) {
       userRole = map['role'].toString();
+      print('🔧 User.fromMap - single role: $userRole');
     }
+
+    print('🔧 User.fromMap - final role: $userRole');
 
     return User(
       id: map['id']?.toInt() ?? 0,

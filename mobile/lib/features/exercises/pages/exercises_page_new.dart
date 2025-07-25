@@ -15,6 +15,7 @@ class ExercisesPage extends ConsumerStatefulWidget {
 class _ExercisesPageState extends ConsumerState<ExercisesPage> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedDifficulty;
+  String? _selectedCategory;
 
   @override
   void dispose() {
@@ -304,13 +305,16 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
   }
 
   Widget _buildLoadingState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Loading exercises...'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            'Loading exercises...',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

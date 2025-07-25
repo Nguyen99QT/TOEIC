@@ -20,13 +20,13 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     @Value("${jwt.expiration:86400000}") // 24 hours
     private long jwtExpiration;
 
-    @Value("${jwt.refresh-expiration:604800000}") // 7 days
+    @Value("${jwt.refresh.expiration:604800000}") // 7 days
     private long refreshExpiration;
 
     public String extractUsername(String token) {
@@ -121,24 +121,24 @@ public class JwtService {
     }
 
     /**
-     * Check if token is a refresh token (AuthController needs this)
-     */
-    public boolean isRefreshToken(String token) {
-        try {
-            String tokenType = extractClaim(token, claims -> claims.get("tokenType", String.class));
-            return "refresh".equals(tokenType);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
      * Validate token without user details - for refresh tokens (AuthController
      * needs this)
      */
     public boolean isTokenValid(String token) {
         try {
             return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if token is a refresh token based on its type claim
+     */
+    public boolean isRefreshToken(String token) {
+        try {
+            String tokenType = extractClaim(token, claims -> claims.get("tokenType", String.class));
+            return "refresh".equals(tokenType);
         } catch (Exception e) {
             return false;
         }

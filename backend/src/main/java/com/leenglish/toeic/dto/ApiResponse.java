@@ -8,7 +8,8 @@ public class ApiResponse<T> {
     private T data;
     private Map<String, Object> metadata;
 
-    public ApiResponse() {}
+    public ApiResponse() {
+    }
 
     public ApiResponse(boolean success, String message, T data) {
         this(success, message, data, null);
@@ -21,20 +22,44 @@ public class ApiResponse<T> {
         this.metadata = metadata;
     }
 
-    public boolean isSuccess() { return success; }
-    public void setSuccess(boolean success) { this.success = success; }
+    public boolean isSuccess() {
+        return success;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 
-    public T getData() { return data; }
-    public void setData(T data) { this.data = data; }
+    public String getMessage() {
+        return message;
+    }
 
-    public Map<String, Object> getMetadata() { return metadata; }
-    public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
 
     // Static factory methods for convenience
     public static <T> ApiResponse<T> success(T data, String message) {
+        return new ApiResponse<>(true, message, data);
+    }
+
+    public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(true, message, data);
     }
 

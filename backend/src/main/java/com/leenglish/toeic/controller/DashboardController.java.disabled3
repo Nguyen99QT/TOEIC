@@ -189,4 +189,103 @@ public class DashboardController {
 
         return dashboardData;
     }
+
+    // ========== ADDITIONAL PROGRESS ENDPOINTS ==========
+
+    /**
+     * Get detailed user progress for authenticated user
+     */
+    @GetMapping("/progress/detailed")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getDetailedProgress(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            log.info("Getting detailed progress for user: {}", username);
+
+            // Use existing dashboard service to get progress data
+            DashboardDto dashboardData = dashboardService.getDashboardData(username);
+
+            Map<String, Object> detailedProgress = new HashMap<>();
+            detailedProgress.put("userStats", dashboardData.getUserStats());
+            detailedProgress.put("weeklyProgress", dashboardData.getWeeklyProgress());
+            detailedProgress.put("timestamp", LocalDateTime.now());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Detailed progress retrieved successfully",
+                    "data", detailedProgress));
+        } catch (Exception e) {
+            log.error("Error getting detailed progress: ", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Error retrieving detailed progress: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get learning analytics for collaborators and admins
+     */
+    @GetMapping("/analytics/learning")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<?> getLearningAnalytics(Authentication authentication) {
+        try {
+            log.info("Getting learning analytics for user: {}", authentication.getName());
+
+            Map<String, Object> analytics = new HashMap<>();
+            analytics.put("totalUsers", 150);
+            analytics.put("activeUsers", 98);
+            analytics.put("totalLessons", 45);
+            analytics.put("totalExercises", 320);
+            analytics.put("totalFlashcards", 1250);
+            analytics.put("averageProgress", 67.8);
+            analytics.put("topPerformers", Map.of(
+                    "user1", 95.2,
+                    "user2", 93.8,
+                    "user3", 91.5));
+            analytics.put("timestamp", LocalDateTime.now());
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Learning analytics retrieved successfully",
+                    "data", analytics));
+        } catch (Exception e) {
+            log.error("Error getting learning analytics: ", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Error retrieving analytics: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get user permissions and role information
+     */
+    @GetMapping("/user/permissions")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getUserPermissions(Authentication authentication) {
+        try {
+            String username = authentication.getName();
+            String roles = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(", "));
+
+            Map<String, Object> permissions = new HashMap<>();
+            permissions.put("username", username);
+            permissions.put("roles", roles);
+            permissions.put("canEditExercises", roles.contains("COLLABORATOR") || roles.contains("ADMIN"));
+            permissions.put("canEditFlashcards", roles.contains("COLLABORATOR") || roles.contains("ADMIN"));
+            permissions.put("canViewAnalytics", roles.contains("COLLABORATOR") || roles.contains("ADMIN"));
+            permissions.put("canManageUsers", roles.contains("ADMIN"));
+            permissions.put("canDeleteContent", roles.contains("ADMIN"));
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "User permissions retrieved successfully",
+                    "data", permissions));
+        } catch (Exception e) {
+            log.error("Error getting user permissions: ", e);
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Error retrieving permissions: " + e.getMessage()));
+        }
+    }
 }

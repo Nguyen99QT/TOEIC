@@ -3,13 +3,16 @@ package com.leenglish.toeic.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.leenglish.toeic.service.UserService;
 import com.leenglish.toeic.service.ExerciseService; // ENABLED
 import com.leenglish.toeic.service.LessonService;
+import com.leenglish.toeic.security.UserDetailsImpl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -121,6 +124,80 @@ public class AdminController {
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Failed to retrieve system health: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    // Debug endpoint to check user roles and authorities
+    @GetMapping("/debug/user-info")
+    @PreAuthorize("hasRole('USER') or hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getUserInfo(Authentication authentication) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("username", userDetails.getUsername());
+            userInfo.put("authorities", userDetails.getAuthorities().toString());
+            userInfo.put("authoritiesDetail", userDetails.getAuthorities().stream()
+                    .map(auth -> auth.getAuthority())
+                    .collect(Collectors.toList()));
+            userInfo.put("isEnabled", userDetails.isEnabled());
+            userInfo.put("isAccountNonExpired", userDetails.isAccountNonExpired());
+            userInfo.put("isAccountNonLocked", userDetails.isAccountNonLocked());
+            userInfo.put("isCredentialsNonExpired", userDetails.isCredentialsNonExpired());
+
+            // Test specific role checks
+            userInfo.put("hasRoleUser", userDetails.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_USER")));
+            userInfo.put("hasRoleCollaborator", userDetails.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_COLLABORATOR")));
+            userInfo.put("hasRoleAdmin", userDetails.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN")));
+
+            response.put("success", true);
+            response.put("userInfo", userInfo);
+            response.put("message", "User info retrieved successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to retrieve user info: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @PostMapping("/users/{userId}/promote-to-collaborator")
+    public ResponseEntity<Map<String, Object>> promoteToCollaborator(@PathVariable Long userId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            userService.promoteToCollaborator(userId);
+            response.put("success", true);
+            response.put("message", "User promoted to collaborator successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to promote user: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @PostMapping("/users/promote-by-username/{username}")
+    public ResponseEntity<Map<String, Object>> promoteToCollaboratorByUsername(@PathVariable String username) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            userService.promoteToCollaboratorByUsername(username);
+            response.put("success", true);
+            response.put("message", "User " + username + " promoted to collaborator successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to promote user: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }

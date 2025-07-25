@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'dart:convert';
 
 @HiveType(typeId: 0)
 class User {
@@ -13,7 +12,7 @@ class User {
   final String email;
 
   @HiveField(3)
-  final String fullName;
+  final String? fullName;
 
   @HiveField(4)
   final String? firstName;
@@ -22,60 +21,70 @@ class User {
   final String? lastName;
 
   @HiveField(6)
-  final String role;
-
-  @HiveField(7)
-  final String membershipType;
-
-  @HiveField(8)
   final String? gender;
 
-  @HiveField(9)
+  @HiveField(7)
   final String? phoneNumber;
 
-  @HiveField(10)
-  final String? profilePicture;
+  @HiveField(8)
+  final String role;
 
-  @HiveField(11)
+  @HiveField(9)
   final DateTime? createdAt;
 
-  @HiveField(12)
+  @HiveField(10)
   final DateTime? updatedAt;
+
+  @HiveField(11)
+  final String? membershipType;
 
   User({
     required this.id,
     required this.username,
     required this.email,
-    required this.fullName,
+    this.fullName,
     this.firstName,
     this.lastName,
-    this.role = 'USER',
-    this.membershipType = 'FREE',
     this.gender,
     this.phoneNumber,
-    this.profilePicture,
+    required this.role,
     this.createdAt,
     this.updatedAt,
+    this.membershipType,
   });
 
   factory User.fromMap(Map<String, dynamic> map) {
+    // Handle roles array from backend
+    String userRole = 'USER';
+    if (map['roles'] != null &&
+        map['roles'] is List &&
+        (map['roles'] as List).isNotEmpty) {
+      userRole = (map['roles'] as List).first.toString();
+    } else if (map['role'] != null) {
+      userRole = map['role'].toString();
+    }
+
     return User(
-      id: map['id'] ?? 0,
+      id: map['id']?.toInt() ?? 0,
       username: map['username'] ?? '',
       email: map['email'] ?? '',
-      fullName: map['fullName'] ?? '',
+      fullName: map['fullName'],
       firstName: map['firstName'],
       lastName: map['lastName'],
-      role: map['role'] ?? 'USER',
-      membershipType: map['membershipType'] ?? 'FREE',
       gender: map['gender'],
       phoneNumber: map['phoneNumber'],
-      profilePicture: map['profilePicture'],
+      role: userRole,
       createdAt:
           map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
       updatedAt:
           map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
+      membershipType: map['membershipType'],
     );
+  }
+
+  factory User.fromJson(String source) {
+    final map = Map<String, dynamic>.from(source as Map);
+    return User.fromMap(map);
   }
 
   Map<String, dynamic> toMap() {
@@ -86,23 +95,17 @@ class User {
       'fullName': fullName,
       'firstName': firstName,
       'lastName': lastName,
-      'role': role,
-      'membershipType': membershipType,
       'gender': gender,
       'phoneNumber': phoneNumber,
-      'profilePicture': profilePicture,
+      'role': role,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'membershipType': membershipType,
     };
   }
 
   String toJson() {
-    return jsonEncode(toMap());
-  }
-
-  factory User.fromJson(String jsonString) {
-    final map = jsonDecode(jsonString) as Map<String, dynamic>;
-    return User.fromMap(map);
+    return toMap().toString();
   }
 
   User copyWith({
@@ -112,13 +115,12 @@ class User {
     String? fullName,
     String? firstName,
     String? lastName,
-    String? role,
-    String? membershipType,
     String? gender,
     String? phoneNumber,
-    String? profilePicture,
+    String? role,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? membershipType,
   }) {
     return User(
       id: id ?? this.id,
@@ -127,27 +129,63 @@ class User {
       fullName: fullName ?? this.fullName,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
-      role: role ?? this.role,
-      membershipType: membershipType ?? this.membershipType,
       gender: gender ?? this.gender,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      profilePicture: profilePicture ?? this.profilePicture,
+      role: role ?? this.role,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      membershipType: membershipType ?? this.membershipType,
     );
   }
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, email: $email, fullName: $fullName, role: $role)';
+    return 'User(id: $id, username: $username, email: $email, fullName: $fullName, role: $role, membershipType: $membershipType)';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is User && other.id == id && other.username == username;
+
+    return other is User &&
+        other.id == id &&
+        other.username == username &&
+        other.email == email;
   }
 
   @override
-  int get hashCode => id.hashCode ^ username.hashCode;
+  int get hashCode {
+    return id.hashCode ^ username.hashCode ^ email.hashCode;
+  }
+
+  // Helper methods for role checking
+  bool get isStudent =>
+      role.toUpperCase() == 'USER' ||
+      role.toUpperCase() == 'STUDENT' ||
+      role.toUpperCase() == 'ROLE_USER' ||
+      role.toUpperCase() == 'ROLE_STUDENT';
+
+  bool get isCollaborator =>
+      role.toUpperCase() == 'COLLABORATOR' ||
+      role.toUpperCase() == 'ROLE_COLLABORATOR';
+
+  bool get isAdmin =>
+      role.toUpperCase() == 'ADMIN' || role.toUpperCase() == 'ROLE_ADMIN';
+
+  bool get canCreateContent => isCollaborator || isAdmin;
+  bool get canManageUsers => isAdmin;
+
+  String get displayRole {
+    switch (role.toUpperCase()) {
+      case 'USER':
+      case 'STUDENT':
+        return 'Student';
+      case 'COLLABORATOR':
+        return 'Collaborator';
+      case 'ADMIN':
+        return 'Admin';
+      default:
+        return 'Student';
+    }
+  }
 }

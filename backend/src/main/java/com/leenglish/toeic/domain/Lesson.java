@@ -64,6 +64,12 @@ public class Lesson {
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = true;
 
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @Column(name = "updated_by", length = 100)
+    private String updatedBy;
+
     // Constructors
     public Lesson() {
         this.createdAt = LocalDateTime.now();
@@ -222,6 +228,23 @@ public class Lesson {
 
     public void setIsPublic(Boolean isPublic) {
         this.isPublic = isPublic;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
         this.updatedAt = LocalDateTime.now();
     }
 

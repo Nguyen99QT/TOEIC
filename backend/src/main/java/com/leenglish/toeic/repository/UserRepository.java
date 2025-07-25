@@ -16,18 +16,17 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // ========== AUTHENTICATION & SECURITY ==========
-
     Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE u.username = :username OR u.email = :email")
-    Optional<User> findByUsernameOrEmail(@Param("username") String username, @Param("email") String email);
+    Boolean existsByUsername(String username);
 
-    boolean existsByUsername(String username);
+    Boolean existsByEmail(String email);
 
-    boolean existsByEmail(String email);
+    // Method needed for AuthenticationService
+    @Query("SELECT u FROM User u WHERE u.username = :usernameOrEmail OR u.email = :usernameOrEmail")
+    Optional<User> findByUsernameOrEmail(@Param("usernameOrEmail") String usernameOrEmail);
 
     // ========== USER MANAGEMENT ==========
 
@@ -76,4 +75,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.membershipType = 'PREMIUM' AND u.premiumExpiresAt IS NOT NULL AND u.premiumExpiresAt BETWEEN :start AND :end")
     List<User> findPremiumUsersExpiringBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+    // Method needed for UserService - find all users with pagination
+    Page<User> findAll(Pageable pageable);
 }

@@ -124,20 +124,22 @@ const ExerciseQuestionsPage: React.FC = () => {
     // Fetch feedback from backend after submit
     useEffect(() => {
         const fetchFeedback = async () => {
-            if (!exerciseId || !currentUser?.id) return;
+            if (!exerciseId) return;
             try {
-                const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}&userId=${currentUser.id}`);
+                // Backend only needs exerciseId, userId is extracted from auth token
+                const res = await api.get(`/exercises/feedback?exerciseId=${exerciseId}`);
                 if (res.data && (res.data.comment || res.data.rating)) {
                     setLastFeedbackComment(res.data.comment);
                     setLastFeedbackRating(res.data.rating);
                     setFeedbackSubmitted(true);
                 }
             } catch (err) {
-                // ignorex
+                // ignore 404 or other errors - means no feedback exists yet
+                console.log('ℹ️ No existing feedback found for exercise', exerciseId);
             }
         };
         if (isSubmitted) fetchFeedback();
-    }, [isSubmitted, exerciseId, currentUser]);
+    }, [isSubmitted, exerciseId]);
 
     // Handle answer selection
     const handleAnswerSelect = (questionId: number, answer: string) => {

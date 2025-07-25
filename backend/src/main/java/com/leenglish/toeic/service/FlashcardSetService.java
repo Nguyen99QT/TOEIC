@@ -14,75 +14,19 @@ import com.leenglish.toeic.dto.FlashcardSetDto;
 import com.leenglish.toeic.dto.FlashcardSetUpdateRequest;
 
 public interface FlashcardSetService {
-
-    FlashcardSetDto getFlashcardSetWithFlashcardsById(Long id, Authentication authentication);
-
-    FlashcardSetDto getFreeFlashcardSetById(Long id);
-
-    // Thêm các method sau:
-
-    /**
-     * Lấy danh sách các bộ flashcard công khai.
-     * 
-     * @return Danh sách các bộ flashcard công khai.
-     */
-    Page<FlashcardSet> getPublicSets(String difficulty, String category, String search, Pageable pageable);
-
-    Page<FlashcardSet> getAccessibleSets(User user, String difficulty, String category, String search,
-            Pageable pageable);
-
-    FlashcardSet getSetById(Long id);
-
-    boolean canUserAccessSet(User user, FlashcardSet set);
-
-    boolean canUserModifySet(User user, FlashcardSet set);
-
-    List<FlashcardSetDto> getPublicFlashcardSets();
-
-    List<FlashcardSetDto> getFreeFlashcardSetsForBasicUsers();
-
-    List<FlashcardSetDto> getFlashcardSetsByUser(Long userId);
-
-    List<FlashcardSetDto> getAccessibleFlashcardSets(Long userId);
-
-    FlashcardSetDto createFlashcardSet(FlashcardSetDto setDto, Long userId);
-
-    FlashcardSetDto updateFlashcardSet(Long id, FlashcardSetDto setDto);
-
-    void deleteFlashcardSet(Long id);
-
-    List<FlashcardSetDto> searchFlashcardSets(String query, Long userId);
-
-    void incrementViewCount(Long id);
-
-    /**
-     * Lấy danh sách các flashcard trong bộ flashcard theo ID.
-     * 
-     * @param id ID của bộ flashcard.
-     * @return Danh sách các flashcard trong bộ.
-     */
-
-    List<Flashcard> getFlashcardsBySetId(Long id);
-
-    FlashcardSet createSet(FlashcardSetCreateRequest request, User user);
-
-    FlashcardSet updateSet(Long id, FlashcardSetUpdateRequest request, User user);
-
-    void deleteSet(Long id);
-
-    /**
-     * Get all flashcard sets (for admin/debugging purposes)
-     * 
-     * @return List of all flashcard sets
-     */
+    
+    // Read operations
     List<FlashcardSetDto> getAllFlashcardSets();
-
-    // Methods for homepage display
-    List<FlashcardSetDto> getFeaturedPublicSets(int limit);
-
-    List<FlashcardSetDto> getPublicSets();
-
-    // Utility method to convert entity to DTO
-    FlashcardSetDto mapToDto(FlashcardSet set);
-
+    List<FlashcardSetDto> getFeaturedFlashcardSets(int limit);
+    FlashcardSetDto getFlashcardSetById(Long id);
+    
+    // CRUD operations for collaborators
+    FlashcardSetDto createFlashcardSet(FlashcardSetDto flashcardSetDto);
+    FlashcardSetDto updateFlashcardSet(FlashcardSetDto flashcardSetDto);
+    void deleteFlashcardSet(Long id);
+    
+    // Search and filter
+    List<FlashcardSetDto> searchFlashcardSets(String keyword);
+    List<FlashcardSetDto> getFlashcardSetsByDifficulty(String difficulty);
+    List<FlashcardSetDto> getFlashcardSetsByCategory(String category);
 }

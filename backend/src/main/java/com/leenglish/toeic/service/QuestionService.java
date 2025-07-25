@@ -263,4 +263,36 @@ public class QuestionService {
                 question = questionRepository.save(question);
                 return convertToDto(question);
         }
+
+        /**
+         * Delete a question
+         */
+        public void deleteQuestion(Long questionId) {
+                Question question = questionRepository.findById(questionId)
+                                .orElseThrow(() -> new RuntimeException("Question not found: " + questionId));
+                questionRepository.delete(question);
+        }
+
+        /**
+         * Get questions by exercise ID (alias method for compatibility)
+         */
+        public List<QuestionDto> getQuestionsByExerciseId(Long exerciseId) {
+                return getQuestionsByExercise(exerciseId);
+        }
+
+        /**
+         * Create bulk questions
+         */
+        public List<QuestionDto> createBulkQuestions(List<QuestionDto> questionDtos) {
+                return questionDtos.stream()
+                                .map(this::createQuestion)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * Get question by ID and return Optional
+         */
+        public java.util.Optional<Question> getQuestionEntityById(Long questionId) {
+                return questionRepository.findById(questionId);
+        }
 }

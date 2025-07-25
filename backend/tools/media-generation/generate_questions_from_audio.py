@@ -62,20 +62,23 @@ TOEIC_TOPICS = [
     }
 ]
 
-def find_unused_audio_files():
+from typing import List, Dict, Any
+def find_unused_audio_files() -> List[str]:
     """Find audio files that haven't been associated with questions yet"""
     if not AUDIO_DIR.exists():
         print("❌ Audio directory does not exist.")
         return []
-    
-    # Get all ex*.mp3 files
-    audio_files = [f for f in os.listdir(AUDIO_DIR) if f.startswith("ex") and f.endswith(".mp3")]
-    return sorted(audio_files, key=lambda x: int(x[2:-4]))  # Sort by number (ex1, ex2, ...)
+    audio_files: List[str] = [f for f in os.listdir(AUDIO_DIR) if f.startswith("ex") and f.endswith(".mp3")]
+    def extract_num(x: str) -> int:
+        try:
+            return int(x[2:-4])
+        except Exception:
+            return 0
+    return sorted(audio_files, key=extract_num)
 
-def generate_new_questions_sql():
+def generate_new_questions_sql() -> None:
     """Generate SQL statements for new questions based on available audio files"""
-    audio_files = find_unused_audio_files()
-    
+    audio_files: List[str] = find_unused_audio_files()
     if not audio_files:
         print("❌ No audio files found.")
         return

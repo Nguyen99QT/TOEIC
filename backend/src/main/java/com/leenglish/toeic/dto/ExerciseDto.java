@@ -23,6 +23,10 @@ public class ExerciseDto {
     private Boolean isLocked;
     private Integer points;
 
+    // File upload fields
+    private String imageUrl;
+    private String audioUrl;
+
     public ExerciseDto() {
     }
 
@@ -169,5 +173,21 @@ public class ExerciseDto {
 
     public void setPoints(Integer points) {
         this.points = points;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getAudioUrl() {
+        return audioUrl;
+    }
+
+    public void setAudioUrl(String audioUrl) {
+        this.audioUrl = audioUrl;
     }
 }

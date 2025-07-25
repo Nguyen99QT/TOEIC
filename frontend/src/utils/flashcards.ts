@@ -1,4 +1,4 @@
-import { FlashcardSet } from "../types";
+import { FlashcardSet, Flashcard } from "../types";
 
 /**
  * Convert backend FlashcardSet response to frontend type
@@ -22,10 +22,42 @@ export const mapBackendFlashcardSet = (backendSet: any): FlashcardSet => {
     flashcards: backendSet.flashcards || [],
 
     // Frontend compatibility
-    title: backendSet.name, // Use name as title
-    totalCards: backendSet.flashcards?.length || 0,
+    title: backendSet.title || backendSet.name, // Use title first, fallback to name
+    totalCards:
+      backendSet.cardCount ||
+      backendSet.flashcardCount ||
+      backendSet.flashcards?.length ||
+      0,
     completedCards: 0, // Would come from user progress
     progress: 0, // Would be calculated from user progress
+  };
+};
+
+/**
+ * Convert backend Flashcard response to frontend type
+ */
+export const mapBackendFlashcard = (backendCard: any): Flashcard => {
+  return {
+    id: backendCard.id,
+    setId: backendCard.flashcardSetId,
+    frontText: backendCard.term, // Backend uses 'term'
+    backText: backendCard.definition, // Backend uses 'definition'
+    hint: backendCard.example, // Use example as hint
+    imageUrl: backendCard.imageUrl,
+    audioUrl: backendCard.audioUrl,
+    orderIndex: backendCard.orderIndex || 0,
+    difficulty: backendCard.level, // Backend uses 'level'
+    difficultyLevel: backendCard.level as
+      | "BEGINNER"
+      | "INTERMEDIATE"
+      | "ADVANCED",
+    isActive: backendCard.isActive ?? true,
+    createdAt: backendCard.createdAt,
+    updatedAt: backendCard.updatedAt || backendCard.createdAt,
+
+    // Legacy compatibility
+    flashcardSetId: backendCard.flashcardSetId,
+    tags: backendCard.category, // Use category as tags
   };
 };
 

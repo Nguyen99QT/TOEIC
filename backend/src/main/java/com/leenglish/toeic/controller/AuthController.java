@@ -18,6 +18,7 @@ import com.leenglish.toeic.dto.LoginRequest;
 import com.leenglish.toeic.dto.RegistrationResponse;
 import com.leenglish.toeic.service.EmailVerificationService;
 import com.leenglish.toeic.security.UserDetailsImpl;
+import com.leenglish.toeic.service.JwtService;
 import com.leenglish.toeic.service.TokenBlacklistService;
 import com.leenglish.toeic.service.UserService;
 import com.leenglish.toeic.utils.JwtUtils;
@@ -40,6 +41,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
@@ -204,8 +208,9 @@ public class AuthController {
             String lastName = registerRequest.get("lastName");
             String genderStr = registerRequest.get("gender");
             String phoneNumber = registerRequest.get("phoneNumber");
+            String roleStr = registerRequest.get("role"); // Accept role parameter
 
-            System.out.println("📝 Registration attempt for user: " + username);
+            System.out.println("📝 Registration attempt for user: " + username + " with role: " + roleStr);
 
             // Validate required fields
             if (username == null || username.trim().isEmpty()) {
@@ -246,8 +251,20 @@ public class AuthController {
                 fullName = nameBuilder.length() > 0 ? nameBuilder.toString() : username;
             }
 
-            // Create new user with email verification
-            User newUser = userService.createUserWithEmailVerification(username, email, password, fullName, Role.USER);
+            // Parse role from request, default to USER
+            Role userRole = Role.USER;
+            if (roleStr != null && !roleStr.trim().isEmpty()) {
+                try {
+                    userRole = Role.valueOf(roleStr.toUpperCase());
+                    System.out.println("✅ Setting user role to: " + userRole);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("⚠️ Invalid role: " + roleStr + ", defaulting to USER");
+                    userRole = Role.USER;
+                }
+            }
+
+            // Create new user with email verification and specified role
+            User newUser = userService.createUserWithEmailVerification(username, email, password, fullName, userRole);
 
             // Update additional fields if provided
             if (genderStr != null && !genderStr.trim().isEmpty()) {
@@ -306,66 +323,68 @@ public class AuthController {
                         .body(Map.of("message", "Refresh token is required"));
             }
 
-            // Validate refresh token
-            try {
-                String username = jwtUtils.extractUsername(refreshToken);
-
-                if (username == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("message", "Invalid refresh token"));
-                }
-
-                // Check if token is expired
-                if (jwtUtils.isTokenExpired(refreshToken)) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("message", "Refresh token has expired"));
-                }
-
-                // Check if token is blacklisted
-                if (tokenBlacklistService.isTokenBlacklisted(refreshToken)) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("message", "Refresh token has been revoked"));
-                }
-
-                // Load user details
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                if (userDetails == null) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("message", "User not found"));
-                }
-
-                // Generate new access token
-                String newAccessToken = jwtUtils.generateToken(userDetails);
-
-                // Get user roles
-                List<String> roles = userDetails.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toList());
-
-                // Create response
-                Map<String, Object> response = new HashMap<>();
-                response.put("accessToken", newAccessToken);
-                response.put("token", newAccessToken); // For compatibility
-                response.put("type", "Bearer");
-                response.put("id", ((UserDetailsImpl) userDetails).getId());
-                response.put("username", userDetails.getUsername());
-                response.put("email", ((UserDetailsImpl) userDetails).getEmail());
-                response.put("roles", roles);
-
-                System.out.println("✅ Token refreshed successfully for user: " + username);
-
-                return ResponseEntity.ok(response);
-
-            } catch (Exception e) {
-                System.out.println("❌ Token refresh validation failed: " + e.getMessage());
+            // Check if token is blacklisted
+            if (tokenBlacklistService.isTokenBlacklisted(refreshToken)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "Invalid refresh token"));
+                        .body(Map.of("message", "Token has been revoked"));
             }
 
+            // Validate refresh token using JwtService
+            if (!jwtService.isTokenValid(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Invalid or expired refresh token"));
+            }
+
+            // Check if this is actually a refresh token
+            if (!jwtService.isRefreshToken(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Token is not a refresh token"));
+            }
+
+            // Extract username from refresh token
+            String username = jwtService.extractUsername(refreshToken);
+            if (username == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Cannot extract username from token"));
+            }
+
+            // Get user details
+            Optional<User> userOptional = userService.findByUsername(username);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "User not found"));
+            }
+            User user = userOptional.get();
+
+            // Generate new access token using JwtService
+            String newAccessToken = jwtService.generateAccessToken(user);
+
+            // Generate new refresh token using JwtService
+            String newRefreshToken = jwtService.generateRefreshToken(user);
+
+            // Create response
+            Map<String, Object> response = new HashMap<>();
+            response.put("accessToken", newAccessToken);
+            response.put("refreshToken", newRefreshToken);
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", jwtService.getAccessTokenExpiration());
+            response.put("message", "Token refreshed successfully");
+
+            // Add user info
+            response.put("user", Map.of(
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "fullName", user.getFullName(),
+                    "role", user.getRole().toString()));
+
+            System.out.println("✅ Token refreshed successfully for user: " + username);
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            System.out.println("❌ Token refresh error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            System.err.println("❌ Token refresh failed: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Token refresh failed: " + e.getMessage()));
         }
     }

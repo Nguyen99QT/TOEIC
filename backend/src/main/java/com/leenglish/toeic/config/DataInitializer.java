@@ -18,7 +18,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private LessonRepository lessonRepository;
-    
+
     @Autowired
     private FlashcardSetRepository flashcardSetRepository;
     
@@ -51,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
         // Initialize Lessons
         if (lessonRepository.count() == 0) {
             System.out.println("? Initializing sample lessons...");
-            
+
             Lesson lesson1 = new Lesson();
             lesson1.setTitle("Basic Greetings");
             lesson1.setDescription("Learn essential greeting phrases for TOEIC");
@@ -62,7 +62,7 @@ public class DataInitializer implements CommandLineRunner {
             lesson1.setIsActive(true);
             lesson1.setIsPremium(false);
             lesson1.setType("VOCABULARY");
-            
+
             Lesson lesson2 = new Lesson();
             lesson2.setTitle("Business English Phrases");
             lesson2.setDescription("Common phrases used in business environments");
@@ -73,7 +73,7 @@ public class DataInitializer implements CommandLineRunner {
             lesson2.setIsActive(true);
             lesson2.setIsPremium(false);
             lesson2.setType("BUSINESS");
-            
+
             Lesson lesson3 = new Lesson();
             lesson3.setTitle("Advanced Vocabulary");
             lesson3.setDescription("Complex vocabulary for advanced TOEIC learners");
@@ -84,7 +84,7 @@ public class DataInitializer implements CommandLineRunner {
             lesson3.setIsActive(true);
             lesson3.setIsPremium(true);
             lesson3.setType("VOCABULARY");
-            
+
             Lesson lesson4 = new Lesson();
             lesson4.setTitle("Listening Comprehension");
             lesson4.setDescription("Improve your listening skills for TOEIC");
@@ -95,60 +95,56 @@ public class DataInitializer implements CommandLineRunner {
             lesson4.setIsActive(true);
             lesson4.setIsPremium(false);
             lesson4.setType("LISTENING");
-            
+
             lessonRepository.save(lesson1);
             lessonRepository.save(lesson2);
             lessonRepository.save(lesson3);
             lessonRepository.save(lesson4);
-            
+
             System.out.println("? Created 4 sample lessons");
         }
-        
+
         // Initialize FlashcardSets
         if (flashcardSetRepository.count() == 0) {
             System.out.println("? Initializing sample flashcard sets...");
-            
+
             FlashcardSet set1 = new FlashcardSet();
             set1.setTitle("Essential Greetings");
             set1.setDescription("Basic greeting vocabulary for beginners");
             set1.setCategory("VOCABULARY");
-            set1.setDifficulty("BEGINNER");
+            set1.setDifficultyLevel("BEGINNER");
             set1.setIsPublic(true);
-            set1.setIsActive(true);
             set1.setIsPremium(false);
-            
+
             FlashcardSet set2 = new FlashcardSet();
             set2.setTitle("Common Phrases");
             set2.setDescription("Everyday phrases for conversation");
             set2.setCategory("PHRASES");
-            set2.setDifficulty("BEGINNER");
+            set2.setDifficultyLevel("BEGINNER");
             set2.setIsPublic(true);
-            set2.setIsActive(true);
             set2.setIsPremium(false);
-            
+
             FlashcardSet set3 = new FlashcardSet();
             set3.setTitle("Advanced Vocabulary");
             set3.setDescription("Complex words for advanced learners");
             set3.setCategory("VOCABULARY");
-            set3.setDifficulty("ADVANCED");
+            set3.setDifficultyLevel("ADVANCED");
             set3.setIsPublic(true);
-            set3.setIsActive(true);
             set3.setIsPremium(true);
-            
+
             FlashcardSet set4 = new FlashcardSet();
             set4.setTitle("Business Terms");
             set4.setDescription("Professional vocabulary for workplace");
             set4.setCategory("BUSINESS");
-            set4.setDifficulty("INTERMEDIATE");
+            set4.setDifficultyLevel("INTERMEDIATE");
             set4.setIsPublic(true);
-            set4.setIsActive(true);
             set4.setIsPremium(false);
-            
+
             flashcardSetRepository.save(set1);
             flashcardSetRepository.save(set2);
             flashcardSetRepository.save(set3);
             flashcardSetRepository.save(set4);
-            
+
             System.out.println("? Created 4 sample flashcard sets");
         }
     }

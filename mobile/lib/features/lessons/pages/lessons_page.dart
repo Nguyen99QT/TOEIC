@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class LessonsPage extends ConsumerStatefulWidget {
   const LessonsPage({super.key});
@@ -133,7 +134,7 @@ class _LessonsPageState extends ConsumerState<LessonsPage> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.pushNamed(context, '/lessons/${lesson['id']}');
+          context.push('/lessons/${lesson['id']}');
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(

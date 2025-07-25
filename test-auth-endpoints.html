@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Authentication and Collaborator Endpoints</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .result {
+        background: #f9f9f9;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 3px;
+      }
+      .error {
+        background: #ffe6e6;
+      }
+      .success {
+        background: #e6ffe6;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+      }
+      .token-display {
+        word-break: break-all;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Test Authentication and Collaborator Endpoints</h1>
+
+      <!-- Register Section -->
+      <div class="section">
+        <h2>0. Register Users</h2>
+        <input
+          type="text"
+          id="regUsername"
+          placeholder="Username"
+          value="admin1"
+        />
+        <input
+          type="password"
+          id="regPassword"
+          placeholder="Password"
+          value="admin123"
+        />
+        <input
+          type="email"
+          id="regEmail"
+          placeholder="Email"
+          value="admin1@test.com"
+        />
+        <input
+          type="text"
+          id="regFullName"
+          placeholder="Full Name"
+          value="Admin One"
+        />
+        <select id="regRole" title="User Role">
+          <option value="USER">USER</option>
+          <option value="COLLABORATOR">COLLABORATOR</option>
+          <option value="ADMIN" selected>ADMIN</option>
+        </select>
+        <br />
+        <button onclick="register()">Register User</button>
+        <button onclick="registerCollaborator()">
+          Quick Register Collaborator1
+        </button>
+        <div id="registerResult" class="result"></div>
+      </div>
+
+      <!-- Register Section 2 -->
+      <div class="section">
+        <h2>0.5. Register Collaborator User</h2>
+        <input
+          type="text"
+          id="regUsername2"
+          placeholder="Username"
+          value="collaborator1"
+        />
+        <input
+          type="password"
+          id="regPassword2"
+          placeholder="Password"
+          value="password123"
+        />
+        <input
+          type="email"
+          id="regEmail2"
+          placeholder="Email"
+          value="collaborator1@test.com"
+        />
+        <input
+          type="text"
+          id="regFullName2"
+          placeholder="Full Name"
+          value="Collaborator One"
+        />
+        <select id="regRole2" title="User Role">
+          <option value="USER">USER</option>
+          <option value="COLLABORATOR" selected>COLLABORATOR</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+        <button onclick="registerCollaborator2()">Register Collaborator</button>
+        <div id="registerResult2" class="result"></div>
+      </div>
+
+      <!-- Login Section -->
+      <div class="section">
+        <h2>1. Login</h2>
+        <input
+          type="text"
+          id="loginUsername"
+          placeholder="Username"
+          value="admin1"
+        />
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Password"
+          value="admin123"
+        />
+        <button onclick="login()">Login</button>
+        <button onclick="loginCollaborator()">
+          Quick Login as Collaborator1
+        </button>
+        <div id="loginResult" class="result"></div>
+      </div>
+
+      <!-- Token Display -->
+      <div class="section">
+        <h2>2. Current Tokens</h2>
+        <div>
+          <strong>Access Token:</strong>
+          <div id="accessToken" class="token-display">Not logged in</div>
+        </div>
+        <div>
+          <strong>Refresh Token:</strong>
+          <div id="refreshToken" class="token-display">Not logged in</div>
+        </div>
+      </div>
+
+      <!-- Test Debug User Info -->
+      <div class="section">
+        <h2>2.5. Debug User Info</h2>
+        <button onclick="getUserInfo()">Get User Info & Authorities</button>
+        <div id="userInfoResult" class="result"></div>
+      </div>
+
+      <!-- Promote User to Collaborator -->
+      <div class="section">
+        <h2>2.7. Promote User to Collaborator (Admin Only)</h2>
+        <input
+          type="text"
+          id="promoteUsername"
+          placeholder="Username to promote"
+          value="collaborator1"
+        />
+        <button onclick="promoteUser()">Promote to Collaborator</button>
+        <div id="promoteResult" class="result"></div>
+      </div>
+
+      <!-- Test Refresh Token -->
+      <div class="section">
+        <h2>3. Test Refresh Token</h2>
+        <button onclick="refreshToken()">Refresh Token</button>
+        <div id="refreshResult" class="result"></div>
+      </div>
+
+      <!-- Test Collaborator Endpoints -->
+      <div class="section">
+        <h2>4. Test Collaborator Endpoints</h2>
+        <button onclick="getAllLessons()">Get All Lessons</button>
+        <button onclick="createLesson()">Create Test Lesson</button>
+        <button onclick="updateLesson()">Update Lesson</button>
+        <div id="collaboratorResult" class="result"></div>
+      </div>
+
+      <!-- Test Regular Lesson Update -->
+      <div class="section">
+        <h2>5. Test Regular Lesson Update (PUT /api/lessons/{id})</h2>
+        <input type="number" id="lessonId" placeholder="Lesson ID" value="43" />
+        <button onclick="updateRegularLesson()">Update Regular Lesson</button>
+        <div id="regularLessonResult" class="result"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080/api";
+      let currentAccessToken = "";
+      let currentRefreshToken = "";
+
+      async function register() {
+        const username = document.getElementById("regUsername").value;
+        const password = document.getElementById("regPassword").value;
+        const email = document.getElementById("regEmail").value;
+        const fullName = document.getElementById("regFullName").value;
+        const role = document.getElementById("regRole").value;
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password, email, fullName, role }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("registerResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ User registered successfully!<br>Username: ${username}<br>Role: ${role}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "registerResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function getUserInfo() {
+        if (!currentAccessToken) {
+          document.getElementById(
+            "userInfoResult"
+          ).innerHTML = `<div class="error">❌ Please login first.</div>`;
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/admin/debug/user-info`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${currentAccessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("userInfoResult");
+
+          if (response.ok) {
+            const userInfo = data.userInfo;
+            resultDiv.innerHTML = `<div class="success">✅ User Info Retrieved:<br>
+              Username: ${userInfo.username}<br>
+              Authorities: ${userInfo.authorities}<br>
+              Authorities Detail: ${JSON.stringify(
+                userInfo.authoritiesDetail
+              )}<br>
+              Has ROLE_USER: ${userInfo.hasRoleUser}<br>
+              Has ROLE_COLLABORATOR: ${userInfo.hasRoleCollaborator}<br>
+              Has ROLE_ADMIN: ${userInfo.hasRoleAdmin}<br>
+              Enabled: ${userInfo.isEnabled}<br>
+              Account Non Expired: ${userInfo.isAccountNonExpired}<br>
+              Account Non Locked: ${userInfo.isAccountNonLocked}<br>
+              Credentials Non Expired: ${userInfo.isCredentialsNonExpired}
+            </div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Failed to get user info: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "userInfoResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function registerCollaborator() {
+        // Quick register collaborator1
+        try {
+          const response = await fetch(`${API_BASE}/auth/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: "collaborator1",
+              password: "password123",
+              email: "collaborator1@test.com",
+              fullName: "Collaborator One",
+              role: "COLLABORATOR",
+            }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("registerResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ Collaborator1 registered successfully!</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "registerResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function registerCollaborator2() {
+        const username = document.getElementById("regUsername2").value;
+        const password = document.getElementById("regPassword2").value;
+        const email = document.getElementById("regEmail2").value;
+        const fullName = document.getElementById("regFullName2").value;
+        const role = document.getElementById("regRole2").value;
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password, email, fullName, role }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("registerResult2");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ User registered successfully!<br>Username: ${username}<br>Role: ${role}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "registerResult2"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function loginCollaborator() {
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: "collaborator1",
+              password: "password123",
+            }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("loginResult");
+
+          if (response.ok) {
+            currentAccessToken = data.accessToken;
+            currentRefreshToken = data.refreshToken;
+
+            document.getElementById("accessToken").textContent =
+              currentAccessToken;
+            document.getElementById("refreshToken").textContent =
+              currentRefreshToken;
+
+            resultDiv.innerHTML = `<div class="success">✅ Collaborator1 login successful!<br>Role: ${data.user.role}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Login failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "loginResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function promoteUser() {
+        if (!currentAccessToken) {
+          document.getElementById(
+            "promoteResult"
+          ).innerHTML = `<div class="error">❌ Please login first.</div>`;
+          return;
+        }
+
+        const username = document.getElementById("promoteUsername").value;
+        if (!username) {
+          document.getElementById(
+            "promoteResult"
+          ).innerHTML = `<div class="error">❌ Please enter a username.</div>`;
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/admin/users/promote-by-username/${username}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${currentAccessToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("promoteResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ ${data.message}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Failed to promote user: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "promoteResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function login() {
+        const username = document.getElementById("loginUsername").value;
+        const password = document.getElementById("loginPassword").value;
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("loginResult");
+
+          if (response.ok) {
+            currentAccessToken = data.accessToken;
+            currentRefreshToken = data.refreshToken;
+
+            document.getElementById("accessToken").textContent =
+              currentAccessToken;
+            document.getElementById("refreshToken").textContent =
+              currentRefreshToken;
+
+            resultDiv.innerHTML = `<div class="success">✅ Login successful!<br>User: ${data.user.username}<br>Role: ${data.user.role}</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Login failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "loginResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function refreshToken() {
+        if (!currentRefreshToken) {
+          document.getElementById(
+            "refreshResult"
+          ).innerHTML = `<div class="error">❌ No refresh token available. Please login first.</div>`;
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/refresh`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken: currentRefreshToken }),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("refreshResult");
+
+          if (response.ok) {
+            currentAccessToken = data.accessToken;
+            currentRefreshToken = data.refreshToken;
+
+            document.getElementById("accessToken").textContent =
+              currentAccessToken;
+            document.getElementById("refreshToken").textContent =
+              currentRefreshToken;
+
+            resultDiv.innerHTML = `<div class="success">✅ Token refreshed successfully!</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Token refresh failed: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "refreshResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function getAllLessons() {
+        if (!currentAccessToken) {
+          document.getElementById(
+            "collaboratorResult"
+          ).innerHTML = `<div class="error">❌ Please login first.</div>`;
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/collaborator/lessons`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${currentAccessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("collaboratorResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ Found ${data.data.length} lessons</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Failed to get lessons: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "collaboratorResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function createLesson() {
+        if (!currentAccessToken) {
+          document.getElementById(
+            "collaboratorResult"
+          ).innerHTML = `<div class="error">❌ Please login first.</div>`;
+          return;
+        }
+
+        const testLesson = {
+          title: "Test Lesson " + Date.now(),
+          description: "A test lesson created via API",
+          content: "Test content",
+          type: "LISTENING",
+          difficulty: "BEGINNER",
+          level: 1,
+          duration: 30,
+          isActive: true,
+          isPremium: false,
+          isPublic: true,
+        };
+
+        try {
+          const response = await fetch(`${API_BASE}/collaborator/lessons`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${currentAccessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(testLesson),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("collaboratorResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ Lesson created: ${data.data.title} (ID: ${data.data.id})</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Failed to create lesson: ${data.message}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "collaboratorResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+
+      async function updateRegularLesson() {
+        if (!currentAccessToken) {
+          document.getElementById(
+            "regularLessonResult"
+          ).innerHTML = `<div class="error">❌ Please login first.</div>`;
+          return;
+        }
+
+        const lessonId = document.getElementById("lessonId").value;
+        const testLesson = {
+          title: "Updated Lesson " + Date.now(),
+          description: "An updated lesson via regular API",
+          content: "Updated content",
+          type: "READING",
+          difficulty: "INTERMEDIATE",
+          level: 2,
+          duration: 45,
+          isActive: true,
+          isPremium: false,
+          isPublic: true,
+        };
+
+        try {
+          const response = await fetch(`${API_BASE}/lessons/${lessonId}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${currentAccessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(testLesson),
+          });
+
+          const data = await response.json();
+          const resultDiv = document.getElementById("regularLessonResult");
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<div class="success">✅ Lesson updated: ${data.title} (ID: ${lessonId})</div>`;
+          } else {
+            resultDiv.innerHTML = `<div class="error">❌ Failed to update lesson: ${
+              data.message || response.statusText
+            }</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "regularLessonResult"
+          ).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+        }
+      }
+    </script>
+  </body>
+</html>

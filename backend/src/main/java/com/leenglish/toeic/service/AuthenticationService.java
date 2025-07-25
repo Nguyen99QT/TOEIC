@@ -20,6 +20,7 @@ import com.leenglish.toeic.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 /**
@@ -52,13 +53,13 @@ public class AuthenticationService {
     private com.leenglish.toeic.security.UserDetailsServiceImpl userDetailsService;
 
     // JWT Configuration
-    @Value("${jwt.secret:leenglish-toeic-platform-secret-key-2024}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration:86400}") // 24 hours in seconds
+    @Value("${jwt.expiration}") // 24 hours in seconds
     private int jwtExpirationInSeconds;
 
-    @Value("${jwt.refresh.expiration:604800}") // 7 days in seconds
+    @Value("${jwt.refresh-expiration}") // 7 days in seconds
     private int refreshTokenExpirationInSeconds;
 
     // ========== AUTHENTICATION METHODS ==========
@@ -73,7 +74,7 @@ public class AuthenticationService {
     public User authenticateUser(String usernameOrEmail, String password) {
         try {
             // Find user by username or email
-            Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
+            Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail);
 
             if (userOpt.isEmpty()) {
                 // Không tìm thấy user trong DB, trả về null (không cho đăng nhập)
@@ -176,7 +177,8 @@ public class AuthenticationService {
      * @return JWT token string
      */
     private String createToken(Map<String, Object> claims, String subject, int expirationSeconds) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -195,7 +197,8 @@ public class AuthenticationService {
      */
     public Claims validateToken(String token) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+            SecretKey key = Keys.hmacShaKeyFor(keyBytes);
 
             return Jwts.parserBuilder()
                     .setSigningKey(key)

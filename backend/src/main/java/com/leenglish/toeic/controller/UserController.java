@@ -532,8 +532,8 @@ public class UserController {
             }
 
             // Thực hiện thay đổi role
-            User updatedUser = userService.updateUserRole(id, roleEnum);
-            return ResponseEntity.ok(updatedUser);
+            userService.updateUserRole(id, roleEnum);
+            return ResponseEntity.ok().body("User role updated successfully");
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

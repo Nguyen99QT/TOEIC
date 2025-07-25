@@ -3,39 +3,30 @@ package com.leenglish.toeic.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    
-    // CORS is now handled by CorsConfig.java - removed duplicate configuration
-    // @Bean
-    // public CorsFilter corsFilter() {
-    //     CorsConfiguration config = new CorsConfiguration();
-    //     config.setAllowCredentials(true);
-    //     config.addAllowedOriginPattern("*");
-    //     config.addAllowedHeader("*");
-    //     config.addAllowedMethod("*");
-    //     
-    //     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    //     source.registerCorsConfiguration("/**", config);
-    //     
-    //     return new CorsFilter(source);
-    // }
 
-    // @Override
-    // public void addCorsMappings(@NonNull CorsRegistry registry) {
-    //     registry.addMapping("/**")
-    //             .allowedOriginPatterns("*")
-    //             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-    //             .allowedHeaders("*")
-    //             .allowCredentials(true);
-    // }
+    @Override
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(false)
+                .maxAge(3600);
+
+        // Also allow CORS for file access endpoints
+        registry.addMapping("/files/**")
+                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(false)
+                .maxAge(3600);
+    }
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {

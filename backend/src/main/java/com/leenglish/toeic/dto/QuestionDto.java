@@ -46,9 +46,33 @@ public class QuestionDto {
     // Additional fields
     private String audioUrl;
     private String imageUrl;
+    private String createdBy;
+    private String updatedBy;
+    private String type; // Question type (READING, LISTENING, etc.)
 
     // Helper method
     public String getDifficultyDisplayName() {
         return difficultyLevel != null ? difficultyLevel.getDisplayName() : "Easy";
+    }
+
+    // Helper methods for compatibility
+    public String getText() {
+        return questionText;
+    }
+
+    public void setText(String text) {
+        this.questionText = text;
+    }
+
+    public String getDifficulty() {
+        return difficultyLevel != null ? difficultyLevel.name() : "EASY";
+    }
+
+    public void setDifficulty(String difficulty) {
+        try {
+            this.difficultyLevel = DifficultyLevel.valueOf(difficulty.toUpperCase());
+        } catch (Exception e) {
+            this.difficultyLevel = DifficultyLevel.EASY;
+        }
     }
 }

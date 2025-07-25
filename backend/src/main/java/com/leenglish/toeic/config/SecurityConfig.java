@@ -159,7 +159,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/user-activities/my/**").authenticated()
                         .requestMatchers("/api/user-activities/admin/**").hasRole("ADMIN")
                         
-                        // Content creation (COLLABORATORS + ADMINS)
+                        // ================================================================
+                        // CONTENT CREATION ENDPOINTS (COLLABORATORS + ADMINS)
+                        // ================================================================
+                        .requestMatchers(HttpMethod.POST, "/api/lessons").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/lessons/**").hasAnyRole("COLLABORATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/lessons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/flashcard-sets").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/flashcard-sets/**").hasAnyRole("COLLABORATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/flashcard-sets/**").hasRole("ADMIN")

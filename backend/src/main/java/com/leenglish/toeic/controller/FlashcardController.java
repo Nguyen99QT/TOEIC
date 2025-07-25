@@ -1,230 +1,464 @@
 package com.leenglish.toeic.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.leenglish.toeic.dto.ApiResponse;
 import com.leenglish.toeic.dto.FlashcardDto;
 import com.leenglish.toeic.dto.FlashcardSetDto;
 import com.leenglish.toeic.service.FlashcardService;
-import com.leenglish.toeic.service.FlashcardSetService;
+import com.leenglish.toeic.repository.UserRepository;
+import com.leenglish.toeic.domain.User;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+
+@Slf4j
 @RestController
-@RequestMapping("/api/flashcards")
+@RequestMapping("/api/flashcard-sets")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class FlashcardController {
 
-    @Autowired
-    private FlashcardService flashcardService;
+    private final FlashcardService flashcardService;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private FlashcardSetService flashcardSetService;
+    /**
+     * Helper method to get user ID from authentication
+     */
+    private Long getUserId(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
 
-    // Flashcard Set endpoints
-    @GetMapping("/sets")
-    public ResponseEntity<List<FlashcardSetDto>> getPublicFlashcardSets() {
-        List<FlashcardSetDto> sets = flashcardSetService.getPublicFlashcardSets();
-        return ResponseEntity.ok(sets);
+        Optional<User> userOpt = userRepository.findByUsername(auth.getName());
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found: " + auth.getName());
+        }
+
+        return userOpt.get().getId();
     }
 
-    // Free flashcard sets for non-premium users (limited access)
-    @GetMapping("/free")
-    public ResponseEntity<List<FlashcardSetDto>> getFreeFlashcardSets() {
-        List<FlashcardSetDto> sets = flashcardSetService.getFreeFlashcardSetsForBasicUsers();
-        return ResponseEntity.ok(sets);
-    }
+    // ========== COLLABORATOR CRUD ENDPOINTS ==========
 
-    @GetMapping("/sets/my")
-    @PreAuthorize("hasRole('USER') or hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<List<FlashcardSetDto>> getMyFlashcardSets(Authentication authentication) {
-        // Thay vì hardcode userId = 1L, sử dụng phương thức đã định nghĩa
-        Long userId = extractUserIdFromAuth(authentication);
-        List<FlashcardSetDto> sets = flashcardSetService.getFlashcardSetsByUser(userId);
-        return ResponseEntity.ok(sets);
-    }
-
-    @GetMapping("/sets/accessible")
-    @PreAuthorize("hasRole('USER') or hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<List<FlashcardSetDto>> getAccessibleFlashcardSets(Authentication authentication) {
-        // Extract user ID from authentication
-        Long userId = 1L; // This should be extracted from the authenticated user
-        List<FlashcardSetDto> sets = flashcardSetService.getAccessibleFlashcardSets(userId);
-        return ResponseEntity.ok(sets);
-    }
-
-    @PostMapping("/sets")
+    /**
+     * Get all flashcard sets for collaborator management
+     */
+    @GetMapping("/collaborator/all")
     @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<FlashcardSetDto> createFlashcardSet(@RequestBody FlashcardSetDto setDto,
-            Authentication authentication) {
-        // Extract user ID from authentication
-        Long userId = 1L; // This should be extracted from the authenticated user
-        FlashcardSetDto createdSet = flashcardSetService.createFlashcardSet(setDto, userId);
-        return ResponseEntity.ok(createdSet);
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getAllForCollaborator(Authentication auth) {
+        try {
+            log.info("🔍 Fetching all flashcard sets for collaborator: {}", auth.getName());
+            List<FlashcardSetDto> sets = flashcardService.getAllFlashcardSets(0, 100); // Get first 100
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Flashcard sets retrieved successfully",
+                    sets));
+        } catch (Exception e) {
+            log.error("❌ Error fetching flashcard sets for collaborator", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch flashcard sets: " + e.getMessage()));
+        }
     }
 
-    @PutMapping("/sets/{id}")
+    /**
+     * Create new flashcard set
+     */
+    @PostMapping("/collaborator/create")
     @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<FlashcardSetDto> updateFlashcardSet(@PathVariable Long id,
-            @RequestBody FlashcardSetDto setDto) {
-        FlashcardSetDto updatedSet = flashcardSetService.updateFlashcardSet(id, setDto);
-        return ResponseEntity.ok(updatedSet);
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> createFlashcardSet(
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("📝 Creating new flashcard set: {} by {}", flashcardSetDto.getTitle(), auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+        } catch (Exception e) {
+            log.error("❌ Error creating flashcard set", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to create flashcard set: " + e.getMessage()));
+        }
     }
 
-    @DeleteMapping("/sets/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteFlashcardSet(@PathVariable Long id) {
-        flashcardSetService.deleteFlashcardSet(id);
-        return ResponseEntity.ok().build();
+    /**
+     * Update flashcard set
+     */
+    @PutMapping("/collaborator/{setId}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> updateFlashcardSet(
+            @PathVariable Long setId,
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("✏️ Updating flashcard set {} by {}", setId, auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(setId, flashcardSetDto, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set updated successfully", updatedSet));
+        } catch (Exception e) {
+            log.error("❌ Error updating flashcard set {}", setId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update flashcard set: " + e.getMessage()));
+        }
     }
 
-    @GetMapping("/sets/search")
-    public ResponseEntity<List<FlashcardSetDto>> searchFlashcardSets(@RequestParam String query,
-            Authentication authentication) {
-        // Extract user ID from authentication
-        Long userId = 1L; // This should be extracted from the authenticated user
-        List<FlashcardSetDto> sets = flashcardSetService.searchFlashcardSets(query, userId);
-        return ResponseEntity.ok(sets);
+    /**
+     * Delete flashcard set
+     */
+    @DeleteMapping("/collaborator/{setId}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteFlashcardSet(
+            @PathVariable Long setId,
+            Authentication auth) {
+        try {
+            log.info("🗑️ Deleting flashcard set {} by {}", setId, auth.getName());
+
+            Long userId = getUserId(auth);
+            flashcardService.deleteFlashcardSet(setId, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set deleted successfully", null));
+        } catch (Exception e) {
+            log.error("❌ Error deleting flashcard set {}", setId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to delete flashcard set: " + e.getMessage()));
+        }
     }
 
-    // Individual Flashcard endpoints
-    @GetMapping("/set/{setId}")
-    public ResponseEntity<List<FlashcardDto>> getFlashcardsBySet(@PathVariable Long setId) {
-        List<FlashcardDto> flashcards = flashcardService.getFlashcardsBySet(setId);
-        return ResponseEntity.ok(flashcards);
+    /**
+     * Get flashcard set details for editing
+     */
+    @GetMapping("/collaborator/{setId}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> getFlashcardSetForEdit(
+            @PathVariable Long setId,
+            Authentication auth) {
+        try {
+            log.info("🔍 Fetching flashcard set {} for editing by {}", setId, auth.getName());
+
+            FlashcardSetDto set = flashcardService.getFlashcardSetById(setId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", set));
+        } catch (Exception e) {
+            log.error("❌ Error fetching flashcard set {} for editing", setId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Flashcard set not found: " + e.getMessage()));
+        }
     }
 
-    @GetMapping("/level/{level}")
-    public ResponseEntity<List<FlashcardDto>> getFlashcardsByLevel(@PathVariable String level) {
-        List<FlashcardDto> flashcards = flashcardService.getFlashcardsByLevel(level);
-        return ResponseEntity.ok(flashcards);
+    // ========== FLASHCARD CRUD WITHIN SET ==========
+
+    /**
+     * Get all flashcards in a set
+     */
+    @GetMapping("/{setId}/flashcards")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<FlashcardDto>>> getFlashcardsInSet(
+            @PathVariable Long setId,
+            Authentication auth) {
+        try {
+            log.info("🔍 Fetching flashcards in set {} by {}", setId, auth.getName());
+
+            List<FlashcardDto> flashcards = flashcardService.getFlashcardsBySet(setId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcards retrieved successfully", flashcards));
+        } catch (Exception e) {
+            log.error("❌ Error fetching flashcards in set {}", setId, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Failed to fetch flashcards: " + e.getMessage()));
+        }
     }
 
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<FlashcardDto>> getFlashcardsByCategory(@PathVariable String category) {
-        List<FlashcardDto> flashcards = flashcardService.getFlashcardsByCategory(category);
-        return ResponseEntity.ok(flashcards);
+    /**
+     * Add flashcard to set
+     */
+    @PostMapping("/{setId}/flashcards")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardDto>> addFlashcardToSet(
+            @PathVariable Long setId,
+            @Valid @RequestBody FlashcardDto flashcardDto,
+            Authentication auth) {
+        try {
+            log.info("📝 Adding flashcard to set {} by {}", setId, auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardDto createdFlashcard = flashcardService.createFlashcard(flashcardDto, setId, userId);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Flashcard added successfully", createdFlashcard));
+        } catch (Exception e) {
+            log.error("❌ Error adding flashcard to set {}", setId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to add flashcard: " + e.getMessage()));
+        }
     }
+
+    /**
+     * Update flashcard
+     */
+    @PutMapping("/{setId}/flashcards/{flashcardId}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardDto>> updateFlashcard(
+            @PathVariable Long setId,
+            @PathVariable Long flashcardId,
+            @Valid @RequestBody FlashcardDto flashcardDto,
+            Authentication auth) {
+        try {
+            log.info("✏️ Updating flashcard {} in set {} by {}", flashcardId, setId, auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardDto updatedFlashcard = flashcardService.updateFlashcard(flashcardId, flashcardDto, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard updated successfully", updatedFlashcard));
+        } catch (Exception e) {
+            log.error("❌ Error updating flashcard {} in set {}", flashcardId, setId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update flashcard: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete flashcard
+     */
+    @DeleteMapping("/{setId}/flashcards/{flashcardId}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteFlashcard(
+            @PathVariable Long setId,
+            @PathVariable Long flashcardId,
+            Authentication auth) {
+        try {
+            log.info("🗑️ Deleting flashcard {} from set {} by {}", flashcardId, setId, auth.getName());
+
+            Long userId = getUserId(auth);
+            flashcardService.deleteFlashcard(flashcardId, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard deleted successfully", null));
+        } catch (Exception e) {
+            log.error("❌ Error deleting flashcard {} from set {}", flashcardId, setId, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to delete flashcard: " + e.getMessage()));
+        }
+    }
+
+    // ========== PUBLIC ENDPOINTS ==========
+
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getPublicFlashcardSets() {
+        try {
+            log.info("🔍 Fetching public flashcard sets");
+            List<FlashcardSetDto> publicSets = flashcardService.getPopularFlashcardSets(50); // Get top 50 popular
+                                                                                             // public sets
+            return ResponseEntity.ok(ApiResponse.success("Public flashcard sets retrieved successfully", publicSets));
+        } catch (Exception e) {
+            log.error("❌ Error fetching public flashcard sets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch public flashcard sets: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/public/featured")
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getFeaturedFlashcardSets(
+            @RequestParam(defaultValue = "4") int limit) {
+        try {
+            List<FlashcardSetDto> featuredSets = flashcardService.getPopularFlashcardSets(limit); // Use popular instead
+            return ResponseEntity
+                    .ok(ApiResponse.success("Featured flashcard sets retrieved successfully", featuredSets));
+        } catch (Exception e) {
+            log.error("❌ Error fetching featured flashcard sets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch featured flashcard sets: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> getFlashcardSetById(@PathVariable Long id) {
+        try {
+            FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
+        } catch (Exception e) {
+            log.error("❌ Error fetching flashcard set with id: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Flashcard set not found: " + e.getMessage()));
+        }
+    }
+
+    // ========== SIMPLE CRUD ENDPOINTS FOR FRONTEND COMPATIBILITY ==========
 
     @PostMapping
     @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<FlashcardDto> createFlashcard(@RequestBody FlashcardDto flashcardDto) {
-        FlashcardDto createdFlashcard = flashcardService.createFlashcard(flashcardDto);
-        return ResponseEntity.ok(createdFlashcard);
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> createFlashcardSetSimple(
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        return createFlashcardSet(flashcardSetDto, auth);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
-    public ResponseEntity<FlashcardDto> updateFlashcard(@PathVariable Long id, @RequestBody FlashcardDto flashcardDto) {
-        FlashcardDto updatedFlashcard = flashcardService.updateFlashcard(id, flashcardDto);
-        return ResponseEntity.ok(updatedFlashcard);
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> updateFlashcardSetSimple(
+            @PathVariable Long id,
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        return updateFlashcardSet(id, flashcardSetDto, auth);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteFlashcard(@PathVariable Long id) {
-        flashcardService.deleteFlashcard(id);
-        return ResponseEntity.ok().build();
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteFlashcardSetSimple(
+            @PathVariable Long id,
+            Authentication auth) {
+        return deleteFlashcardSet(id, auth);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<FlashcardDto>> searchFlashcards(@RequestParam String query) {
-        List<FlashcardDto> flashcards = flashcardService.searchFlashcards(query);
-        return ResponseEntity.ok(flashcards);
-    }
-
-    // Lấy flashcard set (bao gồm flashcards) cho user đã đăng nhập
-    @GetMapping("/sets/{id}")
-    public ResponseEntity<FlashcardSetDto> getFlashcardSetById(@PathVariable Long id, Authentication authentication) {
-        FlashcardSetDto set = flashcardSetService.getFlashcardSetWithFlashcardsById(id, authentication);
-        if (set == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(set);
-    }
-
-    // Lấy flashcard set free (bao gồm flashcards) cho guest
-    @GetMapping("/free/{id}")
-    public ResponseEntity<FlashcardSetDto> getFreeFlashcardSetById(@PathVariable Long id) {
-        FlashcardSetDto set = flashcardSetService.getFreeFlashcardSetById(id);
-        if (set == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(set);
-    }
-
-    private Long extractUserIdFromAuth(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            return 1L; // Default fallback
-        }
-
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getAllFlashcardSets() {
         try {
-            // Try to parse username as ID first
-            return Long.parseLong(authentication.getName());
-        } catch (NumberFormatException e) {
-            // If username is not a number, you might need to lookup user by username
-            // For now, return default
-            return 1L;
-        }
-    }
-
-    @GetMapping("/sets/all")
-    public ResponseEntity<List<FlashcardSetDto>> getAllFlashcardSets() {
-        try {
-            List<FlashcardSetDto> flashcardSets = flashcardSetService.getAllFlashcardSets();
-            System.out.println("📚 Returning " + flashcardSets.size() + " flashcard sets");
-            return ResponseEntity.ok(flashcardSets);
+            log.info("🔍 Fetching all flashcard sets");
+            List<FlashcardSetDto> sets = flashcardService.getAllFlashcardSets(0, 100); // First 100 sets
+            return ResponseEntity.ok(ApiResponse.success("Flashcard sets retrieved successfully", sets));
         } catch (Exception e) {
-            System.err.println("❌ Error fetching flashcard sets: " + e.getMessage());
-            return ResponseEntity.ok(new ArrayList<>());
+            log.error("❌ Error fetching all flashcard sets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch flashcard sets: " + e.getMessage()));
         }
     }
+}
 
-    // Get flashcards by set ID
-    @GetMapping("/sets/{id}/flashcards")
-    public ResponseEntity<List<FlashcardDto>> getFlashcardsBySetId(@PathVariable Long id) {
+/**
+ * Alternative FlashcardController for different API paths
+ * Handles /api/flashcards/* endpoints for frontend compatibility
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/flashcards")
+@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
+class FlashcardAltController {
+
+    private final FlashcardService flashcardService;
+    private final UserRepository userRepository;
+
+    /**
+     * Helper method to get user ID from authentication
+     */
+    private Long getUserId(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
+
+        Optional<User> userOpt = userRepository.findByUsername(auth.getName());
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found: " + auth.getName());
+        }
+
+        return userOpt.get().getId();
+    }
+
+    /**
+     * Get flashcard set by ID - Alternative endpoint for frontend compatibility
+     */
+    @GetMapping("/set/{id}")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> getFlashcardSetByIdAlt(@PathVariable Long id) {
         try {
-            List<com.leenglish.toeic.domain.Flashcard> flashcards = flashcardSetService.getFlashcardsBySetId(id);
-            List<FlashcardDto> flashcardDtos = flashcards.stream()
-                    .map(this::convertToDto)
-                    .collect(java.util.stream.Collectors.toList());
-            System.out.println("📚 Returning " + flashcardDtos.size() + " flashcards for set " + id);
-            return ResponseEntity.ok(flashcardDtos);
+            log.info("🔍 Fetching flashcard set {} (alternative endpoint)", id);
+            FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
         } catch (Exception e) {
-            System.err.println("❌ Error fetching flashcards for set " + id + ": " + e.getMessage());
-            return ResponseEntity.ok(new ArrayList<>());
+            log.error("❌ Error fetching flashcard set with id: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Flashcard set not found: " + e.getMessage()));
         }
     }
 
-    // Convert Flashcard entity to DTO
-    private FlashcardDto convertToDto(com.leenglish.toeic.domain.Flashcard flashcard) {
-        FlashcardDto dto = new FlashcardDto();
-        dto.setId(flashcard.getId());
-        dto.setTerm(flashcard.getFrontText());
-        dto.setDefinition(flashcard.getBackText());
-        dto.setExample(flashcard.getExample());
-        dto.setAudioUrl(flashcard.getAudioUrl());
-        dto.setImageUrl(flashcard.getImageUrl());
-        dto.setLevel(flashcard.getDifficultyLevel() != null ? flashcard.getDifficultyLevel().toString() : "BEGINNER");
-        dto.setCategory(flashcard.getCategory());
-        dto.setIsActive(flashcard.getIsActive());
-        dto.setFlashcardSetId(flashcard.getFlashcardSet() != null ? flashcard.getFlashcardSet().getId() : null);
-        dto.setCreatedAt(flashcard.getCreatedAt());
-        dto.setUpdatedAt(flashcard.getUpdatedAt());
-        return dto;
+    /**
+     * Get all public flashcard sets
+     */
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getPublicFlashcardSetsAlt() {
+        try {
+            log.info("🔍 Fetching public flashcard sets (alternative endpoint)");
+            List<FlashcardSetDto> publicSets = flashcardService.getPopularFlashcardSets(50);
+            return ResponseEntity.ok(ApiResponse.success("Public flashcard sets retrieved successfully", publicSets));
+        } catch (Exception e) {
+            log.error("❌ Error fetching public flashcard sets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch public flashcard sets: " + e.getMessage()));
+        }
     }
 
+    /**
+     * Create new flashcard set
+     */
+    @PostMapping("/set")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> createFlashcardSetAlt(
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("📝 Creating new flashcard set by {}", auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+        } catch (Exception e) {
+            log.error("❌ Error creating flashcard set", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to create flashcard set: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Update flashcard set
+     */
+    @PutMapping("/set/{id}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> updateFlashcardSetAlt(
+            @PathVariable Long id,
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("✏️ Updating flashcard set {} by {}", id, auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(id, flashcardSetDto, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set updated successfully", updatedSet));
+        } catch (Exception e) {
+            log.error("❌ Error updating flashcard set {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update flashcard set: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete flashcard set
+     */
+    @DeleteMapping("/set/{id}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteFlashcardSetAlt(
+            @PathVariable Long id,
+            Authentication auth) {
+        try {
+            log.info("🗑️ Deleting flashcard set {} by {}", id, auth.getName());
+
+            Long userId = getUserId(auth);
+            flashcardService.deleteFlashcardSet(id, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set deleted successfully", null));
+        } catch (Exception e) {
+            log.error("❌ Error deleting flashcard set {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to delete flashcard set: " + e.getMessage()));
+        }
+    }
 }

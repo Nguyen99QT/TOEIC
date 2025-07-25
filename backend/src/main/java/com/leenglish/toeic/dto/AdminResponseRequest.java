@@ -4,8 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import com.leenglish.toeic.domain.Feedback.Status;
-
 public class AdminResponseRequest {
     
     @NotBlank(message = "Admin response is required")
@@ -13,13 +11,13 @@ public class AdminResponseRequest {
     private String adminResponse;
     
     @NotNull(message = "Status is required")
-    private Status status;
+    private String status;
 
     // Constructors
     public AdminResponseRequest() {
     }
 
-    public AdminResponseRequest(String adminResponse, Status status) {
+    public AdminResponseRequest(String adminResponse, String status) {
         this.adminResponse = adminResponse;
         this.status = status;
     }
@@ -33,11 +31,11 @@ public class AdminResponseRequest {
         this.adminResponse = adminResponse;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 } 

@@ -77,7 +77,7 @@ const FeedbackPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const result = await feedbackService.submitFeedback(feedback);
+      const result = await feedbackService.submitExerciseFeedback(feedback);
       if (result.success) {
         toast.success('Thank you for your feedback!');
         navigate('/exercises');

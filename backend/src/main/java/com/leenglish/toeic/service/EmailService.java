@@ -79,10 +79,9 @@ public class EmailService {
         message.setTo(user.getEmail());
         message.setSubject("Đặt lại mật khẩu - LeEnglish TOEIC Platform");
         
-        // Build URL properly handling context path
-        String baseUrl = String.format("http://localhost:%s", serverPort);
-        String path = contextPath.isEmpty() ? "api/auth/reset-password" : contextPath + "api/auth/reset-password";
-        String resetUrl = String.format("%s%s?token=%s", baseUrl, path, token);
+        // Build frontend URL for password reset
+        String frontendUrl = "http://localhost:3000";
+        String resetUrl = String.format("%s/reset-password?token=%s", frontendUrl, token);
         
         String emailContent = String.format(
             "Xin chào %s,\n\n" +

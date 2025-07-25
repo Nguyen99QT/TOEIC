@@ -26,8 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.UpdateUserProfileRequest;
 import com.leenglish.toeic.dto.ChangePasswordRequest;
+import com.leenglish.toeic.dto.ApiResponse;
 import com.leenglish.toeic.enums.Gender;
 import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.repository.UserRepository;
 import com.leenglish.toeic.service.AuthorizationService;
 import com.leenglish.toeic.service.UserService;
 
@@ -57,6 +59,46 @@ public class UserController {
     @Autowired
     private AuthorizationService authorizationService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    // ========== AUTHENTICATION UTILITIES ==========
+
+    /**
+     * Helper method để lấy current user từ database
+     * Đảm bảo user tồn tại và có quyền thực hiện action
+     */
+    private ResponseEntity<String> validateCurrentUser(Long currentUserId) {
+        if (currentUserId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Current-User-Id header is required");
+        }
+
+        Optional<User> currentUserOpt = userService.findById(currentUserId);
+        if (currentUserOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Current user not found. Please re-authenticate.");
+        }
+
+        return null; // Valid user
+    }
+
+    /**
+     * Helper method để check admin permission
+     */
+    private ResponseEntity<String> validateAdminPermission(Long currentUserId) {
+        ResponseEntity<String> basicValidation = validateCurrentUser(currentUserId);
+        if (basicValidation != null) return basicValidation;
+
+        User currentUser = userService.findById(currentUserId).get();
+        if (!authorizationService.isAdmin(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Access denied. Administrator privileges required.");
+        }
+
+        return null; // Valid admin
+    }
+
     // ========== PUBLIC ENDPOINTS (Không cần authentication) ==========
 
     /**
@@ -85,6 +127,52 @@ public class UserController {
     // ========== ADMIN-ONLY ENDPOINTS ==========
 
     /**
+     * GET /api/users/count - Test endpoint to check user count
+     * DEBUG: Simple endpoint to verify database connectivity
+     */
+    @GetMapping("/count")
+    public ResponseEntity<?> getUserCount(@RequestHeader("Current-User-Id") Long currentUserId) {
+        try {
+            // Check if user is admin
+            Optional<User> currentUserOpt = userService.findById(currentUserId);
+            if (currentUserOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not found");
+            }
+
+            User currentUser = currentUserOpt.get();
+            if (!authorizationService.isAdmin(currentUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Access denied. Admin only.");
+            }
+
+            // Get simple count using repository
+            long totalUsers = userRepository.count();
+            List<User> allUsers = userRepository.findAll();
+            
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("totalCount", totalUsers);
+            debugInfo.put("allUsersSize", allUsers.size());
+            debugInfo.put("sampleUsers", allUsers.stream()
+                .limit(3)
+                .map(user -> Map.of(
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail(),
+                    "role", user.getRole(),
+                    "isActive", user.getIsActive()
+                ))
+                .collect(java.util.stream.Collectors.toList())
+            );
+
+            return ResponseEntity.ok(ApiResponse.success(debugInfo, "User count retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+
+    /**
      * GET /api/users - Lấy tất cả users với filtering và pagination
      * ADMIN ONLY: Chỉ admin mới được xem danh sách tất cả users
      * User thường KHÔNG được access endpoint này
@@ -93,6 +181,7 @@ public class UserController {
     public ResponseEntity<?> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) Role role,
@@ -119,10 +208,14 @@ public class UserController {
 
             // BƯỚC 3: Nếu là admin thì cho phép xem tất cả với filtering
             Pageable pageable = PageRequest.of(page, size);
+            
+            // Use search parameter if provided, otherwise use username
+            String searchTerm = search != null ? search : username;
+            
             Page<User> users = userService.findUsersWithFilters(
-                    username, email, role, gender, country, isActive, pageable);
+                    searchTerm, email, role, gender, country, isActive, pageable);
 
-            return ResponseEntity.ok(users);
+            return ResponseEntity.ok(ApiResponse.success(users, "Users retrieved successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -206,7 +299,7 @@ public class UserController {
                 return ResponseEntity.notFound().build();
             }
 
-            return ResponseEntity.ok(targetUser.get());
+            return ResponseEntity.ok(ApiResponse.success(targetUser.get(), "User profile retrieved successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -226,7 +319,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("User not found or not authenticated");
             }
-            return ResponseEntity.ok(currentUser.get());
+            return ResponseEntity.ok(ApiResponse.success(currentUser.get(), "Current user profile retrieved successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving profile: " + e.getMessage());
@@ -348,7 +441,7 @@ public class UserController {
             // BƯỚC 3: Update profile
             User updatedUser = userService.updateUserProfile(currentUserId, request);
 
-            return ResponseEntity.ok(updatedUser);
+            return ResponseEntity.ok(ApiResponse.success(updatedUser, "Profile updated successfully"));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

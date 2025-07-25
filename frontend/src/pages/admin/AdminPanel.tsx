@@ -13,6 +13,7 @@ import { AnalyticsPage } from './analytics-page'
 import AdminFeedbackPage from './AdminFeedbackPage'
 import { BlogManagementPage } from './blog-management-page'
 import BlogEditPage from './blog-edit-page'
+import AdminContactPage from './AdminContactPage'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const AdminPanel: React.FC = () => {
@@ -68,6 +69,8 @@ const AdminPanel: React.FC = () => {
         return <CommentsPage />
       case "feedback":
         return <AdminFeedbackPage />
+      case "contact":
+        return <AdminContactPage />
       default:
         return <AdminDashboard />
     }

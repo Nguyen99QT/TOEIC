@@ -22,6 +22,34 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+// ========== DEBUG UTILITIES ==========
+
+/**
+ * Debug function to test Current-User-Id header
+ */
+export const debugCurrentUserId = (): void => {
+  console.log("🔍 DEBUG: Testing Current-User-Id detection...");
+  
+  const userId = getCurrentUserId();
+  console.log("🔑 Current User ID:", userId);
+  
+  // Log all user-related localStorage entries
+  const userKeys = Object.keys(localStorage).filter(key => 
+    key.includes('user') || key.includes('User') || key.includes('auth')
+  );
+  
+  console.log("📂 User-related localStorage entries:");
+  userKeys.forEach(key => {
+    const value = localStorage.getItem(key);
+    try {
+      const parsed = JSON.parse(value || '{}');
+      console.log(`  ${key}:`, parsed);
+    } catch {
+      console.log(`  ${key}: "${value}"`);
+    }
+  });
+};
+
 // ========== REQUEST INTERCEPTOR ==========
 
 apiClient.interceptors.request.use(
@@ -71,6 +99,13 @@ apiClient.interceptors.request.use(
       if (currentUserId) {
         config.headers["Current-User-Id"] = currentUserId.toString();
         console.log("🔑 Added Current-User-Id header:", currentUserId);
+      } else {
+        console.warn("⚠️ No current user ID found for Current-User-Id header");
+        // Log available localStorage keys for debugging
+        const availableKeys = Object.keys(localStorage).filter(key => 
+          key.includes('user') || key.includes('User')
+        );
+        console.log("🔍 Available user-related localStorage keys:", availableKeys);
       }
     } else {
       console.log("⚠️ No auth token available for request");
@@ -168,7 +203,7 @@ apiClient.interceptors.response.use(
           const refreshResponse = await axios
             .create({
               baseURL: "http://localhost:8080/api",
-              timeout: 10000,
+              timeout: 100000,
             })
             .post("/auth/refresh", {
               refreshToken,
@@ -343,15 +378,24 @@ export const canEditContent = (): boolean => {
  * Get current user ID
  */
 export const getCurrentUserId = (): number | null => {
-  const currentUser = localStorage.getItem("currentUser");
-  if (!currentUser) return null;
+  // Try multiple possible keys for user data
+  const keys = ["toeic_current_user", "currentUser", "user"];
+  
+  for (const key of keys) {
+    const userData = localStorage.getItem(key);
+    if (!userData) continue;
 
-  try {
-    const user = JSON.parse(currentUser);
-    return user.id;
-  } catch {
-    return null;
+    try {
+      const user = JSON.parse(userData);
+      if (user && user.id) {
+        return user.id;
+      }
+    } catch {
+      continue;
+    }
   }
+
+  return null;
 };
 
 /**

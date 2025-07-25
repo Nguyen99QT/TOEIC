@@ -432,6 +432,28 @@ public class UserService {
         // Get all users from database
         List<User> allUsers = userRepository.findAll();
         
+        System.out.println("🔍 [UserService] findUsersWithFilters called with:");
+        System.out.println("  - username: " + username);
+        System.out.println("  - email: " + email);
+        System.out.println("  - role: " + role);
+        System.out.println("  - gender: " + gender);
+        System.out.println("  - country: " + country);
+        System.out.println("  - active: " + active);
+        System.out.println("  - pageable: " + pageable);
+        System.out.println("📊 Total users in database: " + allUsers.size());
+        
+        if (!allUsers.isEmpty()) {
+            System.out.println("👥 Sample users:");
+            for (int i = 0; i < Math.min(3, allUsers.size()); i++) {
+                User user = allUsers.get(i);
+                System.out.println("  - User " + (i+1) + ": ID=" + user.getId() + 
+                    ", username=" + user.getUsername() + 
+                    ", email=" + user.getEmail() + 
+                    ", role=" + user.getRole() + 
+                    ", isActive=" + user.getIsActive());
+            }
+        }
+        
         // Apply filters if provided
         List<User> filteredUsers = allUsers.stream()
                 .filter(user -> username == null || (user.getUsername() != null && user.getUsername().toLowerCase().contains(username.toLowerCase())))
@@ -441,6 +463,8 @@ public class UserService {
                 .filter(user -> country == null || (user.getCountry() != null && user.getCountry().toLowerCase().contains(country.toLowerCase())))
                 .filter(user -> active == null || active.equals(user.getIsActive()))
                 .collect(java.util.stream.Collectors.toList());
+                
+        System.out.println("✅ Filtered users count: " + filteredUsers.size());
         
         // Apply pagination
         int start = (int) pageable.getOffset();

@@ -13,7 +13,7 @@ interface UpdateProfileRequest {
 }
 
 const UserProfile: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateCurrentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -26,15 +26,18 @@ const UserProfile: React.FC = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('🔄 UserProfile: User data updated, refreshing form');
+      const userBirthDate = user.dateOfBirth || user.birthDate;
       setFormData({
         fullName: user.fullName || '',
-        phone: user.phone || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        phone: user.phone || user.phoneNumber || '',
+        dateOfBirth: userBirthDate ? 
+          new Date(userBirthDate as string).toISOString().split('T')[0] : '',
         country: user.country || '',
         gender: user.gender || ''
       });
     }
-  }, [user]);
+  }, [user, user?.fullName, user?.phone, user?.dateOfBirth]); // ⚡ ADDED: More specific dependencies
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -49,14 +52,17 @@ const UserProfile: React.FC = () => {
     setLoading(true);
 
     try {
+      console.log("📤 Sending profile update request...");
       const response = await apiClient.put(`/api/users/${user?.id}`, formData);
       
       if (response.data) {
         toast.success('Profile updated successfully!');
-        updateUser(response.data);
+        updateCurrentUser(response.data);
         setIsEditing(false);
       }
     } catch (error: any) {
+      console.error("❌ Profile update failed:", error);
+      console.error("❌ Error response:", error.response);
       toast.error(error.response?.data || 'Failed to update profile');
     } finally {
       setLoading(false);
@@ -65,10 +71,12 @@ const UserProfile: React.FC = () => {
 
   const handleCancel = () => {
     if (user) {
+      const userBirthDate = user.dateOfBirth || user.birthDate;
       setFormData({
         fullName: user.fullName || '',
-        phone: user.phone || '',
-        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        phone: user.phone || user.phoneNumber || '',
+        dateOfBirth: userBirthDate ? 
+          new Date(userBirthDate as string).toISOString().split('T')[0] : '',
         country: user.country || '',
         gender: user.gender || ''
       });
@@ -120,13 +128,13 @@ const UserProfile: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm text-gray-600">Membership</span>
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
+                      user.isPremium 
+                        ? 'bg-yellow-100 text-yellow-800' 
+                        : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
+                      {user.isPremium ? 'Premium' : 'Free'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

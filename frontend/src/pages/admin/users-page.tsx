@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -13,10 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw } from "lucide-react"
-import { getUsers, toggleUserStatus } from "../../services/users"
-import { User } from "../../types"
+import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw, Bug } from "lucide-react"
+import { getUsers, toggleUserStatus, updateUserRole } from "../../services/users"
+import { User, Role } from "../../types"
 import { toast } from "react-hot-toast"
+import apiClient from "../../services/apiClient"
 
 // Helper function to get user display name
 const getUserDisplayName = (user: User): string => {
@@ -37,7 +38,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage] = useState(0)  // Use 0-based pagination to match backend
+  const [currentPage, setCurrentPage] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalStudents, setTotalStudents] = useState(0)
   const [totalInstructors, setTotalInstructors] = useState(0)
@@ -50,6 +51,12 @@ export function UsersPage() {
       setLoading(true)
       
       console.log("🔄 Loading users from API...")
+      console.log("📝 Request params:", {
+        page: currentPage,
+        size: 20,
+        search: searchTerm || undefined
+      })
+      
       const response = await getUsers({
         page: currentPage,
         size: 20,
@@ -57,8 +64,21 @@ export function UsersPage() {
       })
       
       console.log("✅ Users loaded successfully:", response)
+      console.log("📊 Response structure:", {
+        content: response.content?.length,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+        hasContent: !!response.content
+      })
+      
+      // Check if response has the expected structure
+      if (!response.content || !Array.isArray(response.content)) {
+        console.error("❌ Invalid response structure:", response)
+        throw new Error("API response không có định dạng mong đợi")
+      }
+      
       setUsers(response.content)
-      setTotalUsers(response.totalElements)
+      setTotalUsers(response.totalElements || 0)
       
       // Calculate stats
       const students = response.content.filter(user => user.role === 'USER')
@@ -77,6 +97,37 @@ export function UsersPage() {
     }
   }
 
+  // Debug function to test user count
+  const debugUserCount = async () => {
+    try {
+      console.log("🐛 [DEBUG] Testing user count endpoint...")
+      const response = await apiClient.get('/api/users/count')
+      console.log("🐛 [DEBUG] User count response:", response.data)
+      toast.success('Debug info logged to console')
+    } catch (error: any) {
+      console.error("🐛 [DEBUG] User count error:", error)
+      toast.error('Debug failed: ' + error.message)
+    }
+  }
+
+  // Debug function to test main users endpoint
+  const debugUsersAPI = async () => {
+    try {
+      console.log("🐛 [DEBUG] Testing main users endpoint...")
+      console.log("🐛 [DEBUG] Auth token:", localStorage.getItem('toeic_access_token') ? 'Present' : 'Missing')
+      console.log("🐛 [DEBUG] Current user:", localStorage.getItem('toeic_current_user'))
+      
+      const response = await apiClient.get('/api/users?page=0&size=5')
+      console.log("🐛 [DEBUG] Main users API response:", response.data)
+      toast.success('Debug users API logged to console')
+    } catch (error: any) {
+      console.error("🐛 [DEBUG] Main users API error:", error)
+      console.error("🐛 [DEBUG] Error response:", error.response?.data)
+      console.error("🐛 [DEBUG] Error status:", error.response?.status)
+      toast.error('Debug users API failed: ' + (error.response?.data?.message || error.message))
+    }
+  }
+
   // Handle user status toggle
   const handleToggleStatus = async (userId: number, currentStatus: boolean) => {
     try {
@@ -85,6 +136,17 @@ export function UsersPage() {
       loadUsers() // Reload users
     } catch (error: any) {
       toast.error('Không thể cập nhật trạng thái: ' + error.message)
+    }
+  }
+
+  // Handle role update
+  const handleRoleUpdate = async (userId: number, newRole: Role) => {
+    try {
+      await updateUserRole(userId, newRole)
+      toast.success('Cập nhật vai trò thành công')
+      loadUsers() // Reload users
+    } catch (error: any) {
+      toast.error('Không thể cập nhật vai trò: ' + error.message)
     }
   }
 
@@ -114,6 +176,22 @@ export function UsersPage() {
           <Button className="bg-study-600 hover:bg-study-700">
             <Plus className="mr-2 h-4 w-4" />
             Thêm giảng viên
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={debugUserCount}
+            className="border-study-200 hover:bg-study-50 hover:text-study-600"
+          >
+            <Bug className="mr-2 h-4 w-4" />
+            Debug User Count
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={debugUsersAPI}
+            className="border-yellow-200 hover:bg-yellow-50 hover:text-yellow-600"
+          >
+            <Bug className="mr-2 h-4 w-4" />
+            Debug Users API
           </Button>
         </div>
       </div>
@@ -306,6 +384,18 @@ export function UsersPage() {
                             Chỉnh sửa
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {user.role !== "ADMIN" && (
+                            <>
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => handleRoleUpdate(user.id, user.role === Role.COLLABORATOR ? Role.USER : Role.COLLABORATOR)}
+                              >
+                                <UserCheck className="mr-2 h-4 w-4 text-study-500" />
+                                {user.role === Role.COLLABORATOR ? "Chuyển thành học viên" : "Chuyển thành giảng viên"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           {!user.isActive && (
                             <DropdownMenuItem 
                               className="cursor-pointer"
@@ -315,7 +405,7 @@ export function UsersPage() {
                               Kích hoạt tài khoản
                             </DropdownMenuItem>
                           )}
-                          {user.isActive && (
+                          {user.isActive && user.role !== "ADMIN" && (
                             <DropdownMenuItem 
                               className="text-danger-600 cursor-pointer focus:text-danger-600"
                               onClick={() => handleToggleStatus(user.id, user.isActive || false)}

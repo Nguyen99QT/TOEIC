@@ -130,9 +130,9 @@ export const ToeicFloatingActions: React.FC = () => {
             color: 'bg-yellow-600 hover:bg-yellow-700'
         },
         {
-            icon: '💬',
-            label: 'Help & Support',
-            onClick: () => window.location.href = '/help',
+            icon: '📞',
+            label: 'Contact',
+            onClick: () => window.location.href = '/contact',
             color: 'bg-red-600 hover:bg-red-700'
         }
     ];

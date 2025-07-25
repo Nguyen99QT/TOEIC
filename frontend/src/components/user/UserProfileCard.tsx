@@ -104,11 +104,11 @@ const UserProfileCard: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Ngày sinh:</span>
-                <span className="font-medium">{formatDate(user.dateOfBirth)}</span>
+                <span className="font-medium">{formatDate(user.dateOfBirth || null)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Giới tính:</span>
-                <span className="font-medium">{getGenderLabel(user.gender)}</span>
+                <span className="font-medium">{getGenderLabel(user.gender || null)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Quốc gia:</span>
@@ -170,22 +170,22 @@ const UserProfileCard: React.FC = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Ngày tạo tài khoản:</span>
-                <span className="font-medium">{formatDate(user.createdAt)}</span>
+                <span className="font-medium">{formatDate(user.createdAt || null)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Cập nhật lần cuối:</span>
-                <span className="font-medium">{formatDate(user.updatedAt)}</span>
+                <span className="font-medium">{formatDate(user.updatedAt || null)}</span>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Đăng nhập lần cuối:</span>
-                <span className="font-medium">{formatDate(user.lastLogin)}</span>
+                <span className="font-medium">{formatDate(user.lastLoginDate || null)}</span>
               </div>
               {user.premiumExpiresAt && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Premium hết hạn:</span>
-                  <span className="font-medium">{formatDate(user.premiumExpiresAt)}</span>
+                  <span className="font-medium">{formatDate(user.premiumExpiresAt || null)}</span>
                 </div>
               )}
             </div>

@@ -25,6 +25,9 @@ import './index.css';
 // Components
 import LoadingFallback from './components/ui/LoadingFallback';
 import Layout from './components/ui/Layout';
+import Navigation from './components/ui/Navigation';
+import Footer from './components/ui/Footer';
+import FloatingActionButton from './components/ui/FloatingActionButton';
 import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
 
 // Pages
@@ -34,6 +37,8 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import CollaboratorDashboard from './pages/CollaboratorDashboard';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
@@ -51,6 +56,8 @@ import EditProfilePage from './pages/user/EditProfilePage';
 import ChangePasswordPage from './pages/user/ChangePasswordPage';
 import FeedbackPage from './pages/user/FeedbackPage';
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
+import ContactPage from './pages/contact/ContactPage';
+import AdminContactPage from './pages/admin/AdminContactPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
@@ -110,6 +117,24 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     console.log('🔄 App Authentication State:', { loading, isAuthenticated, currentUser });
   }, [loading, isAuthenticated, currentUser]);
+
+  // Enhanced Layout component with Navigation and Footer
+  const Layout: React.FC<{ children: React.ReactNode; showNavigation?: boolean; showFooter?: boolean }> = ({
+    children,
+    showNavigation = true,
+    showFooter = true
+  }) => {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {showNavigation && <Navigation key={`nav-${isAuthenticated}-${currentUser?.id || 'guest'}`} />}
+        <main className="flex-1">
+          {children}
+        </main>
+        {showFooter && <Footer />}
+        {isAuthenticated && <FloatingActionButton />}
+      </div>
+    );
+  };
 
   // LocationLogger để debug routing
   const LocationLogger = () => {
@@ -196,43 +221,36 @@ const AppContent: React.FC = () => {
                 </Layout>
               }
             />
+
+            {/* Forgot Password Route */}
             <Route
-              path="/blog/:id"
+              path="/forgot-password"
               element={
-                <ProtectedRoute
-                  promptTitle="Đăng nhập để xem Blog"
-                  promptMessage="Bạn cần phải đăng nhập để xem chi tiết bài viết Blog"
-                >
-                  <Layout>
-                    <BlogDetail />
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Layout showNavigation={false} showFooter={false}>
+                    <ForgotPasswordPage />
                   </Layout>
-                </ProtectedRoute>
+                )
               }
             />
+
+            {/* Reset Password Route */}
             <Route
-              path="/create-blog"
+              path="/reset-password"
               element={
-                <ProtectedRoute
-                  promptTitle="Đăng nhập để đăng bài Blog"
-                  promptMessage="Bạn cần phải đăng nhập để đăng bài viết Blog mới"
-                >
-                  <Layout>
-                    <CreateBlog />
+                loading ? (
+                  <LoadingFallback />
+                ) : isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Layout showNavigation={false} showFooter={false}>
+                    <ResetPasswordPage />
                   </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/edit-blog/:id"
-              element={
-                <ProtectedRoute
-                  promptTitle="Đăng nhập để chỉnh sửa Blog"
-                  promptMessage="Bạn cần phải đăng nhập để chỉnh sửa bài viết Blog"
-                >
-                  <Layout>
-                    <EditBlog />
-                  </Layout>
-                </ProtectedRoute>
+                )
               }
             />
             <Route path="/pricing" element={
@@ -252,7 +270,7 @@ const AppContent: React.FC = () => {
             } />
 
             {/* Protected Routes */}
-            <Route
+            {/* <Route
               path="/dashboard"
               element={
                 <ProtectedRoute
@@ -264,7 +282,7 @@ const AppContent: React.FC = () => {
                   </Layout>
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             {/* Collaborator Dashboard */}
             <Route
@@ -689,6 +707,19 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/contact"
+              element={
+                <ProtectedRoute
+                  promptTitle="Login to Contact"
+                                      promptMessage="You need to login to send contact to us"
+                >
+                  <Layout>
+                    <ContactPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/settings"
               element={
                 <ProtectedRoute
@@ -755,7 +786,15 @@ const AppContent: React.FC = () => {
               path="/admin/feedback"
               element={
                 <AdminRoute>
-                  <AdminFeedbackPage />
+                  <AdminPanel />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/contact"
+              element={
+                <AdminRoute>
+                  <AdminPanel />
                 </AdminRoute>
               }
             />

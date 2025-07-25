@@ -1,6 +1,7 @@
 package com.leenglish.toeic.dto;
 
 import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.enums.MembershipType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -21,6 +22,7 @@ public class UserDto {
 
     private String fullName;
     private Role role;
+    private MembershipType membershipType;
     private Integer currentLevel;
     private Integer totalScore;
     private Integer testsCompleted;
@@ -32,13 +34,14 @@ public class UserDto {
     }
 
     public UserDto(Long id, String username, String email, String fullName, Role role,
-            Integer currentLevel, Integer totalScore, Integer testsCompleted,
+            MembershipType membershipType, Integer currentLevel, Integer totalScore, Integer testsCompleted,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.role = role;
+        this.membershipType = membershipType;
         this.currentLevel = currentLevel;
         this.totalScore = totalScore;
         this.testsCompleted = testsCompleted;
@@ -85,6 +88,14 @@ public class UserDto {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public MembershipType getMembershipType() {
+        return membershipType;
+    }
+
+    public void setMembershipType(MembershipType membershipType) {
+        this.membershipType = membershipType;
     }
 
     public Integer getCurrentLevel() {

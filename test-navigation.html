@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Navigation</title>
+</head>
+<body>
+    <h1>Test Navigation Debug</h1>
+    
+    <div>
+        <h2>Current Location:</h2>
+        <p id="currentPath"></p>
+    </div>
+    
+    <div>
+        <h2>Test Links:</h2>
+        <a href="http://localhost:3000/questions/groups/1" target="_blank">Test View Group 1</a><br>
+        <a href="http://localhost:3000/questions/groups/1/edit" target="_blank">Test Edit Group 1</a><br>
+        <a href="http://localhost:3000/questions/groups/2" target="_blank">Test View Group 2</a><br>
+        <a href="http://localhost:3000/questions/groups/2/edit" target="_blank">Test Edit Group 2</a><br>
+    </div>
+    
+    <div>
+        <h2>Token Check:</h2>
+        <button onclick="checkToken()">Check Token</button>
+        <p id="tokenInfo"></p>
+    </div>
+    
+    <script>
+        document.getElementById('currentPath').textContent = window.location.href;
+        
+        function checkToken() {
+            const token = localStorage.getItem('toeic_access_token') || 
+                         localStorage.getItem('token') || 
+                         localStorage.getItem('authToken');
+            document.getElementById('tokenInfo').textContent = token ? 'Token exists: ' + token.substring(0, 20) + '...' : 'No token found';
+        }
+        
+        // Auto check token on load
+        checkToken();
+    </script>
+</body>
+</html>

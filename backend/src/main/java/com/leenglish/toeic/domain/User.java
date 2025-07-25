@@ -29,7 +29,7 @@ import jakarta.validation.constraints.Size;
  */
 
 @Entity
-@Table(name = "user", indexes = {
+@Table(name = "users", indexes = {
         @Index(name = "idx_username", columnList = "username"),
         @Index(name = "idx_email", columnList = "email"),
         @Index(name = "idx_role", columnList = "role")

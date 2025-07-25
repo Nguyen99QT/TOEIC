@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Token</title>
+</head>
+<body>
+    <h1>Debug Token Status</h1>
+    <button onclick="checkToken()">Check Token</button>
+    <button onclick="logout()">Logout</button>
+    <button onclick="relogin()">Re-login as teacher</button>
+    <div id="result"></div>
+
+    <script>
+        function checkToken() {
+            const resultDiv = document.getElementById('result');
+            
+            const tokens = {
+                'toeic_access_token': localStorage.getItem('toeic_access_token'),
+                'authToken': localStorage.getItem('authToken'),
+                'accessToken': localStorage.getItem('accessToken'),
+                'token': localStorage.getItem('token')
+            };
+            
+            console.log('🔐 All tokens in localStorage:', tokens);
+            
+            const token = tokens['toeic_access_token'] || tokens['authToken'] || tokens['accessToken'] || tokens['token'];
+            
+            if (!token) {
+                resultDiv.innerHTML = '❌ No token found in localStorage!';
+                return;
+            }
+            
+            // Decode JWT token to check expiration
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const now = Math.floor(Date.now() / 1000);
+                const exp = payload.exp;
+                const timeLeft = exp - now;
+                
+                resultDiv.innerHTML = `
+                    <h3>Token Status:</h3>
+                    <p>✅ Token found: ${token.substring(0, 30)}...</p>
+                    <p>👤 Username: ${payload.sub || payload.username || 'Unknown'}</p>
+                    <p>🕐 Expires at: ${new Date(exp * 1000).toLocaleString()}</p>
+                    <p>⏰ Time left: ${timeLeft > 0 ? timeLeft + ' seconds' : 'EXPIRED'}</p>
+                    <p>🎭 Roles: ${JSON.stringify(payload.roles || payload.authorities || 'None')}</p>
+                    <p>Status: ${timeLeft > 0 ? '✅ Valid' : '❌ Expired'}</p>
+                `;
+                
+                if (timeLeft <= 0) {
+                    console.error('❌ Token has expired!');
+                } else {
+                    console.log('✅ Token is still valid for', timeLeft, 'seconds');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '❌ Invalid token format: ' + error.message;
+                console.error('❌ Token decode error:', error);
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+        
+        async function relogin() {
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'teacher',
+                        password: 'teacher123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const token = data.accessToken || data.token;
+                    
+                    localStorage.setItem('toeic_access_token', token);
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('accessToken', token);
+                    
+                    alert('✅ Re-login successful!');
+                    checkToken();
+                } else {
+                    alert('❌ Re-login failed: ' + response.status);
+                }
+            } catch (error) {
+                alert('❌ Re-login error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

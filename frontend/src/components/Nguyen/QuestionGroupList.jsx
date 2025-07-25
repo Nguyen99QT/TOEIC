@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const QuestionGroupList = ({ onSelectGroup, refreshTrigger }) => {
+  const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,11 +30,13 @@ const QuestionGroupList = ({ onSelectGroup, refreshTrigger }) => {
   const fetchGroups = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('toeic_access_token') || localStorage.getItem('token');
       if (!token) {
         throw new Error('Không có token xác thực');
       }
 
+      console.log('🔍 Fetching groups with token:', token ? 'present' : 'missing');
+      
       const response = await fetch('http://localhost:8080/api/question-group', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -40,11 +44,16 @@ const QuestionGroupList = ({ onSelectGroup, refreshTrigger }) => {
         },
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ API Error:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('✅ Groups fetched:', data);
       setGroups(data || []);
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -61,7 +70,7 @@ const QuestionGroupList = ({ onSelectGroup, refreshTrigger }) => {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('toeic_access_token') || localStorage.getItem('token');
       const response = await fetch(`http://localhost:8080/api/question-group/${groupId}`, {
         method: 'DELETE',
         headers: {
@@ -224,10 +233,53 @@ const QuestionGroupList = ({ onSelectGroup, refreshTrigger }) => {
                         <div className="btn-group btn-group-sm">
                           <button
                             className="btn btn-outline-primary"
-                            onClick={() => onSelectGroup && onSelectGroup(group)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('🔍 View button clicked for group:', group);
+                              console.log('🔍 Current location before navigate:', window.location.href);
+                              console.log('🔍 Navigating to:', `/questions/groups/${group.id}`);
+                              
+                              // Check authentication before navigate
+                              const token = localStorage.getItem('toeic_access_token') || localStorage.getItem('token');
+                              console.log('🔍 Token status:', token ? 'EXISTS' : 'MISSING');
+                              
+                              // Navigate to view page - using correct route
+                              navigate(`/questions/groups/${group.id}`);
+                              
+                              // Check if navigation happened
+                              setTimeout(() => {
+                                console.log('🔍 Location after navigate:', window.location.href);
+                              }, 100);
+                            }}
                             title="Xem chi tiết"
                           >
                             <i className="fas fa-eye"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-warning me-1"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('✏️ Edit button clicked for group:', group);
+                              console.log('✏️ Current location before navigate:', window.location.href);
+                              console.log('✏️ Navigating to:', `/questions/groups/${group.id}/edit`);
+                              
+                              // Check authentication before navigate
+                              const token = localStorage.getItem('toeic_access_token') || localStorage.getItem('token');
+                              console.log('✏️ Token status:', token ? 'EXISTS' : 'MISSING');
+                              
+                              // Navigate to edit page - using correct route
+                              navigate(`/questions/groups/${group.id}/edit`);
+                              
+                              // Check if navigation happened
+                              setTimeout(() => {
+                                console.log('✏️ Location after navigate:', window.location.href);
+                              }, 100);
+                            }}
+                            title="Chỉnh sửa"
+                          >
+                            <i className="fas fa-edit"></i>
                           </button>
                           <button
                             className="btn btn-outline-danger"

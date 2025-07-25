@@ -8,8 +8,7 @@ const SimpleTOEICTest = () => {
   const navigate = useNavigate();
   
   // State management
-  const [testParts, setTestParts] = useState([]); // Part navigation structure
-  const [questionsData, setQuestionsData] = useState([]); // Raw question data from API
+  const [testParts, setTestParts] = useState([]); // Part structure info
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
   const [currentQuestions, setCurrentQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
@@ -40,35 +39,13 @@ const SimpleTOEICTest = () => {
     const loadTestData = async () => {
       try {
         setIsLoading(true);
+        console.log('Loading test parts for testId:', testId);
+        
+        // First, load test parts structure
         const response = await axios.get(`http://localhost:8080/api/tests/${testId}/parts`);
+        console.log('Test parts loaded:', response.data);
         
-        // Store raw question data for filtering by part later
         setTestParts(response.data);
-        
-        // Create part structure for navigation (7 parts in TOEIC)
-        const partStructure = [
-          { partId: 1, partNumber: 1, title: "Part 1: Mô tả tranh", description: "Nghe và chọn mô tả phù hợp với tranh" },
-          { partId: 2, partNumber: 2, title: "Part 2: Hỏi - đáp", description: "Nghe câu hỏi và chọn câu trả lời phù hợp" },
-          { partId: 3, partNumber: 3, title: "Part 3: Đối thoại", description: "Nghe đoạn hội thoại và trả lời câu hỏi" },
-          { partId: 4, partNumber: 4, title: "Part 4: Bài nói chuyện", description: "Nghe bài nói và trả lời câu hỏi" },
-          { partId: 5, partNumber: 5, title: "Part 5: Hoàn thành câu", description: "Chọn từ hoặc cụm từ để hoàn thành câu" },
-          { partId: 6, partNumber: 6, title: "Part 6: Hoàn thành đoạn văn", description: "Chọn từ hoặc câu để hoàn thành đoạn văn" },
-          { partId: 7, partNumber: 7, title: "Part 7: Đọc hiểu", description: "Đọc đoạn văn và trả lời câu hỏi" }
-        ];
-        
-        // Filter only parts that have questions in the test data
-        const availableParts = partStructure.filter(part => 
-          response.data.some(question => question.partNumber === part.partNumber)
-        );
-        
-        console.log(`Loaded test data with ${response.data.length} questions across ${availableParts.length} parts`);
-        
-        // Store the part structure separately for navigation
-        setTestParts(availableParts);
-        
-        // Store raw question data
-        setQuestionsData(response.data);
-        
         setError(null);
       } catch (error) {
         console.error('Error loading test data:', error);
@@ -190,6 +167,8 @@ const SimpleTOEICTest = () => {
 
   // Audio management function with enhanced error handling and retries
   const playAudioSequence = useCallback((audioList, index, retryCount = 0) => {
+    console.log(`playAudioSequence called with: audioList.length=${audioList.length}, index=${index}, retryCount=${retryCount}`);
+    
     if (!audioRef.current || index >= audioList.length) {
       // All audio completed
       setIsAudioPlaying(false);
@@ -209,6 +188,7 @@ const SimpleTOEICTest = () => {
     // Test audio URL validity and size before setting
     fetch(currentAudio.url, { method: 'HEAD' })
       .then(response => {
+        console.log(`Fetch HEAD response for audio ${index + 1}:`, response.status, response.statusText);
         const contentLength = response.headers.get('content-length');
         const contentType = response.headers.get('content-type');
         
@@ -229,6 +209,7 @@ const SimpleTOEICTest = () => {
         }
         
         // File seems valid, proceed with playback
+        console.log(`Setting audio source to: ${currentAudio.url}`);
         audioRef.current.src = currentAudio.url;
         
         // Set up event handlers for main audio element
@@ -248,13 +229,26 @@ const SimpleTOEICTest = () => {
           console.log(`Audio ${index + 1} ready for playback`);
         };
         
+        audioRef.current.onloadstart = () => {
+          console.log(`Audio ${index + 1} loading started`);
+        };
+        
+        audioRef.current.onloadeddata = () => {
+          console.log(`Audio ${index + 1} data loaded`);
+        };
+        
         // Try to play
+        console.log(`Attempting to play audio ${index + 1}...`);
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.warn(`Audio ${index + 1} play promise failed:`, error.message);
-            handleAudioError(audioList, index, retryCount, `Play failed: ${error.message}`);
-          });
+          playPromise
+            .then(() => {
+              console.log(`Audio ${index + 1} play promise resolved - playing successfully`);
+            })
+            .catch(error => {
+              console.warn(`Audio ${index + 1} play promise failed:`, error.message);
+              handleAudioError(audioList, index, retryCount, `Play failed: ${error.message}`);
+            });
         }
       })
       .catch(error => {
@@ -281,59 +275,61 @@ const SimpleTOEICTest = () => {
 
   // Load questions when part changes
   useEffect(() => {
-    const loadQuestionsForCurrentPart = () => {
-      if (!questionsData || questionsData.length === 0 || !testParts[currentPartIndex]) return;
+    const loadQuestionsForCurrentPart = async () => {
+      if (!testParts[currentPartIndex]) {
+        console.log('No part at current index:', currentPartIndex);
+        return;
+      }
       
       try {
-        // Filter questions for current part from raw question data
         const currentPartNumber = testParts[currentPartIndex].partNumber;
-        const currentPartQuestions = questionsData.filter(question => 
-          question.partNumber === currentPartNumber
+        console.log('Loading questions for part:', currentPartNumber, 'testId:', testId);
+        
+        // Get auth token for API call
+        const token = localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        
+        // Load questions for current part
+        const response = await axios.get(
+          `http://localhost:8080/api/tests/${testId}/part/${currentPartNumber}/questions`,
+          { headers }
         );
         
-        // Transform API data to match component expectations
-        const transformedQuestions = currentPartQuestions.map(q => ({
-          questionId: q.questionId,
-          partNumber: q.partNumber,
-          questionOrder: q.questionOrder,
-          questionText: q.questionText,
-          audioUrl: q.audioUrl,
-          imageUrl: q.imageUrl,
-          // Transform the options format from API to component format
-          options: [
-            { optionId: `${q.questionId}-A`, label: 'A', content: q.optionA },
-            { optionId: `${q.questionId}-B`, label: 'B', content: q.optionB },
-            { optionId: `${q.questionId}-C`, label: 'C', content: q.optionC },
-            { optionId: `${q.questionId}-D`, label: 'D', content: q.optionD }
-          ].filter(opt => opt.content) // Filter out empty options
-        }));
+        console.log('Questions loaded for part', currentPartNumber, ':', response.data);
         
-        // Filter out invalid questions (with null options or questionText = "abc")
-        const validQuestions = transformedQuestions.filter(question => {
-          const hasValidOptions = question.options && question.options.length >= 2 &&
-            question.options.every(option => option.label && option.content);
-          const hasValidText = question.questionText && 
-            question.questionText !== "abc" && question.questionText !== "abcc" &&
-            question.questionText.trim().length > 3;
-          return hasValidOptions && hasValidText;
+        // Transform questions to expected format
+        const transformedQuestions = response.data.map(q => {
+          // Log original options order
+          console.log(`Question ${q.questionId} original options:`, q.options?.map(opt => `${opt.label}: ${opt.content}`));
+          
+          // Sort options by label to ensure A, B, C, D order
+          const sortedOptions = (q.options || []).sort((a, b) => a.label.localeCompare(b.label));
+          console.log(`Question ${q.questionId} sorted options:`, sortedOptions.map(opt => `${opt.label}: ${opt.content}`));
+          
+          return {
+            questionId: q.questionId,
+            partNumber: q.partNumber,
+            questionOrder: q.questionOrder,
+            questionText: q.questionText,
+            content: q.content, // For reading passages
+            audioUrl: q.audioUrl,
+            imageUrl: q.imageUrl,
+            options: sortedOptions
+          };
         });
         
-        console.log(`Loaded ${validQuestions.length} valid questions for part ${currentPartNumber} (filtered from ${transformedQuestions.length})`);
-        setCurrentQuestions(validQuestions);
+        console.log('Transformed questions:', transformedQuestions);
+        setCurrentQuestions(transformedQuestions);
         
         // Auto-play audio for listening parts
-        if (isListeningPart(currentPartNumber) && validQuestions.length > 0) {
+        if (isListeningPart(currentPartNumber) && transformedQuestions.length > 0) {
           // Create audio playlist from all questions with valid audio
-          const audioList = validQuestions
+          const audioList = transformedQuestions
             .filter(q => {
-              // More thorough audio URL validation
               if (!q.audioUrl) return false;
-              
-              // Check if audioUrl is a valid string and not empty
               const audioUrl = q.audioUrl.trim();
               if (audioUrl.length === 0) return false;
               
-              // Check if it's a valid audio file extension
               const validExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
               const hasValidExtension = validExtensions.some(ext => 
                 audioUrl.toLowerCase().includes(ext)
@@ -351,7 +347,7 @@ const SimpleTOEICTest = () => {
               url: `http://localhost:8080${q.audioUrl}`,
               questionId: q.questionId,
               questionText: q.questionText,
-              audioFileName: q.audioUrl.split('/').pop() // Extract filename for debugging
+              audioFileName: q.audioUrl.split('/').pop()
             }));
           
           console.log(`Created audio playlist for part ${currentPartNumber}:`, audioList);
@@ -361,9 +357,22 @@ const SimpleTOEICTest = () => {
           
           if (audioList.length > 0) {
             console.log(`Starting audio sequence with ${audioList.length} audio files`);
-            setTimeout(() => {
-              playAudioSequence(audioList, 0, 0);
-            }, 1000);
+            
+            // Wait for audio element to be ready before starting playback
+            const waitForAudioReady = (retries = 0) => {
+              if (audioRef.current) {
+                console.log('audioRef.current is ready, calling playAudioSequence');
+                playAudioSequence(audioList, 0, 0);
+              } else if (retries < 10) {
+                console.log(`Waiting for audioRef (attempt ${retries + 1}/10)...`);
+                setTimeout(() => waitForAudioReady(retries + 1), 200);
+              } else {
+                console.error('audioRef.current is still null after 10 attempts! Cannot play audio');
+              }
+            };
+            
+            // Start with a small delay to allow DOM to update
+            setTimeout(() => waitForAudioReady(), 100);
           } else {
             console.log(`No valid audio files found for part ${currentPartNumber}, marking as completed`);
             setIsAudioCompleted(true);
@@ -374,15 +383,15 @@ const SimpleTOEICTest = () => {
           setAudioPlaylist([]);
         }
       } catch (error) {
-        console.error('Error loading questions:', error);
-        setError('Không thể tải câu hỏi');
+        console.error('Error loading questions for part:', testParts[currentPartIndex]?.partNumber, error);
+        setError('Không thể tải câu hỏi cho part này');
       }
     };
 
-    if (questionsData.length > 0 && testParts.length > 0 && currentPartIndex < testParts.length) {
+    if (testParts.length > 0 && currentPartIndex < testParts.length) {
       loadQuestionsForCurrentPart();
     }
-  }, [currentPartIndex, questionsData, testParts, testId, playAudioSequence, isListeningPart]);
+  }, [currentPartIndex, testParts, testId, playAudioSequence, isListeningPart]);
 
   // Navigation functions with restriction to prevent going back
   const handleNextPart = () => {
@@ -908,24 +917,26 @@ const SimpleTOEICTest = () => {
         </div>
       </div>
 
-      {/* Enhanced audio element for listening parts */}
-      {isListeningPart(currentPart.partNumber) && (
-        <audio
-          ref={audioRef}
-          onPlay={() => {
-            setIsAudioPlaying(true);
-            console.log('Audio started playing');
-          }}
-          onPause={() => {
-            setIsAudioPlaying(false);
-            console.log('Audio paused');
-          }}
-          onEnded={() => {
-            setIsAudioPlaying(false);
-            console.log('Audio ended');
-          }}
-          onError={(e) => {
-            console.error('Audio element error:', {
+      {/* Enhanced audio element - always render but hide when not needed */}
+      <audio
+        ref={audioRef}
+        style={{ 
+          display: (currentPart && isListeningPart(currentPart.partNumber)) ? 'block' : 'none' 
+        }}
+        onPlay={() => {
+          setIsAudioPlaying(true);
+          console.log('Audio started playing');
+        }}
+        onPause={() => {
+          setIsAudioPlaying(false);
+          console.log('Audio paused');
+        }}
+        onEnded={() => {
+          setIsAudioPlaying(false);
+          console.log('Audio ended');
+        }}
+        onError={(e) => {
+          console.error('Audio element error:', {
               error: e.target.error,
               code: e.target.error?.code,
               message: e.target.error?.message,
@@ -946,7 +957,6 @@ const SimpleTOEICTest = () => {
           crossOrigin="anonymous"
           controls={false} // Hide controls for automatic playback
         />
-      )}
     </div>
   );
 };

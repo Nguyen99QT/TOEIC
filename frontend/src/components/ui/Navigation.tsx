@@ -11,71 +11,93 @@ const Navigation: React.FC = () => {
 
     const isActivePath = (path: string) => {
         // Special handling for dashboard routes
-        if (path === '/dashboard' || path === '/admin/dashboard') {
-            return location.pathname === '/dashboard' || location.pathname === '/admin/dashboard';
+        if (path === '/dashboard' || path === '/admin/dashboard' || path === '/collaborator/dashboard') {
+            return location.pathname === '/dashboard' || 
+                   location.pathname === '/admin/dashboard' || 
+                   location.pathname === '/collaborator/dashboard';
         }
         return location.pathname === path;
     };
 
     // Dynamic navigation based on user role
     const getDashboardPath = () => {
-        return currentUser?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
+        if (currentUser?.role === 'ADMIN') {
+            return '/admin/dashboard';
+        } else if (currentUser?.role === 'COLLABORATOR') {
+            return '/collaborator/dashboard';
+        } else {
+            return '/dashboard';
+        }
     };
 
-    const navLinks = [
-        { path: getDashboardPath(), label: 'Dashboard', icon: '📊' },
-        { path: '/lessons', label: 'Lessons', icon: '📚' },
-        { path: '/exercises', label: 'Exercises', icon: '✏️' },
-        { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
-        { path: '/blogs', label: 'Blog', icon: '📈' },
-        { path: '/feedback', label: 'Feedback', icon: '💬' },
-    ];
+    const getNavLinks = () => {
+        const baseLinks = [
+            { path: getDashboardPath(), label: 'Dashboard', icon: '📊' },
+            { path: '/lessons', label: 'Lessons', icon: '📚' },
+            { path: '/exercises', label: 'Exercises', icon: '✏️' },
+            { path: '/test-selection', label: 'Tests', icon: '📝' },
+            { path: '/flashcards', label: 'Flashcards', icon: '🎴' },
+            { path: '/blogs', label: 'Blog', icon: '📈' },
+        ];
+
+        // Add role-specific links
+        if (currentUser?.role === 'ADMIN' || currentUser?.role === 'COLLABORATOR') {
+            baseLinks.push(
+                { path: '/questions', label: 'My Questions', icon: '❓' }
+            );
+        }
+
+        baseLinks.push({ path: '/feedback', label: 'Feedback', icon: '💬' });
+        return baseLinks;
+    };
+
+    const navLinks = getNavLinks();
 
     return (
         <nav className="bg-white shadow-lg sticky top-0 z-50">
-            <div className="container mx-auto px-4">
-                <div className="flex justify-between items-center h-16">
+            <div className="w-full px-4 max-w-none">{/* Changed from container mx-auto to w-full */}
+                <div className="flex justify-between items-center h-14 gap-4">{/* Reduced from h-16 to h-14 */}
                     {/* Logo */}
                     <Link
                         to="/"
-                        className="flex items-center space-x-2 hover-grow"
+                        className="flex items-center space-x-2 hover-grow flex-shrink-0"
                     >
                         <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                             <span className="text-white font-bold text-lg">L</span>
                         </div>
                         <span className="text-xl font-bold gradient-text">LeEnglish</span>
-                        <span className="text-sm text-gray-500 hidden md:inline">TOEIC Platform</span>
+                        <span className="text-sm text-gray-500 hidden xl:inline">TOEIC Platform</span>
                     </Link>
 
                     {/* Desktop Navigation */}
                     {isAuthenticated && (
-                        <div className="hidden md:flex items-center space-x-6">
+                        <div className="hidden lg:flex items-center space-x-2 flex-shrink-0">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.path}
                                     to={link.path}
                                     className={`
-                    flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 hover-lift
+                    flex items-center space-x-1 px-2 py-2 rounded-lg transition-all duration-200 hover-lift text-sm
                     ${isActivePath(link.path)
                                             ? 'bg-blue-100 text-blue-700 font-medium'
                                             : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
                                         }
                   `}
                                 >
-                                    <span className="text-lg">{link.icon}</span>
-                                    <span>{link.label}</span>
+                                    <span className="text-base">{link.icon}</span>
+                                    <span className="hidden xl:inline">{link.label}</span>
                                 </Link>
                             ))}
                         </div>
                     )}
 
                     {/* Search Bar */}
-                    <div className="hidden lg:flex items-center space-x-4 flex-1 max-w-md mx-8">
+                    <div className="hidden xl:flex items-center flex-1 max-w-sm mx-4">
                         <div className="relative w-full">
                             <input
                                 type="text"
-                                placeholder="Search lessons, exercises..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                placeholder="Search..."
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                             />
                             <div className="absolute left-3 top-2.5 text-gray-400">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,15 +108,15 @@ const Navigation: React.FC = () => {
                     </div>
 
                     {/* User Actions */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 flex-shrink-0">
                         {isAuthenticated && currentUser ? (
                             <>
                                 {/* Notifications */}
                                 <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM21 9l-4-4H7l-4 4v5l4 4h10l4-4V9z" />
                                     </svg>
-                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
                                         3
                                     </span>
                                 </button>
@@ -103,14 +125,14 @@ const Navigation: React.FC = () => {
                                 <div className="relative">
                                     <button
                                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                                        className="flex items-center space-x-2 p-1 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                                     >
                                         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                                             <span className="text-white font-medium text-sm">
                                                 {currentUser.username?.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                        <span className="hidden md:block font-medium text-gray-700">
+                                        <span className="hidden lg:block font-medium text-gray-700 max-w-24 truncate">
                                             {currentUser.username}
                                         </span>
                                         <svg
@@ -182,7 +204,7 @@ const Navigation: React.FC = () => {
                                 </div>
                             </>
                         ) : (
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-2">
                                 <Link to="/login">
                                     <EnhancedButton variant="ghost" size="sm">
                                         Login
@@ -190,7 +212,8 @@ const Navigation: React.FC = () => {
                                 </Link>
                                 <Link to="/register">
                                     <EnhancedButton variant="primary" size="sm">
-                                        Sign Up
+                                        <span className="hidden sm:inline">Sign Up</span>
+                                        <span className="sm:hidden">Join</span>
                                     </EnhancedButton>
                                 </Link>
                             </div>
@@ -199,7 +222,7 @@ const Navigation: React.FC = () => {
                         {/* Mobile Menu Button */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="md:hidden p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                            className="lg:hidden p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
                             title="Open navigation menu"
                             aria-label="Open navigation menu"
                         >

@@ -57,14 +57,16 @@ const EditQuestionGroupPage = () => {
   useEffect(() => {
     const fetchGroup = async () => {
       try {
-        const token = localStorage.getItem('token') || 
-                     localStorage.getItem('authToken') || 
-                     localStorage.getItem('accessToken');
+        const token = localStorage.getItem('toeic_access_token') || 
+                     localStorage.getItem('token') || 
+                     localStorage.getItem('authToken');
         
         if (!token) {
           setError('No authentication token found');
           return;
         }
+
+        console.log('🔍 Fetching group for edit:', groupId);
 
         const response = await fetch(`http://localhost:8080/api/question-group/${groupId}`, {
           headers: {
@@ -151,7 +153,8 @@ const EditQuestionGroupPage = () => {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem('token') || 
+      const token = localStorage.getItem('toeic_access_token') || 
+                   localStorage.getItem('token') || 
                    localStorage.getItem('authToken') || 
                    localStorage.getItem('accessToken');
 
@@ -223,7 +226,7 @@ const EditQuestionGroupPage = () => {
       });
 
       if (response.ok) {
-        navigate(`/questions/view/${groupId}`);
+        navigate(`/questions/groups/${groupId}`);
       } else {
         const errorText = await response.text();
         console.error('Server error:', errorText);
@@ -265,7 +268,7 @@ const EditQuestionGroupPage = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Edit Question Group</h1>
           <button 
-            onClick={() => navigate(`/questions/view/${groupId}`)}
+            onClick={() => navigate(`/questions/groups/${groupId}`)}
             className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
@@ -489,7 +492,7 @@ const EditQuestionGroupPage = () => {
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={() => navigate(`/questions/view/${groupId}`)}
+              onClick={() => navigate(`/questions/groups/${groupId}`)}
               className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               disabled={saving}
             >

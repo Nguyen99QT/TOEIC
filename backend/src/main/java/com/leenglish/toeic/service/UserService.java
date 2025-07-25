@@ -390,6 +390,7 @@ public class UserService {
         dto.setEmail(user.getEmail());
         dto.setFullName(user.getFullName());
         dto.setRole(user.getRole());
+        dto.setMembershipType(user.getMembershipType());
         dto.setTotalScore(user.getTotalScore());
         dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());

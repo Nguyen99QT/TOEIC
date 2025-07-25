@@ -13,6 +13,25 @@ const TestResultsReview = ({ reviewResult, onReturnToTests }) => {
     ? (testResult.correctAnswers / testResult.totalQuestions * 100) 
     : 0;
   const totalScore = (testResult.scoreListen || 0) + (testResult.scoreRead || 0);
+  
+  // Advanced analytics
+  const listeningQuestions = questionReviews.filter(q => q && q.partNumber <= 4);
+  const readingQuestions = questionReviews.filter(q => q && q.partNumber > 4);
+  const listeningCorrect = listeningQuestions.filter(q => q.isCorrect).length;
+  const readingCorrect = readingQuestions.filter(q => q.isCorrect).length;
+  const listeningPercentage = listeningQuestions.length > 0 ? (listeningCorrect / listeningQuestions.length * 100) : 0;
+  const readingPercentage = readingQuestions.length > 0 ? (readingCorrect / readingQuestions.length * 100) : 0;
+  
+  // Performance level assessment
+  const getPerformanceLevel = (score) => {
+    if (score >= 860) return { level: 'Xuất sắc', color: '#059669', icon: '🏆' };
+    if (score >= 730) return { level: 'Tốt', color: '#16a34a', icon: '⭐' };
+    if (score >= 470) return { level: 'Trung bình', color: '#eab308', icon: '📈' };
+    if (score >= 220) return { level: 'Cần cải thiện', color: '#f59e0b', icon: '📚' };
+    return { level: 'Cần luyện tập nhiều hơn', color: '#dc2626', icon: '💪' };
+  };
+  
+  const performanceLevel = getPerformanceLevel(totalScore);
 
   // Early return if no data
   if (!reviewResult || !questionReviews || questionReviews.length === 0) {
@@ -151,6 +170,28 @@ const TestResultsReview = ({ reviewResult, onReturnToTests }) => {
       borderRadius: '8px',
       padding: '15px',
       textAlign: 'center'
+    },
+    sectionCard: {
+      backgroundColor: 'white',
+      border: '1px solid #e5e5e5',
+      borderRadius: '8px',
+      padding: '20px',
+      textAlign: 'center'
+    },
+    infoCard: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '15px',
+      backgroundColor: 'white',
+      border: '1px solid #e5e5e5',
+      borderRadius: '8px'
+    },
+    recommendationCard: {
+      padding: '15px',
+      borderRadius: '8px',
+      border: '1px solid #e5e5e5',
+      marginTop: '15px'
     }
   };
 
@@ -161,17 +202,140 @@ const TestResultsReview = ({ reviewResult, onReturnToTests }) => {
         <h1 style={{fontSize: '32px', marginBottom: '10px', color: '#1e40af'}}>
           🎉 Kết quả bài test TOEIC
         </h1>
-        <div style={{fontSize: '24px', marginBottom: '15px'}}>
+        
+        {/* TOEIC Score Display - Main Focus */}
+        <div style={{fontSize: '36px', fontWeight: 'bold', color: '#059669', marginBottom: '15px'}}>
+          {totalScore}/990
+        </div>
+        <div style={{fontSize: '18px', color: '#6b7280', marginBottom: '10px'}}>
+          Điểm TOEIC tổng
+        </div>
+        <div style={{fontSize: '12px', color: '#9ca3af', marginBottom: '20px', fontStyle: 'italic'}}>
+          Thang điểm TOEIC: 10-990 (Listening: 5-495, Reading: 5-495)
+        </div>
+        
+        {/* Section Scores */}
+        <div style={{display: 'flex', justifyContent: 'center', gap: '40px', marginBottom: '20px'}}>
+          <div style={{textAlign: 'center'}}>
+            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#3b82f6'}}>
+              {testResult.scoreListen || 0}
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280'}}>Listening</div>
+          </div>
+          <div style={{textAlign: 'center'}}>
+            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#8b5cf6'}}>
+              {testResult.scoreRead || 0}
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280'}}>Reading</div>
+          </div>
+        </div>
+        
+        {/* Answer Statistics */}
+        <div style={{fontSize: '18px', marginBottom: '10px', color: '#374151'}}>
           <span style={{color: '#16a34a', fontWeight: 'bold'}}>{testResult.correctAnswers}</span>
           <span style={{color: '#6b7280'}}> / </span>
           <span style={{color: '#1e40af', fontWeight: 'bold'}}>{testResult.totalQuestions}</span>
           <span style={{color: '#6b7280'}}> câu đúng</span>
+          <span style={{marginLeft: '10px', color: '#6b7280'}}>({percentage.toFixed(1)}%)</span>
         </div>
-        <div style={{fontSize: '20px', marginBottom: '10px'}}>
-          Tỷ lệ đúng: <span style={{color: '#1e40af', fontWeight: 'bold'}}>{percentage.toFixed(1)}%</span>
+        
+        {/* Performance Level */}
+        <div style={{
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          marginTop: '15px',
+          padding: '10px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px'
+        }}>
+          <span style={{fontSize: '20px', marginRight: '8px'}}>{performanceLevel.icon}</span>
+          <span style={{fontSize: '16px', fontWeight: 'bold', color: performanceLevel.color}}>
+            {performanceLevel.level}
+          </span>
         </div>
-        <div style={{fontSize: '28px', fontWeight: 'bold', color: '#059669'}}>
-          Điểm: {totalScore}/990
+      </div>
+
+      {/* Detailed Performance Analysis */}
+      <div style={styles.card}>
+        <h2 style={{fontSize: '24px', marginBottom: '20px'}}>📈 Phân tích chi tiết</h2>
+        
+        {/* Section Performance Comparison */}
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '25px'}}>
+          <div style={{...styles.sectionCard, borderLeft: '4px solid #3b82f6'}}>
+            <h3 style={{fontSize: '18px', color: '#3b82f6', marginBottom: '10px'}}>🎧 Listening Section</h3>
+            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#1e40af', marginBottom: '5px'}}>
+              {testResult.scoreListen || 0}/495
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280', marginBottom: '8px'}}>
+              {listeningCorrect}/{listeningQuestions.length} câu đúng ({listeningPercentage.toFixed(1)}%)
+            </div>
+            <div style={{fontSize: '12px', color: listeningPercentage >= 70 ? '#16a34a' : listeningPercentage >= 50 ? '#eab308' : '#dc2626'}}>
+              {listeningPercentage >= 70 ? '✅ Tốt' : listeningPercentage >= 50 ? '⚠️ Khá' : '❌ Cần cải thiện'}
+            </div>
+          </div>
+          
+          <div style={{...styles.sectionCard, borderLeft: '4px solid #8b5cf6'}}>
+            <h3 style={{fontSize: '18px', color: '#8b5cf6', marginBottom: '10px'}}>📖 Reading Section</h3>
+            <div style={{fontSize: '24px', fontWeight: 'bold', color: '#7c3aed', marginBottom: '5px'}}>
+              {testResult.scoreRead || 0}/495
+            </div>
+            <div style={{fontSize: '14px', color: '#6b7280', marginBottom: '8px'}}>
+              {readingCorrect}/{readingQuestions.length} câu đúng ({readingPercentage.toFixed(1)}%)
+            </div>
+            <div style={{fontSize: '12px', color: readingPercentage >= 70 ? '#16a34a' : readingPercentage >= 50 ? '#eab308' : '#dc2626'}}>
+              {readingPercentage >= 70 ? '✅ Tốt' : readingPercentage >= 50 ? '⚠️ Khá' : '❌ Cần cải thiện'}
+            </div>
+          </div>
+        </div>
+        
+        {/* Test Information */}
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '20px'}}>
+          <div style={styles.infoCard}>
+            <span style={{fontSize: '16px'}}>🎯</span>
+            <div>
+              <div style={{fontSize: '14px', color: '#6b7280'}}>Độ chính xác</div>
+              <div style={{fontSize: '16px', fontWeight: 'bold', color: percentage >= 70 ? '#16a34a' : '#dc2626'}}>
+                {percentage.toFixed(1)}%
+              </div>
+            </div>
+          </div>
+          
+          <div style={styles.infoCard}>
+            <span style={{fontSize: '16px'}}>📊</span>
+            <div>
+              <div style={{fontSize: '14px', color: '#6b7280'}}>Tổng câu hỏi</div>
+              <div style={{fontSize: '16px', fontWeight: 'bold'}}>{testResult.totalQuestions}</div>
+            </div>
+          </div>
+          
+          <div style={styles.infoCard}>
+            <span style={{fontSize: '16px'}}>📈</span>
+            <div>
+              <div style={{fontSize: '14px', color: '#6b7280'}}>Mức độ TOEIC</div>
+              <div style={{fontSize: '16px', fontWeight: 'bold', color: performanceLevel.color}}>
+                {totalScore >= 860 ? 'C1-C2' : totalScore >= 730 ? 'B2-C1' : totalScore >= 470 ? 'B1-B2' : 'A1-A2'}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Recommendations */}
+        <div style={{...styles.recommendationCard, backgroundColor: totalScore >= 730 ? '#f0f9ff' : totalScore >= 470 ? '#fffbeb' : '#fef2f2'}}>
+          <h3 style={{fontSize: '16px', marginBottom: '10px', color: '#374151'}}>
+            💡 Đề xuất cải thiện
+          </h3>
+          <div style={{fontSize: '14px', lineHeight: '1.5', color: '#4b5563'}}>
+            {totalScore >= 860 ? (
+              "🎉 Xuất sắc! Bạn đã đạt trình độ rất cao. Hãy tiếp tục duy trì và hoàn thiện kỹ năng."
+            ) : totalScore >= 730 ? (
+              "⭐ Kết quả tốt! Tập trung vào các kỹ năng yếu hơn để đạt điểm cao hơn."
+            ) : totalScore >= 470 ? (
+              `📚 Cần cải thiện thêm. ${listeningPercentage < readingPercentage ? 'Tập trung luyện Listening' : 'Tập trung luyện Reading'} để nâng cao điểm số.`
+            ) : (
+              "💪 Hãy luyện tập cơ bản từ đầu. Nên học từ vựng và ngữ pháp cơ bản trước khi làm test."
+            )}
+          </div>
         </div>
       </div>
 
@@ -184,11 +348,13 @@ const TestResultsReview = ({ reviewResult, onReturnToTests }) => {
               <h3 style={{fontSize: '18px', marginBottom: '10px', color: '#3b82f6'}}>
                 Part {stat.partNumber}
               </h3>
-              <div style={{fontSize: '16px', marginBottom: '5px'}}>
-                {stat.correct}/{stat.total} câu đúng
+              <div style={{fontSize: '20px', marginBottom: '5px', fontWeight: 'bold'}}>
+                <span style={{color: '#16a34a'}}>{stat.correct}</span>
+                <span style={{color: '#6b7280'}}>/</span>
+                <span style={{color: '#374151'}}>{stat.total}</span>
               </div>
-              <div style={{fontSize: '14px', color: stat.percentage >= 70 ? '#16a34a' : '#dc2626'}}>
-                {stat.percentage}%
+              <div style={{fontSize: '12px', color: '#6b7280'}}>
+                {stat.percentage >= 70 ? '✅' : '❌'} {stat.percentage}% đúng
               </div>
             </div>
           ))}

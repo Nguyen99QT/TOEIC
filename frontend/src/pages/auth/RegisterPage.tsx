@@ -2,6 +2,8 @@
  * ================================================================
  * REGISTER PAGE COMPONENT
  * ================================================================
+ * 
+ * Modern and clean user registration form
  */
 
 import React, { useState } from 'react';

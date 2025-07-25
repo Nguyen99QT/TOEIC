@@ -45,6 +45,12 @@ const CreateBlog = () => {
             return;
         }
 
+        // Kiểm tra role - chỉ COLLABORATOR và ADMIN mới được tạo blog
+        if (currentUser.role !== 'COLLABORATOR' && currentUser.role !== 'ADMIN') {
+            alert('Chỉ cộng tác viên và admin mới có thể tạo blog!');
+            return;
+        }
+
         setLoading(true);
 
         const formData = new FormData();
@@ -88,6 +94,44 @@ const CreateBlog = () => {
                 setLoading(false);
             });
     };
+
+    // Kiểm tra quyền trước khi render form
+    if (!isAuthenticated || !currentUser) {
+        return (
+            <div style={{
+                maxWidth: 800,
+                margin: '20px auto',
+                padding: 32,
+                backgroundColor: '#ffffff',
+                borderRadius: 12,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                textAlign: 'center'
+            }}>
+                <h2 style={{ color: '#ef4444', marginBottom: 16 }}>Yêu cầu đăng nhập</h2>
+                <p>Bạn cần đăng nhập để tạo bài viết blog.</p>
+            </div>
+        );
+    }
+
+    if (currentUser.role !== 'COLLABORATOR' && currentUser.role !== 'ADMIN') {
+        return (
+            <div style={{
+                maxWidth: 800,
+                margin: '20px auto',
+                padding: 32,
+                backgroundColor: '#ffffff',
+                borderRadius: 12,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+                textAlign: 'center'
+            }}>
+                <h2 style={{ color: '#ef4444', marginBottom: 16 }}>Không có quyền truy cập</h2>
+                <p>Chỉ cộng tác viên và admin mới có thể tạo bài viết blog.</p>
+                <p style={{ fontSize: 14, color: '#64748b', marginTop: 8 }}>
+                    Role hiện tại: {currentUser.role}
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div style={{

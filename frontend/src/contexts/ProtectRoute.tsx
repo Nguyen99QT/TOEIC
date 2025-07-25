@@ -23,10 +23,24 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     const loginTimestamp = localStorage.getItem('auth_login_timestamp');
     const hasValidTokens = localStorage.getItem('toeic_access_token') && localStorage.getItem('toeic_current_user');
 
-    // Check if login was recent (within last 10 seconds)
-    const isRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 10000;
+    // Check if login was recent (within last 15 seconds) - increased timeout
+    const isRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 15000;
 
-    persistentLogger.info(`🔍 ProtectedRoute check: auth=${isAuthenticated}, loading=${loading}, justLoggedIn=${!!justLoggedIn}, recentLogin=${!!isRecentLogin}, hasTokens=${!!hasValidTokens}`);
+    // Check if token is actually valid (not expired)
+    const isTokenValid = () => {
+        const token = localStorage.getItem('toeic_access_token');
+        if (!token) return false;
+        
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const now = Math.floor(Date.now() / 1000);
+            return payload.exp > now; // Token not expired
+        } catch {
+            return false;
+        }
+    };
+
+    persistentLogger.info(`🔍 ProtectedRoute check: auth=${isAuthenticated}, loading=${loading}, justLoggedIn=${!!justLoggedIn}, recentLogin=${!!isRecentLogin}, hasTokens=${!!hasValidTokens}, tokenValid=${isTokenValid()}`);
     console.log('🔍 ProtectedRoute check:', {
         loading,
         isAuthenticated,
@@ -35,17 +49,18 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         justLoggedIn: !!justLoggedIn,
         isRecentLogin: !!isRecentLogin,
         hasValidTokens,
+        tokenValid: isTokenValid(),
         timestamp: new Date().toISOString()
     });
 
     // If user just logged in and has valid tokens, allow access temporarily
-    if ((justLoggedIn || isRecentLogin) && hasValidTokens) {
+    if ((justLoggedIn || isRecentLogin) && hasValidTokens && isTokenValid()) {
         persistentLogger.info('⏳ ProtectedRoute: User just logged in with valid tokens, allowing access');
         console.log('⏳ ProtectedRoute: User just logged in with valid tokens, allowing access');
         // Clean up the flag after a delay to allow AuthContext to catch up
         setTimeout(() => {
             localStorage.removeItem('auth_just_logged_in');
-        }, 8000); // Increase timeout to 8 seconds
+        }, 12000); // Increase timeout to 12 seconds
         return <>{children}</>;
     }
 

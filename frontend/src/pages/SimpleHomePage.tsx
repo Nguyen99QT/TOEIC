@@ -6,6 +6,17 @@ const SimpleHomePage: React.FC = () => {
     const { isAuthenticated, currentUser, loading } = useAuth();
     const navigate = useNavigate();
 
+    // Helper function to get correct dashboard path based on user role
+    const getDashboardPath = () => {
+        if (currentUser?.role === 'ADMIN') {
+            return '/admin/dashboard';
+        } else if (currentUser?.role === 'COLLABORATOR') {
+            return '/collaborator/dashboard';
+        } else {
+            return '/dashboard';
+        }
+    };
+
     console.log('🏠 SimpleHomePage: Auth state:', { isAuthenticated, currentUser: currentUser?.username || 'guest', loading });
 
     // If user becomes authenticated, redirect to home to load full HomePage
@@ -48,7 +59,7 @@ const SimpleHomePage: React.FC = () => {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <button
-                                    onClick={() => navigate('/dashboard')}
+                                    onClick={() => navigate(getDashboardPath())}
                                     className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors transform hover:scale-105"
                                 >
                                     📊 Go to Dashboard

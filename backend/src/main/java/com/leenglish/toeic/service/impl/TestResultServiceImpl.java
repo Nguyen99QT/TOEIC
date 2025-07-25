@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +57,7 @@ public class TestResultServiceImpl implements TestResultService {
         // Lists to store detailed answers for database
         List<UserAnswer> detailedAnswers = new ArrayList<>();
         int listeningCorrect = 0, readingCorrect = 0;
+        int listeningTotal = 0, readingTotal = 0;
         
         // Calculate correct answers and prepare detailed answer records
         for (var testQuestion : test.getTestQuestions()) {
@@ -68,10 +68,17 @@ public class TestResultServiceImpl implements TestResultService {
             
             if (isCorrect) {
                 correctAnswers++;
-                // Count by part for TOEIC scoring
-                if (testQuestion.getPartNumber() <= 4) {
+            }
+            
+            // Count by part for TOEIC scoring (Parts 1-4 = Listening, Parts 5-7 = Reading)
+            if (testQuestion.getPartNumber() <= 4) {
+                listeningTotal++;
+                if (isCorrect) {
                     listeningCorrect++;
-                } else {
+                }
+            } else {
+                readingTotal++;
+                if (isCorrect) {
                     readingCorrect++;
                 }
             }
@@ -102,19 +109,32 @@ public class TestResultServiceImpl implements TestResultService {
                 userResult.setUser(user);
             }
             
-            // Calculate TOEIC-style scores for listening and reading
-            int listeningScore = Math.min(495, (int) (((double) listeningCorrect / (totalQuestions * 0.5)) * 495));
-            int readingScore = Math.min(495, (int) (((double) readingCorrect / (totalQuestions * 0.5)) * 495));
+            // Calculate TOEIC-style scores for listening and reading based on actual correct answers
+            // TOEIC standard: 495 max for each section
+            int listeningScore = 0;
+            int readingScore = 0;
+            
+            if (listeningTotal > 0) {
+                // Calculate listening score based on percentage of correct answers
+                double listeningPercentage = (double) listeningCorrect / listeningTotal;
+                listeningScore = Math.min(495, (int) Math.round(listeningPercentage * 495));
+            }
+            
+            if (readingTotal > 0) {
+                // Calculate reading score based on percentage of correct answers
+                double readingPercentage = (double) readingCorrect / readingTotal;
+                readingScore = Math.min(495, (int) Math.round(readingPercentage * 495));
+            }
             
             userResult.setScoreListen(listeningScore);
             userResult.setScoreRead(readingScore);
-            userResult.setStartedAt(Timestamp.valueOf(LocalDateTime.now().minusHours(2))); // Assume 2-hour test
-            userResult.setFinishedAt(Timestamp.valueOf(LocalDateTime.now()));
+            // Note: startedAt and finishedAt are not set since we don't have actual timing functionality
             
             // Save to database
             userResult = userResultRepository.save(userResult);
             System.out.println("=== RESULT SAVED: Test result saved to database with ID: " + userResult.getResultId());
-            System.out.println("=== RESULT DETAILS: Total Score: " + (listeningScore + readingScore) + ", Listening: " + listeningScore + ", Reading: " + readingScore);
+            System.out.println("=== RESULT DETAILS: Total Score: " + (listeningScore + readingScore) + ", Listening: " + listeningScore + " (" + listeningCorrect + "/" + listeningTotal + "), Reading: " + readingScore + " (" + readingCorrect + "/" + readingTotal + ")");
+            System.out.println("=== SCORE BREAKDOWN: Listening " + listeningCorrect + "/" + listeningTotal + " = " + listeningScore + "/495, Reading " + readingCorrect + "/" + readingTotal + " = " + readingScore + "/495");
             
             // Now save detailed answers with the UserResult reference
             for (UserAnswer answer : detailedAnswers) {

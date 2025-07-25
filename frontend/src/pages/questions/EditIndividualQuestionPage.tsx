@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getToken } from '../../services/auth';
 
 interface Option {
   label: string;
@@ -17,7 +18,7 @@ interface Question {
 }
 
 const EditIndividualQuestionPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { questionId } = useParams<{ questionId: string }>();
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,22 +32,33 @@ const EditIndividualQuestionPage: React.FC = () => {
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        const token = getToken();
         if (!token) {
-          setError('No authentication token found.');
+          setError('No authentication token found. Please login again.');
           setLoading(false);
           return;
         }
-        const response = await fetch(`http://localhost:8080/api/question-bank/${id}`, {
+        
+        console.log('🔍 Fetching question with ID:', questionId);
+        console.log('🔑 Using token:', token.substring(0, 30) + '...');
+        
+        const response = await fetch(`http://localhost:8080/api/question-bank/${questionId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
+        
+        console.log('📡 Response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
         }
+        
         const data = await response.json();
+        console.log('✅ Question data received:', data);
         // Map API fields to local state with safe defaults
         setQuestion({
           id: data.questionId || 0,
@@ -68,13 +80,14 @@ const EditIndividualQuestionPage: React.FC = () => {
               ]
         });
       } catch (err: any) {
+        console.error('❌ Error fetching question:', err);
         setError(err.message || 'Error fetching question');
       } finally {
         setLoading(false);
       }
     };
     fetchQuestion();
-  }, [id]);
+  }, [questionId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!question) return;
@@ -111,12 +124,15 @@ const EditIndividualQuestionPage: React.FC = () => {
     setError(''); // Clear previous errors
     
     try {
-      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const token = getToken();
       if (!token) {
-        setError('No authentication token found.');
+        setError('No authentication token found. Please login again.');
         setSaving(false);
         return;
       }
+      
+      console.log('🔄 Updating question:', questionId);
+      
       const formData = new FormData();
       // Build question DTO
       const questionDTO = {
@@ -125,21 +141,48 @@ const EditIndividualQuestionPage: React.FC = () => {
         correctOptionLabel: question.correctOption, // Đúng tên trường backend cần
         options: question.options,
       };
-      formData.append('question', new Blob([JSON.stringify(questionDTO)], { type: 'application/json' }));
-      if (audioFile) formData.append('audio', audioFile);
-      if (imageFile) formData.append('image', imageFile);
       
-      const response = await fetch(`http://localhost:8080/api/question-bank/${id}`, {
+      console.log('📝 Question data:', questionDTO);
+      formData.append('question', new Blob([JSON.stringify(questionDTO)], { type: 'application/json' }));
+      
+      if (audioFile) {
+        formData.append('audio', audioFile);
+        console.log('🎵 Audio file added:', audioFile.name, 'Size:', audioFile.size);
+      }
+      if (imageFile) {
+        formData.append('image', imageFile);
+        console.log('🖼️ Image file added:', imageFile.name, 'Size:', imageFile.size);
+      }
+      
+      // Log all form data contents
+      console.log('🔍 FormData contents:');
+      Array.from(formData.entries()).forEach(([key, value]) => {
+        if (value instanceof File) {
+          console.log(`  ${key}: ${value.name} (${value.size} bytes)`);
+        } else if (value && typeof value === 'object' && 'size' in value) {
+          console.log(`  ${key}: Blob (${(value as any).size} bytes)`);
+        } else {
+          console.log(`  ${key}:`, value);
+        }
+      });
+      
+      const response = await fetch(`http://localhost:8080/api/question-bank/${questionId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
         body: formData,
       });
+      
+      console.log('📡 Update response status:', response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Update failed:', errorText);
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
+      
+      console.log('✅ Question updated successfully!');
       alert('Question updated successfully!');
       navigate('/questions/my');
     } catch (err: any) {

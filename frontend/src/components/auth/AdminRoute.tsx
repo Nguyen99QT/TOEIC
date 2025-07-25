@@ -11,16 +11,19 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { isAuthenticated, currentUser, loading } = useAuth();
   const location = useLocation();
 
-  console.log('🔍 AdminRoute Debug:', {
-    loading,
-    isAuthenticated,
-    currentUser: currentUser ? {
-      id: currentUser.id,
-      username: currentUser.username,
-      role: currentUser.role
-    } : null,
-    pathname: location.pathname
-  });
+  // Debug logging only in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 AdminRoute Debug:', {
+      loading,
+      isAuthenticated,
+      currentUser: currentUser ? {
+        id: currentUser.id,
+        username: currentUser.username,
+        role: currentUser.role
+      } : null,
+      pathname: location.pathname
+    });
+  }
 
   // Show loading spinner while checking authentication
   if (loading) {

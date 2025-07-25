@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import AuthDebugMonitor from '../components/common/AuthDebugMonitor';
 import Breadcrumb from '../components/ui/Breadcrumb';
 import { useAuth } from '../contexts/AuthContext';
 import { useBreadcrumb } from '../hooks/useBreadcrumb';
@@ -186,6 +187,9 @@ const DashboardPage: React.FC = () => {
       initial="hidden"
       animate="visible"
     >
+      {/* Auth Debug Monitor - Disabled in production */}
+      {process.env.NODE_ENV === 'development' && false && <AuthDebugMonitor />}
+      
       {/* Breadcrumb Navigation */}
       <motion.div variants={cardVariants}>
         <Breadcrumb items={breadcrumbItems} />
@@ -265,6 +269,57 @@ const DashboardPage: React.FC = () => {
             <FireIcon className="w-12 h-12 text-orange-500" />
           </div>
         </motion.div>
+      </motion.div>
+
+      {/* Quick Test Widget */}
+      <motion.div
+        className="bg-gradient-to-r from-green-500 to-blue-600 rounded-xl shadow-lg p-8 text-white"
+        variants={cardVariants}
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+              <AcademicCapIcon className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold">Ready for a TOEIC Test?</h3>
+              <p className="text-green-100 mt-1">Take a practice test and track your progress</p>
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => window.location.href = '/tests'}
+              className="bg-white text-green-600 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <span>Quick Test</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </button>
+            <button
+              onClick={() => window.location.href = '/tests'}
+              className="bg-white bg-opacity-20 text-white hover:bg-opacity-30 font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              Full Test
+            </button>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center space-x-6 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-300 rounded-full"></div>
+            <span>15 min Quick Test</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+            <span>120 min Full Test</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-yellow-300 rounded-full"></div>
+            <span>Instant Results</span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Study Time & Quick Actions */}

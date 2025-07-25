@@ -49,12 +49,15 @@ const ViewQuestionGroupPage = () => {
   useEffect(() => {
     const fetchGroup = async () => {
       try {
-        const token = getToken();
+        const token = localStorage.getItem('toeic_access_token') || getToken();
 
         if (!token) {
           setError('No authentication token found');
           return;
         }
+
+        console.log('🔍 Fetching group with ID:', groupId);
+        console.log('🔑 Using token:', token ? 'present' : 'missing');
 
         const response = await fetch(`http://localhost:8080/api/question-group/${groupId}`, {
           headers: {
@@ -63,15 +66,20 @@ const ViewQuestionGroupPage = () => {
           }
         });
 
+        console.log('📡 Response status:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('✅ Group data received:', data);
           setGroup(data);
         } else if (response.status === 404) {
           setError('Question group not found');
         } else if (response.status === 403) {
           setError('You do not have permission to view this question group');
         } else {
-          setError('Failed to load question group');
+          const errorText = await response.text();
+          console.error('❌ API Error:', errorText);
+          setError('Failed to load question group: ' + errorText);
         }
       } catch (err: any) {
         console.error('Error fetching group:', err);
@@ -87,7 +95,7 @@ const ViewQuestionGroupPage = () => {
   }, [groupId]);
 
   const handleEdit = () => {
-    navigate(`/questions/edit/${groupId}`);
+    navigate(`/questions/groups/${groupId}/edit`);
   };
 
   const handleDelete = async () => {
@@ -96,7 +104,8 @@ const ViewQuestionGroupPage = () => {
     }
 
     try {
-      const token = localStorage.getItem('token') ||
+      const token = localStorage.getItem('toeic_access_token') || 
+        localStorage.getItem('token') ||
         localStorage.getItem('authToken') ||
         localStorage.getItem('accessToken');
 

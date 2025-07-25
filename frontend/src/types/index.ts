@@ -112,7 +112,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   role: "ADMIN" | "USER" | "COLLABORATOR";
-  membershipType: "FREE" | "PREMIUM";
+  membershipType: "BASIC" | "PREMIUM" | "VIP";
   gender?: Gender;
   birthDate?: string;
   dateOfBirth?: string; // Added for backend compatibility

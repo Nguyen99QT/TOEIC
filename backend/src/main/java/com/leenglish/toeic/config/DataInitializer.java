@@ -2,12 +2,16 @@ package com.leenglish.toeic.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.leenglish.toeic.domain.Lesson;
 import com.leenglish.toeic.domain.FlashcardSet;
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.repository.LessonRepository;
 import com.leenglish.toeic.repository.FlashcardSetRepository;
+import com.leenglish.toeic.repository.UserRepository;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -17,9 +21,33 @@ public class DataInitializer implements CommandLineRunner {
     
     @Autowired
     private FlashcardSetRepository flashcardSetRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
+        // Initialize Admin User
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            System.out.println("🔧 Creating admin user...");
+            
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setEmail("admin@toeic.com");
+            admin.setPasswordHash(passwordEncoder.encode("password"));
+            admin.setFullName("Administrator");
+            admin.setRole(Role.ADMIN);
+            admin.setIsActive(true);
+            admin.setIsEmailVerified(true);
+            admin.setTotalScore(0);
+            admin.setIsPremium(false);
+            
+            userRepository.save(admin);
+            System.out.println("✅ Created admin user with username: admin, password: password");
+        }
         // Initialize Lessons
         if (lessonRepository.count() == 0) {
             System.out.println("? Initializing sample lessons...");

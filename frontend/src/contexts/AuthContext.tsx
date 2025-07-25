@@ -57,6 +57,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log('🔍 User exists:', !!user);
                 console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'null');
                 console.log('🔍 User info:', user ? { id: user.id, username: user.username } : 'null');
+                
+                // Debug localStorage directly in AuthContext
+                console.log('🔍 Debug localStorage from AuthContext:', {
+                    'token': localStorage.getItem('token') ? 'EXISTS' : 'MISSING',
+                    'toeic_access_token': localStorage.getItem('toeic_access_token') ? 'EXISTS' : 'MISSING',
+                    'accessToken': localStorage.getItem('accessToken') ? 'EXISTS' : 'MISSING',
+                    'authToken': localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
+                    'toeic_current_user': localStorage.getItem('toeic_current_user') ? 'EXISTS' : 'MISSING',
+                    'currentUser': localStorage.getItem('currentUser') ? 'EXISTS' : 'MISSING'
+                });
 
                 if (token && user && checkAuth()) {
                     console.log('✅ Found valid auth for:', user.username);
@@ -67,14 +77,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('ℹ️ No valid authentication found - user is guest');
                     console.log('🔍 checkAuth() result:', token && user ? checkAuth() : 'skipped (missing token or user)');
 
-                    // Check if we have a recent login success flag
+                    // Check if we have a recent login success flag OR valid tokens
                     const loginSuccess = localStorage.getItem('toeic_login_success');
-                    if (loginSuccess === 'true' && token && user) {
-                        console.log('🔧 Found recent login success flag, restoring authentication');
+                    const justLoggedIn = localStorage.getItem('auth_just_logged_in');
+                    const loginTimestamp = localStorage.getItem('auth_login_timestamp');
+                    
+                    // Check if login was very recent (within last 30 seconds)
+                    const isVeryRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 30000;
+                    
+                    if ((loginSuccess === 'true' || justLoggedIn === 'true' || isVeryRecentLogin) && token && user) {
+                        console.log('🔧 Found recent login indicators, forcibly restoring authentication');
+                        console.log('🔧 Login indicators:', { loginSuccess, justLoggedIn, isVeryRecentLogin, hasToken: !!token, hasUser: !!user });
                         setCurrentUser(user);
                         setIsAuthenticated(true);
                         startAutoRefresh();
-                        localStorage.removeItem('toeic_login_success'); // Clear flag after use
+                        
+                        // Clean up flags after successful restoration
+                        setTimeout(() => {
+                            localStorage.removeItem('toeic_login_success');
+                            localStorage.removeItem('auth_just_logged_in');
+                        }, 5000);
+                        return;
+                    }
+
+                    // If we have valid-looking token and user but checkAuth fails, try to restore anyway
+                    if (token && user && token.length > 20 && user.username) {
+                        console.warn('🔧 Token and user exist but checkAuth failed - attempting forced restoration');
+                        setCurrentUser(user);
+                        setIsAuthenticated(true);
+                        startAutoRefresh();
                         return;
                     }
 
@@ -123,15 +154,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (usernameOrEmail: string, password: string): Promise<void> => {
         try {
+            console.log('🔍 AuthContext: Starting login process...');
             const { login: authLogin, startAutoRefresh } = await import('../services/auth');
+            
+            console.log('🔍 AuthContext: Calling authLogin...');
             const response = await authLogin({
                 username: usernameOrEmail,
                 password: password
             });
 
             console.log('🔍 AuthContext: Login response received:', response);
+            console.log('🔍 AuthContext: Checking localStorage after authLogin...');
+            console.log('🔍 AuthContext: Token in localStorage:', !!localStorage.getItem('toeic_access_token'));
+            console.log('🔍 AuthContext: User in localStorage:', !!localStorage.getItem('toeic_current_user'));
 
             if (response && (response.token || response.accessToken)) {
+                // ✅ FIX: Explicitly save token to localStorage
+                const token = response.token || response.accessToken;
+                console.log('🔍 AuthContext: Manually saving token to localStorage...');
+                
+                const { setToken } = await import('../services/auth');
+                setToken(token);
+                console.log('✅ AuthContext: Token saved manually');
+
+                // Also save user data to localStorage with the setCurrentUser function
+                const { setCurrentUser: storeUser } = await import('../services/auth');
+                
                 // Handle both role (string) and roles (array) from backend
                 let userRole: "ADMIN" | "USER" | "COLLABORATOR" = 'USER';
 
@@ -157,17 +205,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: response.email || '',
                     fullName: response.username || '',
                     role: userRole,
-                    membershipType: "FREE"
+                    membershipType: response.membershipType || "BASIC"
                 };
 
                 console.log('✅ AuthContext: Setting user data:', user);
+
+                // Store user data in localStorage immediately
+                storeUser(user);
+                console.log('✅ AuthContext: User data stored in localStorage');
 
                 // Use React's state batching to ensure updates happen together
                 setCurrentUser(user);
                 setIsAuthenticated(true);
 
-                // Set a flag to indicate successful login for persistence
+                // Set multiple flags to indicate successful login for persistence
                 localStorage.setItem('toeic_login_success', 'true');
+                localStorage.setItem('auth_just_logged_in', 'true');
+                localStorage.setItem('auth_login_timestamp', Date.now().toString());
 
                 // Add a verification step to ensure state updates properly
                 setTimeout(() => {
@@ -177,7 +231,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         localStorage: {
                             token: !!localStorage.getItem('toeic_access_token'),
                             user: !!localStorage.getItem('toeic_current_user'),
-                            loginFlag: localStorage.getItem('toeic_login_success')
+                            loginFlag: localStorage.getItem('toeic_login_success'),
+                            justLoggedIn: localStorage.getItem('auth_just_logged_in'),
+                            loginTimestamp: localStorage.getItem('auth_login_timestamp')
                         }
                     });
                 }, 200);
@@ -213,9 +269,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { removeToken, stopAutoRefresh } = await import('../services/auth');
             removeToken();
             stopAutoRefresh();
-            
-            // Clear login success flag
-            localStorage.removeItem('toeic_login_success');
         } catch (error) {
             console.error('Error during logout:', error);
             // Fallback to manual cleanup
@@ -234,6 +287,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('completedExercises');
         }
 
+        // Clear all authentication flags
+        localStorage.removeItem('toeic_login_success');
+        localStorage.removeItem('auth_just_logged_in');
+        localStorage.removeItem('auth_login_timestamp');
+        
         setCurrentUser(null);
         setIsAuthenticated(false);
         console.log('✅ User logged out successfully');
@@ -315,6 +373,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setIsAuthenticated(true);
                 return;
             }
+        }
+
+        // Auto-restore authentication if we have tokens but not authenticated
+        if (!loading && !isAuthenticated && !currentUser) {
+            const checkForValidAuth = async () => {
+                try {
+                    const { getToken, getCurrentUser } = await import('../services/auth');
+                    const token = getToken();
+                    const storedUser = getCurrentUser();
+                    
+                    // Check for recent login flags
+                    const justLoggedIn = localStorage.getItem('auth_just_logged_in');
+                    const loginSuccess = localStorage.getItem('toeic_login_success');
+                    const loginTimestamp = localStorage.getItem('auth_login_timestamp');
+                    const isVeryRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 30000;
+                    
+                    if (token && storedUser && (justLoggedIn || loginSuccess || isVeryRecentLogin)) {
+                        console.log('🔄 Auto-restoring authentication from valid tokens and flags');
+                        setCurrentUser(storedUser);
+                        setIsAuthenticated(true);
+                    }
+                } catch (error) {
+                    console.error('Error in auto-restore:', error);
+                }
+            };
+            
+            checkForValidAuth();
         }
     }, [loading, isAuthenticated, currentUser]);
 

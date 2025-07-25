@@ -195,7 +195,7 @@ const TOEICQuestionGroupForm = () => {
     setProgress(10);
 
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+      const token = localStorage.getItem('toeic_access_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
       if (!token) {
         toast.error('Authentication token not found! Please login again.');
         return;
@@ -594,20 +594,6 @@ const TOEICQuestionGroupForm = () => {
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  console.log('🔍 DEBUG - Current form data:');
-                  console.log('Group Data:', groupData);
-                  console.log('Content:', content);
-                  console.log('Questions:', questions);
-                  console.log('Current Part:', currentPart);
-                  toast.info('Debug info logged to console');
-                }}
-                className="px-6 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
-              >
-                Debug Data
               </button>
               <button
                 type="submit"

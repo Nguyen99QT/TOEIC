@@ -107,9 +107,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         await _audioPlayer.stop();
         
         // Try download method for better compatibility
-        if (_localFilePath == null) {
-          _localFilePath = await _downloadAudioFile(widget.audioUrl);
-        }
+        _localFilePath ??= await _downloadAudioFile(widget.audioUrl);
         
         if (_localFilePath != null) {
           print('Playing from local file: $_localFilePath');

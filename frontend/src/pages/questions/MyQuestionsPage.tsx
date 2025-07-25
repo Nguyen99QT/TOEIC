@@ -43,11 +43,6 @@ const MyQuestionsPage = () => {
         // Get token using auth service
         const token = getToken();
         
-        console.log('=== MyQuestionsPage Debug ===');
-        console.log('Token found:', token ? 'Yes' : 'No');
-        console.log('Token preview:', token ? token.substring(0, 50) + '...' : 'None');
-        console.log('User from context:', user);
-        
         if (!token) {
           setError('No authentication token found. Please login again.');
           return;
@@ -55,30 +50,22 @@ const MyQuestionsPage = () => {
 
         // Fetch question groups - try multiple endpoints
         try {
-          console.log('Fetching question groups from /api/question-group/my...');
           let groupsResponse = await fetch('http://localhost:8080/api/question-group/my', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
-
-          console.log('My Groups response status:', groupsResponse.status);
-          console.log('My Groups response headers:', Object.fromEntries(groupsResponse.headers.entries()));
           
           if (groupsResponse.ok) {
             const groupsData = await groupsResponse.json();
-            console.log('Groups data received:', groupsData);
             setQuestionGroups(Array.isArray(groupsData) ? groupsData : []);
           } else {
             const errorText = await groupsResponse.text();
-            console.warn('Groups fetch failed with status:', groupsResponse.status);
-            console.warn('Error response body:', errorText);
             
             // Try to parse error as JSON
             try {
               const errorJson = JSON.parse(errorText);
-              console.warn('Parsed error:', errorJson);
               if (groupsResponse.status === 403) {
                 setError('Access denied. You may not have permission to view question groups.');
               } else if (groupsResponse.status === 401) {
@@ -91,7 +78,6 @@ const MyQuestionsPage = () => {
             }
           }
         } catch (err) {
-          console.error('Groups fetch network error:', err);
           setError(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`);
           setQuestionGroups([]);
         }
@@ -105,20 +91,21 @@ const MyQuestionsPage = () => {
             }
           });
 
-          console.log('Questions response status:', questionsResponse.status);
-          
           if (questionsResponse.ok) {
             const questionsData = await questionsResponse.json();
             setQuestions(questionsData || []);
           } else {
-            console.warn('Questions fetch failed with status:', questionsResponse.status);
+            if (questionsResponse.status === 401) {
+              setError('Authentication failed for individual questions. Please login again.');
+            } else {
+              setError(`Failed to load individual questions: HTTP ${questionsResponse.status}`);
+            }
           }
         } catch (err) {
-          console.error('Questions fetch error:', err);
+          setError(`Network error while fetching questions: ${err instanceof Error ? err.message : 'Unknown error'}`);
         }
 
       } catch (err: any) {
-        console.error('Error fetching data:', err);
         setError(err.message || 'An error occurred');
       } finally {
         setLoading(false);
@@ -151,26 +138,28 @@ const MyQuestionsPage = () => {
       setQuestionGroups(prev => prev.filter(group => group.groupId !== groupId));
       alert(`Group "${groupTitle}" deleted successfully`);
     } catch (error) {
-      console.error('Error deleting group:', error);
       alert('Failed to delete group: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
   // Individual Question: Edit & Delete
   const handleEditIndividualQuestion = (questionId: number) => {
-    navigate(`/questions/edit-individual/${questionId}`);
+    navigate(`/questions/${questionId}/edit`);
   };
 
   const handleDeleteIndividualQuestion = async (questionId: number) => {
     if (!window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
       return;
     }
+    
     try {
       const token = getToken();
+      
       if (!token) {
         alert('No authentication token found');
         return;
       }
+      
       const response = await fetch(`http://localhost:8080/api/question-bank/${questionId}`, {
         method: 'DELETE',
         headers: {
@@ -178,13 +167,17 @@ const MyQuestionsPage = () => {
           'Content-Type': 'application/json',
         },
       });
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
+      
+      // Update UI
       setQuestions(prev => prev.filter(q => q.questionId !== questionId));
+      
       alert('Question deleted successfully');
     } catch (error) {
-      console.error('Error deleting question:', error);
       alert('Failed to delete question: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
@@ -212,17 +205,6 @@ const MyQuestionsPage = () => {
         <p className="mt-2 text-gray-600">
           Questions and Question Groups created by {user?.fullName || user?.username}
         </p>
-      </div>
-
-      {/* Debug Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <h3 className="text-sm font-medium text-blue-800">Debug Information</h3>
-        <div className="mt-2 text-xs text-blue-600">
-          <p>Questions loaded: {questions.length}</p>
-          <p>Question Groups loaded: {questionGroups.length}</p>
-          <p>User: {user?.username || 'Not found'}</p>
-          <p>Token: {getToken() ? 'Present' : 'Missing'}</p>
-        </div>
       </div>
 
       {/* Tabs */}
@@ -410,13 +392,13 @@ const MyQuestionsPage = () => {
                       <div className="flex space-x-2">
                         <button 
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          onClick={() => navigate(`/questions/view/${group.groupId}`)}
+                          onClick={() => navigate(`/questions/groups/${group.groupId}`)}
                         >
                           View
                         </button>
                         <button 
                           className="text-green-600 hover:text-green-800 text-sm font-medium"
-                          onClick={() => navigate(`/questions/edit/${group.groupId}`)}
+                          onClick={() => navigate(`/questions/groups/${group.groupId}/edit`)}
                         >
                           Edit
                         </button>

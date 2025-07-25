@@ -138,6 +138,22 @@ apiClient.interceptors.response.use(
 
     // Handle JWT token refresh on 401 errors
     if (error.response?.status === 401 && original && !original._retry) {
+      console.warn("🔐 Unauthorized error detected:", error.config?.url);
+
+      // Check if this is a login request - don't try to refresh for login failures
+      if (error.config?.url?.includes('/auth/login')) {
+        console.log("🔐 Login request failed, not attempting token refresh");
+        return Promise.reject(error);
+      }
+
+      // Check if user just logged in recently - be more lenient
+      const loginTimestamp = localStorage.getItem('auth_login_timestamp');
+      const isVeryRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 30000; // 30 seconds grace period
+      
+      if (isVeryRecentLogin) {
+        console.log("🔧 Recent login detected, will be more patient with 401 errors");
+      }
+
       original._retry = true;
 
       const refreshToken =
@@ -181,24 +197,38 @@ apiClient.interceptors.response.use(
         } catch (refreshError: any) {
           console.error("❌ Token refresh failed:", refreshError);
 
-          // Check if refresh endpoint exists and user session is valid
-          if (refreshError.response?.status === 404) {
-            console.log("🔄 Refresh endpoint not found, redirecting to login");
-          } else if (refreshError.response?.status === 401) {
-            console.log("🔄 Refresh token invalid, redirecting to login");
-          } else {
-            console.log(
-              "🔄 Refresh failed for unknown reason, redirecting to login"
-            );
-          }
+          // Only trigger auth failure if it's not a very recent login
+          if (!isVeryRecentLogin) {
+            // Check if refresh endpoint exists and user session is valid
+            if (refreshError.response?.status === 404) {
+              console.log("🔄 Refresh endpoint not found, redirecting to login");
+            } else if (refreshError.response?.status === 401) {
+              console.log("🔄 Refresh token invalid, redirecting to login");
+            } else {
+              console.log(
+                "🔄 Refresh failed for unknown reason, redirecting to login"
+              );
+            }
 
-          // Clear tokens and redirect gracefully
-          handleAuthFailure();
+            // Clear tokens and redirect gracefully
+            handleAuthFailure();
+          } else {
+            console.log("🔧 Recent login detected, not triggering auth failure on refresh error");
+          }
+          
           return Promise.reject(error);
         }
       } else {
-        console.log("🚫 No refresh token available, redirecting to login");
-        handleAuthFailure();
+        console.log("🚫 No refresh token available");
+        
+        // Only trigger auth failure if it's not a very recent login
+        if (!isVeryRecentLogin) {
+          console.log("🔄 Redirecting to login");
+          handleAuthFailure();
+        } else {
+          console.log("🔧 Recent login detected, not triggering auth failure immediately");
+        }
+        
         return Promise.reject(error);
       }
     }
@@ -218,6 +248,17 @@ apiClient.interceptors.response.use(
  * Handle authentication failure gracefully
  */
 const handleAuthFailure = () => {
+  console.warn('⚠️ Authentication failure detected in API interceptor');
+  
+  // Check if user just logged in recently - don't logout immediately
+  const loginTimestamp = localStorage.getItem('auth_login_timestamp');
+  const isVeryRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 60000; // 1 minute grace period
+  
+  if (isVeryRecentLogin) {
+    console.log('🔧 Recent login detected, not clearing auth data immediately');
+    return; // Don't clear auth data for recent logins
+  }
+
   // Clear all auth data - all possible keys
   localStorage.removeItem("toeic_access_token");
   localStorage.removeItem("toeic_refresh_token");
@@ -227,6 +268,11 @@ const handleAuthFailure = () => {
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
   localStorage.removeItem("currentUser");
+  
+  // Clear auth flags
+  localStorage.removeItem('auth_just_logged_in');
+  localStorage.removeItem('toeic_login_success');
+  localStorage.removeItem('auth_login_timestamp');
 
   // Set a flag to prevent immediate redirect loops
   sessionStorage.setItem("authFailed", "true");

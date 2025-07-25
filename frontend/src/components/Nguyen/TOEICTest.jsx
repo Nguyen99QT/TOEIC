@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getToken } from '../../services/auth';
 
 const TOEICTest = () => {
   const { testId } = useParams();
@@ -29,10 +30,34 @@ const TOEICTest = () => {
   const isListeningPart = (partNumber) => partNumber <= 4;
   const isReadingSection = () => currentPartIndex >= 4;
 
+  // Auth headers helper
+  const getAuthHeaders = useCallback(() => {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, []);
+
   // Initialize test data
+  const loadTestData = useCallback(async () => {
+    try {
+      console.log('Loading test data for testId:', testId);
+      setIsLoading(true);
+      const response = await axios.get(`http://localhost:8080/api/tests/${testId}/parts`, {
+        headers: getAuthHeaders()
+      });
+      console.log('Test parts loaded:', response.data);
+      setTestParts(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error loading test data:', error);
+      setError('Không thể tải dữ liệu bài test');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [testId, getAuthHeaders]);
+
   useEffect(() => {
     loadTestData();
-  }, [testId]);
+  }, [loadTestData]);
 
   // Timer effect
   useEffect(() => {
@@ -51,36 +76,45 @@ const TOEICTest = () => {
     return () => clearInterval(timer);
   }, [isTestStarted, isTestCompleted, timeRemaining]);
 
-  // Load questions when part changes
-  useEffect(() => {
-    if (testParts.length > 0 && currentPartIndex < testParts.length) {
-      loadQuestionsForCurrentPart();
-    }
-  }, [currentPartIndex, testParts]);
-
-  const loadTestData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`http://localhost:8080/api/tests/${testId}/parts`);
-      setTestParts(response.data);
-      setError(null);
-    } catch (error) {
-      console.error('Error loading test data:', error);
-      setError('Không thể tải dữ liệu bài test');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const loadQuestionsForCurrentPart = async () => {
-    if (!testParts[currentPartIndex]) return;
+    if (!testParts[currentPartIndex]) {
+      console.log('❌ No part at index:', currentPartIndex, 'testParts:', testParts);
+      return;
+    }
     
     try {
       const partNumber = testParts[currentPartIndex].partNumber;
+      console.log('🔄 Loading questions for part:', partNumber, 'testId:', testId);
+      console.log('🔄 Making request to:', `http://localhost:8080/api/tests/${testId}/part/${partNumber}/questions`);
+      
+      setCurrentQuestions([]); // Clear previous questions
+      console.log('🧹 Cleared previous questions');
+      
       const response = await axios.get(
-        `http://localhost:8080/api/tests/${testId}/part/${partNumber}/questions`
+        `http://localhost:8080/api/tests/${testId}/part/${partNumber}/questions`,
+        {
+          headers: getAuthHeaders()
+        }
       );
-      setCurrentQuestions(response.data);
+      
+      console.log('✅ Raw response:', response);
+      console.log('✅ Response status:', response.status);
+      console.log('✅ Response data:', response.data);
+      console.log('✅ Response data type:', typeof response.data);
+      console.log('✅ Response data length:', response.data ? response.data.length : 'N/A');
+      
+      if (response.data && Array.isArray(response.data)) {
+        console.log('🎯 Setting questions state with:', response.data.length, 'questions');
+        setCurrentQuestions(response.data);
+        console.log('🎯 State update completed');
+        
+        // Force re-render check
+        setTimeout(() => {
+          console.log('⏰ After timeout check - currentQuestions should be updated');
+        }, 100);
+      } else {
+        console.log('❌ Invalid response data format:', response.data);
+      }
       
       // Auto-play audio for listening parts
       if (isListeningPart(partNumber) && response.data.length > 0) {
@@ -89,10 +123,28 @@ const TOEICTest = () => {
         }, 1000); // Small delay to ensure audio element is ready
       }
     } catch (error) {
-      console.error('Error loading questions:', error);
+      console.error('❌ Error loading questions:', error);
+      console.error('❌ Error details:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
       setError('Không thể tải câu hỏi');
     }
   };
+
+  // Load questions when part changes
+  useEffect(() => {
+    console.log('📍 useEffect triggered - testParts.length:', testParts.length, 'currentPartIndex:', currentPartIndex);
+    if (testParts.length > 0 && currentPartIndex < testParts.length) {
+      console.log('📍 About to load questions for current part');
+      loadQuestionsForCurrentPart();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testParts, currentPartIndex]);
+
+  // Monitor currentQuestions changes
+  useEffect(() => {
+    console.log('🔥 currentQuestions changed:', currentQuestions.length, 'questions');
+    console.log('🔥 currentQuestions content:', currentQuestions);
+  }, [currentQuestions]);
 
   const playPartAudio = () => {
     if (audioRef.current && currentQuestions.length > 0) {
@@ -143,7 +195,9 @@ const TOEICTest = () => {
         }))
       };
 
-      await axios.post(`http://localhost:8080/api/tests/${testId}/submit`, submissionData);
+      await axios.post(`http://localhost:8080/api/tests/${testId}/submit`, submissionData, {
+        headers: getAuthHeaders()
+      });
       setIsTestCompleted(true);
       alert('Bài test đã được nộp thành công!');
     } catch (error) {
@@ -175,6 +229,19 @@ const TOEICTest = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl text-red-600">{error}</div>
+      </div>
+    );
+  }
+
+  // Debug information
+  if (testParts.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-xl text-gray-600">Debug: Không có test parts</div>
+          <div className="text-sm text-gray-500 mt-2">TestId: {testId}</div>
+          <div className="text-sm text-gray-500">Test Parts Length: {testParts.length}</div>
+        </div>
       </div>
     );
   }
@@ -251,6 +318,10 @@ const TOEICTest = () => {
   const currentPart = testParts[currentPartIndex];
   if (!currentPart) return null;
 
+  // Debug rendering
+  console.log('RENDER: currentQuestions.length =', currentQuestions.length);
+  console.log('RENDER: currentQuestions =', currentQuestions);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Timer and Progress Bar */}
@@ -326,7 +397,79 @@ const TOEICTest = () => {
 
         {/* Questions */}
         <div className="space-y-6">
-          {currentQuestions.map((question, questionIndex) => (
+          {/* Debug Info */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+            <p className="text-sm text-gray-600">
+              <strong>Debug:</strong> Current Part: {currentPart.partNumber}, 
+              Questions Count: {currentQuestions.length},
+              Part Index: {currentPartIndex}
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Token:</strong> {getToken() ? 'Available' : 'Missing'}
+            </p>
+            <p className="text-sm text-gray-600">
+              <strong>Questions Array:</strong> {JSON.stringify(currentQuestions.map(q => ({ id: q.questionId, text: q.questionText })))}
+            </p>
+            <div className="mt-2 space-x-2">
+              <button
+                onClick={loadQuestionsForCurrentPart}
+                className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+              >
+                🔄 Reload Questions
+              </button>
+              <button
+                onClick={() => {
+                  console.log('🔍 Manual State Check:');
+                  console.log('testParts:', testParts);
+                  console.log('currentPartIndex:', currentPartIndex);
+                  console.log('currentQuestions:', currentQuestions);
+                  console.log('currentPart:', currentPart);
+                }}
+                className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+              >
+                � Check State
+              </button>
+            </div>
+            {currentQuestions.length === 0 && (
+              <p className="text-red-500 text-sm mt-2">⚠️ Không có câu hỏi nào được load!</p>
+            )}
+            {currentQuestions.length > 0 && (
+              <p className="text-green-600 text-sm mt-2">✅ Có {currentQuestions.length} câu hỏi được load</p>
+            )}
+          </div>
+          
+          {/* Reading Passage Content for Part 6 & 7 */}
+          {(currentPart.partNumber === 6 || currentPart.partNumber === 7) && 
+           currentQuestions.length > 0 && currentQuestions[0].content && (
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <div className="flex items-center mb-4">
+                <span className="text-gray-600 mr-2">📖</span>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {currentPart.partNumber === 6 ? 'Text Completion Passage' : 'Reading Passage'}
+                </h3>
+              </div>
+              <div className="prose max-w-none">
+                <div className="text-gray-900 leading-relaxed whitespace-pre-line">
+                  {currentQuestions[0].content}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Questions List */}
+          {(() => {
+            console.log('QUESTIONS RENDER CHECK: length =', currentQuestions.length);
+            if (currentQuestions.length === 0) {
+              return (
+                <div className="bg-red-50 border border-red-200 rounded p-4 text-center">
+                  <p className="text-red-600">Không có câu hỏi nào để hiển thị</p>
+                </div>
+              );
+            } else {
+              console.log('RENDERING QUESTIONS:', currentQuestions.length, 'questions');
+              return currentQuestions.map((question, questionIndex) => {
+                console.log('MAPPING QUESTION:', questionIndex, question.questionId);
+                return (
             <div key={question.questionId} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
@@ -380,7 +523,10 @@ const TOEICTest = () => {
                 </div>
               </div>
             </div>
-          ))}
+                );
+              });
+            }
+          })()}
         </div>
 
         {/* Navigation */}

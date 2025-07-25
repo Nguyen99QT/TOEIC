@@ -25,6 +25,7 @@ import com.leenglish.toeic.utils.JwtUtils;
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.enums.Gender;
+import com.leenglish.toeic.enums.MembershipType;
 import com.leenglish.toeic.service.EmailService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -104,12 +105,16 @@ public class AuthController {
             // Tạo và trả về response với JwtResponse
             System.out.println("✅ Login successful for user: " + loginRequest.getUsername());
 
+            // Get membershipType from existing userOpt
+            MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(MembershipType.BASIC);
+
             return ResponseEntity.ok(new JwtResponse(
                     jwt,
                     userDetails.getId(),
                     userDetails.getUsername(),
                     userDetails.getEmail(),
-                    roles));
+                    roles,
+                    membershipType));
         } catch (BadCredentialsException e) {
             System.out.println("❌ Authentication failed: Bad credentials for user: " + loginRequest.getUsername());
             return ResponseEntity

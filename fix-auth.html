@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Authentication</title>
+</head>
+<body>
+    <h1>Fix Authentication Tokens</h1>
+    <button onclick="fixAuth()">Fix Authentication</button>
+    <pre id="output"></pre>
+
+    <script>
+        function fixAuth() {
+            const output = document.getElementById('output');
+            
+            // Check current localStorage
+            output.innerHTML = 'Current localStorage:\n';
+            Object.keys(localStorage).forEach(key => {
+                output.innerHTML += `${key}: ${localStorage.getItem(key)}\n`;
+            });
+            
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Copy token to all required keys
+                localStorage.setItem('toeic_access_token', token);
+                localStorage.setItem('accessToken', token);
+                localStorage.setItem('authToken', token);
+                
+                // Create admin user data
+                const adminUser = {
+                    id: 2,
+                    username: 'admin',
+                    email: 'admin@gmail.com',
+                    fullName: 'admin',
+                    role: 'ADMIN',
+                    membershipType: 'FREE'
+                };
+                
+                // Store user data with all required keys
+                localStorage.setItem('toeic_current_user', JSON.stringify(adminUser));
+                localStorage.setItem('currentUser', JSON.stringify(adminUser));
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                
+                output.innerHTML += '\n✅ Fixed authentication tokens and user data\n';
+                output.innerHTML += '🔄 Please refresh http://localhost:3000\n';
+                
+                console.log('✅ Authentication fixed!');
+            } else {
+                output.innerHTML += '\n❌ No token found in localStorage\n';
+            }
+        }
+    </script>
+</body>
+</html>

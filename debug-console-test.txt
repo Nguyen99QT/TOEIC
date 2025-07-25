@@ -1,0 +1,40 @@
+
+// Paste this in browser console on http://localhost:3000/edit-blog/3 to debug:
+
+console.log('🧪 Testing edit blog save...');
+
+const token = localStorage.getItem('toeic_access_token') || 
+              localStorage.getItem('authToken') ||
+              localStorage.getItem('accessToken');
+
+console.log('🔐 Token found:', !!token);
+
+if (!token) {
+  console.error('❌ No token found! Please login first.');
+} else {
+  console.log('🔐 Token preview:', token.substring(0, 30) + '...');
+  
+  const formData = new FormData();
+  formData.append('title', 'Debug Test Title ' + Date.now());
+  formData.append('content', 'Debug Test Content ' + Date.now());
+
+  fetch('http://localhost:8080/api/blog/3/upload', {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + token
+    },
+    body: formData
+  })
+  .then(response => {
+    console.log('📥 Response status:', response.status);
+    console.log('📥 Response headers:', [...response.headers.entries()]);
+    return response.text();
+  })
+  .then(data => {
+    console.log('📥 Response data:', data);
+  })
+  .catch(error => {
+    console.error('❌ Error:', error);
+  });
+}
+

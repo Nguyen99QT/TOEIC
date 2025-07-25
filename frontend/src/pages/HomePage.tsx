@@ -16,6 +16,17 @@ const HomePage: React.FC = () => {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const fetchAttempted = useRef(false);
 
+  // Helper function to get correct dashboard path based on user role
+  const getDashboardPath = () => {
+    if (currentUser?.role === 'ADMIN') {
+      return '/admin/dashboard';
+    } else if (currentUser?.role === 'COLLABORATOR') {
+      return '/collaborator/dashboard';
+    } else {
+      return '/dashboard';
+    }
+  };
+
   console.log('🏠 HomePage: Render state:', {
     isAuthenticated,
     currentUser: currentUser?.username || 'guest',
@@ -187,7 +198,7 @@ const HomePage: React.FC = () => {
                     <EnhancedButton
                       variant="secondary"
                       size="lg"
-                      onClick={() => navigate('/dashboard')}
+                      onClick={() => navigate(getDashboardPath())}
                       className="w-full sm:w-auto"
                     >
                       📊 Go to Dashboard

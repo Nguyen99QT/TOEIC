@@ -13,15 +13,18 @@ import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'r
 import BlogList from './components/blog/BlogList';
 import BlogDetail from './components/blog/BlogDetail';
 import CreateBlog from './components/blog/CreateBlog';
+import EditBlog from './components/blog/EditBlog';
+import CollaboratorBlogList from './components/blog/CollaboratorBlogList';
 // Authentication
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
+// Global CSS to prevent overflow
+import './index.css';
+
 // Components
 import LoadingFallback from './components/ui/LoadingFallback';
-import Navigation from './components/ui/Navigation';
-import Footer from './components/ui/Footer';
-import FloatingActionButton from './components/ui/FloatingActionButton';
+import Layout from './components/ui/Layout';
 import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
 
 // Pages
@@ -32,6 +35,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import LogoutPage from './pages/auth/LogoutPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import DashboardPage from './pages/DashboardPage';
+import CollaboratorDashboard from './pages/CollaboratorDashboard';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
 import ExercisesPage from './pages/exercises/ExercisesPage';
@@ -70,9 +74,14 @@ import TestResultDetailPage from './pages/test-results/TestResultDetailPage';
 import ModernAddQuestionPage from './pages/questions/ModernAddQuestionPage';
 import MyQuestionsPage from './pages/questions/MyQuestionsPage';
 import SimpleMyQuestionsPage from './pages/questions/SimpleMyQuestionsPage';
+import TOEICQuestionGroupForm from './components/Nguyen/TOEICQuestionGroupForm';
+import QuestionGroupsPage from './pages/questions/QuestionGroupsPage';
 import ViewQuestionGroupPage from './pages/questions/ViewQuestionGroupPage';
 import EditQuestionGroupPage from './pages/questions/EditQuestionGroupPage';
 import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestionPage';
+
+// Test Components
+import TestIndividualQuestions from './components/test/TestIndividualQuestions';
 
 // ========== MAIN APP COMPONENT ==========
 
@@ -97,23 +106,10 @@ const AppContent: React.FC = () => {
   // Add debug logging
   console.log('🔍 App State:', { loading, isAuthenticated, currentUser });
 
-  // Enhanced Layout component with Navigation and Footer
-  const Layout: React.FC<{ children: React.ReactNode; showNavigation?: boolean; showFooter?: boolean }> = ({
-    children,
-    showNavigation = true,
-    showFooter = true
-  }) => {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {showNavigation && <Navigation />}
-        <main className="flex-1">
-          {children}
-        </main>
-        {showFooter && <Footer />}
-        {isAuthenticated && <FloatingActionButton />}
-      </div>
-    );
-  };
+  // Enhanced debugging for authentication state
+  useEffect(() => {
+    console.log('🔄 App Authentication State:', { loading, isAuthenticated, currentUser });
+  }, [loading, isAuthenticated, currentUser]);
 
   // LocationLogger để debug routing
   const LocationLogger = () => {
@@ -139,7 +135,7 @@ const AppContent: React.FC = () => {
               (() => {
                 console.log('🏠 HomePage Route: isAuthenticated =', isAuthenticated, 'user =', currentUser?.username || 'guest');
                 return (
-                  <Layout showNavigation={true} showFooter={true}>
+                  <Layout showSidebar={isAuthenticated} showNavigation={!isAuthenticated} showFooter={true}>
                     {isAuthenticated ? <HomePage /> : <SimpleHomePage />}
                   </Layout>
                 );
@@ -156,7 +152,7 @@ const AppContent: React.FC = () => {
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
-                    <Layout showNavigation={false} showFooter={false}>
+                    <Layout showSidebar={false} showNavigation={false} showFooter={false}>
                       <LoginPage />
                     </Layout>
                   </ProtectedRoute>
@@ -174,7 +170,7 @@ const AppContent: React.FC = () => {
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
-                    <Layout showNavigation={false} showFooter={false}>
+                    <Layout showSidebar={false} showNavigation={false} showFooter={false}>
                       <RegisterPage />
                     </Layout>
                   </ProtectedRoute>
@@ -185,7 +181,7 @@ const AppContent: React.FC = () => {
             <Route
               path="/logout"
               element={
-                <Layout showNavigation={false} showFooter={false}>
+                <Layout showSidebar={false} showNavigation={false} showFooter={false}>
                   <LogoutPage />
                 </Layout>
               }
@@ -195,7 +191,7 @@ const AppContent: React.FC = () => {
             <Route
               path="/verify-email"
               element={
-                <Layout showNavigation={false} showFooter={false}>
+                <Layout showSidebar={false} showNavigation={false} showFooter={false}>
                   <EmailVerificationPage />
                 </Layout>
               }
@@ -226,6 +222,19 @@ const AppContent: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/edit-blog/:id"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để chỉnh sửa Blog"
+                  promptMessage="Bạn cần phải đăng nhập để chỉnh sửa bài viết Blog"
+                >
+                  <Layout>
+                    <EditBlog />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/pricing" element={
               <Layout>
                 <PricingPage />
@@ -252,6 +261,36 @@ const AppContent: React.FC = () => {
                 >
                   <Layout>
                     <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Collaborator Dashboard */}
+            <Route
+              path="/collaborator/dashboard"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập với tài khoản cộng tác viên"
+                  promptMessage="Bạn cần phải đăng nhập với tài khoản cộng tác viên để xem dashboard"
+                >
+                  <Layout>
+                    <CollaboratorDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Collaborator Blog List */}
+            <Route
+              path="/collaborator/blogs"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập với tài khoản cộng tác viên"
+                  promptMessage="Bạn cần phải đăng nhập với tài khoản cộng tác viên để quản lý blog"
+                >
+                  <Layout>
+                    <CollaboratorBlogList />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -439,6 +478,26 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/questions/add-group"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TOEICQuestionGroupForm />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/questions/groups"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <QuestionGroupsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/questions/groups/:groupId"
               element={
                 <ProtectedRoute>
@@ -464,6 +523,18 @@ const AppContent: React.FC = () => {
                 <ProtectedRoute>
                   <Layout>
                     <EditIndividualQuestionPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Test Route for Individual Questions API */}
+            <Route
+              path="/questions/test"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <TestIndividualQuestions />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -700,7 +771,7 @@ const AppContent: React.FC = () => {
               path="/admin/blog/create"
               element={
                 <AdminRoute>
-                  <Layout showNavigation={false} showFooter={false}>
+                  <Layout showSidebar={true} showNavigation={false} showFooter={false}>
                     <CreateBlog />
                   </Layout>
                 </AdminRoute>

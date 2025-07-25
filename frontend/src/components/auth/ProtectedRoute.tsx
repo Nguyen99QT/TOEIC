@@ -31,15 +31,37 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       currentUser: currentUser?.username || 'none'
     });
 
-    // Debug localStorage authentication data
-    console.log('🔍 Debug localStorage auth data:', {
-      token: localStorage.getItem('toeic_access_token') ? 'EXISTS' : 'MISSING',
-      refreshToken: localStorage.getItem('toeic_refresh_token') ? 'EXISTS' : 'MISSING',
-      user: localStorage.getItem('toeic_current_user') ? 'EXISTS' : 'MISSING',
-      legacyToken: localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
-      legacyUser: localStorage.getItem('currentUser') ? 'EXISTS' : 'MISSING'
-    });
+    // Debug localStorage authentication data with actual checks
+    const actualToken = localStorage.getItem('toeic_access_token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const actualUser = localStorage.getItem('toeic_current_user') || localStorage.getItem('currentUser');
+    
+    // Debug logging only in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Debug localStorage auth data:', {
+        token: actualToken ? 'EXISTS' : 'MISSING',
+        tokenPreview: actualToken ? actualToken.substring(0, 30) + '...' : 'NONE',
+        refreshToken: localStorage.getItem('toeic_refresh_token') ? 'EXISTS' : 'MISSING',
+        user: actualUser ? 'EXISTS' : 'MISSING',
+        userPreview: actualUser ? JSON.parse(actualUser).username : 'NONE',
+        legacyToken: localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING',
+        legacyUser: localStorage.getItem('currentUser') ? 'EXISTS' : 'MISSING',
+        justLoggedIn: localStorage.getItem('auth_just_logged_in') ? 'EXISTS' : 'MISSING',
+        loginSuccess: localStorage.getItem('toeic_login_success') ? 'EXISTS' : 'MISSING',
+        loginTimestamp: localStorage.getItem('auth_login_timestamp') ? 'EXISTS' : 'MISSING'
+      });
+    }
   }, [isAuthenticated, loading, requireAuth, location.pathname, currentUser]);
+
+  // Check for recent login flags - use more robust token/user detection
+  const actualToken = localStorage.getItem('toeic_access_token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken') || localStorage.getItem('token');
+  const actualUser = localStorage.getItem('toeic_current_user') || localStorage.getItem('currentUser');
+  const justLoggedIn = localStorage.getItem('auth_just_logged_in');
+  const loginSuccess = localStorage.getItem('toeic_login_success');
+  const loginTimestamp = localStorage.getItem('auth_login_timestamp');
+  const hasValidTokens = actualToken && actualUser;
+  
+  // Check if login was very recent (within last 15 seconds)
+  const isVeryRecentLogin = loginTimestamp && (Date.now() - parseInt(loginTimestamp)) < 15000;
 
   // Show loading while auth is being determined
   if (loading) {
@@ -49,6 +71,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  // If user just logged in with valid tokens, allow access temporarily while AuthContext catches up
+  if ((justLoggedIn || loginSuccess || isVeryRecentLogin) && hasValidTokens && !isAuthenticated) {
+    console.log('🔧 ProtectedRoute: Recent login detected with valid tokens, allowing temporary access');
+    
+    // Clean up flags after a delay
+    setTimeout(() => {
+      localStorage.removeItem('auth_just_logged_in');
+      localStorage.removeItem('toeic_login_success');
+    }, 10000);
+    
+    return <>{children}</>;
   }
 
   // TEMPORARY DEBUG: Show authentication bypass button in development

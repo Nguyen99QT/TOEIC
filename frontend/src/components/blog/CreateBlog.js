@@ -27,12 +27,43 @@ const CreateBlog = () => {
     // Xử lý chọn file ảnh/video/pdf
     const handleFileChange = (e) => {
         const { name, files } = e.target;
+        const file = files[0];
+
+        if (!file) return;
+
+        // Kiểm tra size file
+        const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+        if (file.size > MAX_SIZE) {
+            alert(`File quá lớn! Vui lòng chọn file nhỏ hơn 50MB. File hiện tại: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+            e.target.value = ''; // Clear input
+            return;
+        }
+
         if (name === 'image') {
-            setImage(files[0]); // nếu bạn có state image
+            // Kiểm tra định dạng ảnh
+            if (!file.type.startsWith('image/')) {
+                alert('Vui lòng chọn file ảnh hợp lệ!');
+                e.target.value = '';
+                return;
+            }
+            setImage(file);
         } else if (name === 'video') {
-            setVideo(files[0]); // nếu bạn có state video
+            // Kiểm tra định dạng video
+            if (!file.type.startsWith('video/')) {
+                alert('Vui lòng chọn file video hợp lệ!');
+                e.target.value = '';
+                return;
+            }
+            console.log('Video selected:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            setVideo(file);
         } else if (name === 'pdf') {
-            setPdf(files[0]);
+            // Kiểm tra định dạng PDF
+            if (file.type !== 'application/pdf') {
+                alert('Vui lòng chọn file PDF hợp lệ!');
+                e.target.value = '';
+                return;
+            }
+            setPdf(file);
         }
     };
 
@@ -51,9 +82,19 @@ const CreateBlog = () => {
         formData.append('title', form.title);
         formData.append('content', form.content);
         formData.append('author', form.author || currentUser.username);
-        if (image) formData.append('image', image);
-        if (video) formData.append('video', video);
-        if (pdf) formData.append('pdf', pdf);
+
+        if (image) {
+            formData.append('image', image);
+            console.log('📷 Adding image:', image.name, 'Size:', (image.size / 1024 / 1024).toFixed(2) + 'MB');
+        }
+        if (video) {
+            formData.append('video', video);
+            console.log('🎥 Adding video:', video.name, 'Size:', (video.size / 1024 / 1024).toFixed(2) + 'MB');
+        }
+        if (pdf) {
+            formData.append('pdf', pdf);
+            console.log('📄 Adding PDF:', pdf.name, 'Size:', (pdf.size / 1024 / 1024).toFixed(2) + 'MB');
+        }
 
         // Get token from multiple possible storage keys
         const token = localStorage.getItem('toeic_access_token') ||
@@ -66,22 +107,40 @@ const CreateBlog = () => {
             return;
         }
 
+        console.log('🚀 Starting blog upload...');
+
         axios.post(`${BACKEND_URL}/api/blog/upload`, formData, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 // KHÔNG cần set Content-Type, axios sẽ tự động set cho FormData
+            },
+            onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                console.log(`📤 Upload progress: ${percentCompleted}%`);
             }
         })
-            .then(() => {
+            .then((response) => {
+                console.log('✅ Blog upload successful:', response.data);
                 alert('Đăng bài viết thành công!');
                 navigate('/admin/blog'); // Quay về trang quản lý blog
             })
             .catch(error => {
-                console.error('Lỗi khi đăng bài viết:', error);
+                console.error('❌ Lỗi khi đăng bài viết:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    data: error.response?.data
+                });
+
                 if (error.response && error.response.status === 401) {
                     alert('Bạn cần đăng nhập để đăng bài viết!');
+                } else if (error.response && error.response.status === 413) {
+                    alert('File quá lớn! Vui lòng chọn file nhỏ hơn.');
+                } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+                    alert('Lỗi kết nối mạng! Vui lòng kiểm tra kết nối và thử lại.');
                 } else {
-                    alert('Đăng bài viết thất bại!');
+                    alert('Đăng bài viết thất bại! ' + (error.response?.data || error.message));
                 }
             })
             .finally(() => {

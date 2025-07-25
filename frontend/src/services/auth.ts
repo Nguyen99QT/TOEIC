@@ -34,6 +34,7 @@ export interface LoginResponse {
   role?: string;
   roles?: string[];
   type?: string;
+  membershipType?: "FREE" | "PREMIUM";
 }
 
 export interface AuthResponse {
@@ -475,7 +476,7 @@ export const register = async (userData: RegisterRequest): Promise<RegistrationR
       if (error.response.status === 400) {
         throw new Error(
           error.response.data?.message ||
-            "Invalid registration data. Please check your inputs."
+          "Invalid registration data. Please check your inputs."
         );
       } else if (error.response.status === 409) {
         throw new Error(

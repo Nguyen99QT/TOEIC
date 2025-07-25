@@ -38,49 +38,73 @@ public class BlogPostController {
 
     // Tạo blog kèm upload file
     @PostMapping("/upload")
-    public BlogPost createBlogPost(
+    public ResponseEntity<?> createBlogPost(
             @RequestParam("title") String title,
             @RequestParam("content") String content,
             @RequestParam(value = "author", required = false) String author,
             @RequestParam(value = "image", required = false) MultipartFile image,
             @RequestParam(value = "video", required = false) MultipartFile video,
-            @RequestParam(value = "pdf", required = false) MultipartFile pdf) throws IOException {
-        BlogPost blogPost = new BlogPost();
-        blogPost.setTitle(title);
-        blogPost.setContent(content);
-        blogPost.setAuthor(author);
+            @RequestParam(value = "pdf", required = false) MultipartFile pdf) {
 
-        String uploadDir = "Upload";
-        File uploadFolder = new File(uploadDir);
-        if (!uploadFolder.exists()) {
-            uploadFolder.mkdirs();
+        try {
+            System.out.println("📝 Blog upload request received:");
+            System.out.println("Title: " + title);
+            System.out.println("Content length: " + (content != null ? content.length() : 0));
+            System.out.println("Author: " + author);
+            System.out.println("Image: "
+                    + (image != null ? image.getOriginalFilename() + " (" + image.getSize() + " bytes)" : "none"));
+            System.out.println("Video: "
+                    + (video != null ? video.getOriginalFilename() + " (" + video.getSize() + " bytes)" : "none"));
+            System.out.println(
+                    "PDF: " + (pdf != null ? pdf.getOriginalFilename() + " (" + pdf.getSize() + " bytes)" : "none"));
+
+            BlogPost blogPost = new BlogPost();
+            blogPost.setTitle(title);
+            blogPost.setContent(content);
+            blogPost.setAuthor(author);
+
+            String uploadDir = "Upload";
+            File uploadFolder = new File(uploadDir);
+            if (!uploadFolder.exists()) {
+                uploadFolder.mkdirs();
+            }
+
+            // Lưu file ảnh (nếu có)
+            if (image != null && !image.isEmpty()) {
+                String imageName = System.currentTimeMillis() + "_"
+                        + StringUtils.cleanPath(image.getOriginalFilename());
+                Path imagePath = Paths.get("Upload", imageName);
+                Files.copy(image.getInputStream(), imagePath);
+                blogPost.setImageUrl("/Upload/" + imageName);
+            }
+
+            // Lưu file video (nếu có)
+            if (video != null && !video.isEmpty()) {
+                String videoName = System.currentTimeMillis() + "_"
+                        + StringUtils.cleanPath(video.getOriginalFilename());
+                Path videoPath = Paths.get(uploadDir, videoName);
+                Files.copy(video.getInputStream(), videoPath);
+                blogPost.setVideoUrl("/Upload/" + videoName);
+            }
+
+            // Lưu PDF (nếu có)
+            if (pdf != null && !pdf.isEmpty()) {
+                String pdfName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(pdf.getOriginalFilename());
+                Path pdfPath = Paths.get(uploadDir, pdfName);
+                Files.copy(pdf.getInputStream(), pdfPath);
+                blogPost.setPdfUrl("/Upload/" + pdfName);
+            }
+
+            BlogPost savedBlogPost = blogPostService.createBlogPost(blogPost);
+            System.out.println("✅ Blog post created successfully with ID: " + savedBlogPost.getId());
+            return ResponseEntity.ok(savedBlogPost);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error creating blog post: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body("Error creating blog post: " + e.getMessage());
         }
-
-        // Lưu file ảnh (nếu có)
-        if (image != null && !image.isEmpty()) {
-            String imageName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(image.getOriginalFilename());
-            Path imagePath = Paths.get("Upload", imageName);
-            Files.copy(image.getInputStream(), imagePath);
-            blogPost.setImageUrl("/Upload/" + imageName);
-        }
-
-        // Lưu file video (nếu có)
-        if (video != null && !video.isEmpty()) {
-            String videoName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(video.getOriginalFilename());
-            Path videoPath = Paths.get(uploadDir, videoName);
-            Files.copy(video.getInputStream(), videoPath);
-            blogPost.setVideoUrl("/Upload/" + videoName);
-        }
-
-        // Lưu PDF (nếu có)
-        if (pdf != null && !pdf.isEmpty()) {
-            String pdfName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(pdf.getOriginalFilename());
-            Path pdfPath = Paths.get(uploadDir, pdfName);
-            Files.copy(pdf.getInputStream(), pdfPath);
-            blogPost.setPdfUrl("/Upload/" + pdfName);
-        }
-
-        return blogPostService.createBlogPost(blogPost);
     }
 
     // Lấy chi tiết blog

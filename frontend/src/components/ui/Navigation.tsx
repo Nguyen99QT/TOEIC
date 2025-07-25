@@ -110,9 +110,18 @@ const Navigation: React.FC = () => {
                                                 {currentUser.username?.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                        <span className="hidden md:block font-medium text-gray-700">
-                                            {currentUser.username}
-                                        </span>
+                                        <div className="hidden md:block">
+                                            <div className="font-medium text-gray-700">
+                                                {currentUser.username}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {currentUser.membershipType === 'PREMIUM' ? (
+                                                    <span className="text-yellow-600 font-medium">👑 Premium</span>
+                                                ) : (
+                                                    <span className="text-gray-500">Free Member</span>
+                                                )}
+                                            </div>
+                                        </div>
                                         <svg
                                             className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}
                                             fill="none"

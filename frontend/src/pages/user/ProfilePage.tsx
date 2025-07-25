@@ -161,14 +161,13 @@ const ProfilePage: React.FC = () => {
     try {
       setIsSaving(true);
 
-      const updatedProfile = await updateUserProfile(currentUser.id, {
+      // Only update fields that backend supports
+      const updatedProfile = await updateUserProfile({
         fullName: `${formData.firstName} ${formData.lastName}`.trim(),
-        firstName: formData.firstName,
-        lastName: formData.lastName,
         email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        targetScore: formData.targetScore
+        phone: formData.phoneNumber,
+        // Note: firstName, lastName, address, targetScore are not supported by current backend
+        // These would need additional API endpoints or DTO changes
       });
 
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : null);

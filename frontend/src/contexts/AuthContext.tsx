@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: response.email || '',
                     fullName: response.username || '',
                     role: userRole,
-                    membershipType: "FREE"
+                    membershipType: response.membershipType || "FREE"
                 };
 
                 console.log('✅ AuthContext: Setting user data:', user);

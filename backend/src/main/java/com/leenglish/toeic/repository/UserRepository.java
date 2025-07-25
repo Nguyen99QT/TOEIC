@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +59,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "u.email LIKE %:keyword% OR " +
             "u.fullName LIKE %:keyword%")
     Page<User> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
     Page<User> findByIsActiveTrue(Pageable pageable);
-    
+
+    // ========== MEMBERSHIP MANAGEMENT ==========
+
+    /**
+     * Find users with expired premium memberships
+     */
+    @Query("SELECT u FROM User u WHERE u.membershipType = 'PREMIUM' AND u.premiumExpiresAt IS NOT NULL AND u.premiumExpiresAt < :now")
+    List<User> findExpiredPremiumUsers(@Param("now") LocalDateTime now);
+
+    /**
+     * Find premium users whose membership expires between two dates
+     */
+    @Query("SELECT u FROM User u WHERE u.membershipType = 'PREMIUM' AND u.premiumExpiresAt IS NOT NULL AND u.premiumExpiresAt BETWEEN :start AND :end")
+    List<User> findPremiumUsersExpiringBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
 }

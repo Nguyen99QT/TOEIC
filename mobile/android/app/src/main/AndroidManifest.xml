@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="toeic_mobile"
+        android:label="TOEIC Platform"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

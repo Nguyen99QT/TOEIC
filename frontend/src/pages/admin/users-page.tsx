@@ -39,7 +39,7 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
   const [totalStudents, setTotalStudents] = useState(0)
   const [totalInstructors, setTotalInstructors] = useState(0)

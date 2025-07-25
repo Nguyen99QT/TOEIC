@@ -158,7 +158,7 @@ apiClient.interceptors.response.use(
           const refreshResponse = await axios
             .create({
               baseURL: "http://localhost:8080/api",
-              timeout: 10000,
+              timeout: 100000,
             })
             .post("/auth/refresh", {
               refreshToken,

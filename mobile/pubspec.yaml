@@ -46,6 +46,8 @@ dependencies:
   just_audio: ^0.9.34
   audioplayers: ^5.0.0
   flutter_sound: ^9.2.13
+  file_picker: ^6.1.1
+  image_picker: ^1.0.4
 
   # Utils
   intl: ^0.18.1

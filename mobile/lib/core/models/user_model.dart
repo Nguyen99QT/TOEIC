@@ -54,6 +54,16 @@ class User {
   });
 
   factory User.fromMap(Map<String, dynamic> map) {
+    // Handle roles array from backend
+    String userRole = 'USER';
+    if (map['roles'] != null &&
+        map['roles'] is List &&
+        (map['roles'] as List).isNotEmpty) {
+      userRole = (map['roles'] as List).first.toString();
+    } else if (map['role'] != null) {
+      userRole = map['role'].toString();
+    }
+
     return User(
       id: map['id']?.toInt() ?? 0,
       username: map['username'] ?? '',
@@ -63,7 +73,7 @@ class User {
       lastName: map['lastName'],
       gender: map['gender'],
       phoneNumber: map['phoneNumber'],
-      role: map['role'] ?? 'USER',
+      role: userRole,
       createdAt:
           map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
       updatedAt:
@@ -146,5 +156,36 @@ class User {
   @override
   int get hashCode {
     return id.hashCode ^ username.hashCode ^ email.hashCode;
+  }
+
+  // Helper methods for role checking
+  bool get isStudent =>
+      role.toUpperCase() == 'USER' ||
+      role.toUpperCase() == 'STUDENT' ||
+      role.toUpperCase() == 'ROLE_USER' ||
+      role.toUpperCase() == 'ROLE_STUDENT';
+
+  bool get isCollaborator =>
+      role.toUpperCase() == 'COLLABORATOR' ||
+      role.toUpperCase() == 'ROLE_COLLABORATOR';
+
+  bool get isAdmin =>
+      role.toUpperCase() == 'ADMIN' || role.toUpperCase() == 'ROLE_ADMIN';
+
+  bool get canCreateContent => isCollaborator || isAdmin;
+  bool get canManageUsers => isAdmin;
+
+  String get displayRole {
+    switch (role.toUpperCase()) {
+      case 'USER':
+      case 'STUDENT':
+        return 'Student';
+      case 'COLLABORATOR':
+        return 'Collaborator';
+      case 'ADMIN':
+        return 'Admin';
+      default:
+        return 'Student';
+    }
   }
 }

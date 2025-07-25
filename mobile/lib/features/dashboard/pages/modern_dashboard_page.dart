@@ -59,6 +59,13 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
 
+    // Debug logging
+    print('🔍 Dashboard Debug:');
+    print('   User: ${user?.username}');
+    print('   Role: ${user?.role}');
+    print('   isCollaborator: ${user?.isCollaborator}');
+    print('   canCreateContent: ${user?.canCreateContent}');
+
     return MainLayout(
       child: RefreshIndicator(
         color: AppTheme.primaryColor,
@@ -77,6 +84,61 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
               pinned: true,
               backgroundColor: Colors.transparent,
               elevation: 0,
+              actions: user?.isCollaborator == true
+                  ? [
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.admin_panel_settings,
+                            color: Colors.white),
+                        tooltip: 'Content Management',
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
+                          const PopupMenuItem<String>(
+                            value: 'lessons',
+                            child: Row(
+                              children: [
+                                Icon(Icons.book, color: Colors.blue),
+                                SizedBox(width: 12),
+                                Text('Manage Lessons'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'exercises',
+                            child: Row(
+                              children: [
+                                Icon(Icons.assignment, color: Colors.green),
+                                SizedBox(width: 12),
+                                Text('Manage Exercises'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'flashcards',
+                            child: Row(
+                              children: [
+                                Icon(Icons.style, color: Colors.purple),
+                                SizedBox(width: 12),
+                                Text('Manage Flashcards'),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onSelected: (String value) {
+                          switch (value) {
+                            case 'lessons':
+                              context.go('/lessons-manage');
+                              break;
+                            case 'exercises':
+                              context.go('/exercises-crud');
+                              break;
+                            case 'flashcards':
+                              context.go('/flashcards-crud');
+                              break;
+                          }
+                        },
+                      ),
+                    ]
+                  : null,
               flexibleSpace: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -158,6 +220,7 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   'Welcome back! 👋',
@@ -416,6 +479,8 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
   }
 
   Widget _buildQuickActionsSection(bool isTablet) {
+    final user = AuthService.instance.currentUser;
+
     final actions = [
       {
         'title': 'Take Practice Test',
@@ -446,6 +511,33 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
         'route': '/profile',
       },
     ];
+
+    // Add collaborator actions if user is collaborator
+    if (user?.isCollaborator == true) {
+      actions.addAll([
+        {
+          'title': 'Manage Lessons',
+          'subtitle': 'Create & edit lessons',
+          'icon': Icons.book_outlined,
+          'color': Colors.blue,
+          'route': '/lessons-manage',
+        },
+        {
+          'title': 'Manage Exercises',
+          'subtitle': 'Create & edit exercises',
+          'icon': Icons.assignment_outlined,
+          'color': Colors.green,
+          'route': '/exercises-crud',
+        },
+        {
+          'title': 'Manage Flashcards',
+          'subtitle': 'Create & edit flashcards',
+          'icon': Icons.style_outlined,
+          'color': Colors.purple,
+          'route': '/flashcards-crud',
+        },
+      ]);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,21 +581,29 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    action['title'] as String,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.getTextColor(context),
-                        ),
-                    textAlign: TextAlign.center,
+                  Flexible(
+                    child: Text(
+                      action['title'] as String,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.getTextColor(context),
+                          ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    action['subtitle'] as String,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.getSecondaryTextColor(context),
-                        ),
-                    textAlign: TextAlign.center,
+                  Flexible(
+                    child: Text(
+                      action['subtitle'] as String,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.getSecondaryTextColor(context),
+                          ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

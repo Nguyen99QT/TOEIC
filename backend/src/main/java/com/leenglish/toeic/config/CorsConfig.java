@@ -32,9 +32,10 @@ public class CorsConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                // Set allowed origins
+                // Set allowed origins using allowedOriginPatterns for compatibility with
+                // allowCredentials
                 List<String> origins = Arrays.asList(allowedOrigins.split(","));
-                configuration.setAllowedOrigins(origins);
+                configuration.setAllowedOriginPatterns(origins);
                 configuration.setAllowCredentials(allowCredentials);
 
                 // Set allowed methods

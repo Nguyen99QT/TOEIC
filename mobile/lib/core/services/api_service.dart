@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toeic_mobile/core/services/storage_service.dart';
+import 'package:toeic_mobile/core/services/dio_service.dart';
 
 class ApiService {
   // Base URL - Improved network configuration
@@ -20,6 +22,14 @@ class ApiService {
       // Default fallback
       return 'http://localhost:8080/api';
     }
+  }
+
+  /// Static Dio getter for new CRUD operations
+  static Dio get dio => DioApiService.dio;
+
+  /// Initialize both HTTP and Dio services
+  static void init() {
+    DioApiService.instance.init();
   }
 
   final StorageService _storageService = StorageService.instance;

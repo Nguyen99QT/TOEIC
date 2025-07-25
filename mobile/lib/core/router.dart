@@ -13,6 +13,13 @@ import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
 import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
 import 'package:toeic_mobile/core/services/auth_service.dart';
 
+// CRUD screens
+import 'package:toeic_mobile/features/exercise/screens/exercise_list_screen.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_form_screen.dart';
+import 'package:toeic_mobile/features/flashcard/screens/flashcard_set_list_screen.dart';
+import 'package:toeic_mobile/features/lessons/screens/lesson_manage_screen.dart';
+import 'package:toeic_mobile/features/lessons/screens/lesson_form_screen.dart';
+
 final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(
@@ -58,8 +65,22 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
+      path: '/exercises/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ExerciseDetailPage(exerciseId: id);
+      },
+    ),
+    GoRoute(
       path: '/flashcards',
       builder: (context, state) => const FlashcardsPage(),
+    ),
+    GoRoute(
+      path: '/flashcards/:id/study',
+      builder: (context, state) {
+        final setId = state.pathParameters['id']!;
+        return FlashcardStudyPage(flashcardSetId: setId);
+      },
     ),
     GoRoute(
       path: '/flashcard-study/:setId',
@@ -67,6 +88,43 @@ final GoRouter appRouter = GoRouter(
         final setId = state.pathParameters['setId']!;
         return FlashcardStudyPage(flashcardSetId: setId);
       },
+    ),
+    // CRUD Routes - Exercise Management
+    GoRoute(
+      path: '/exercises-crud',
+      builder: (context, state) => const ExerciseListScreen(),
+    ),
+    GoRoute(
+      path: '/exercises/create',
+      builder: (context, state) => const ExerciseFormScreen(),
+    ),
+    GoRoute(
+      path: '/exercises/:id/edit',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return ExerciseFormScreen(exerciseId: id);
+      },
+    ),
+    // CRUD Routes - Lesson Management
+    GoRoute(
+      path: '/lessons-manage',
+      builder: (context, state) => const LessonManageScreen(),
+    ),
+    GoRoute(
+      path: '/lessons/create',
+      builder: (context, state) => const LessonFormScreen(),
+    ),
+    GoRoute(
+      path: '/lessons/:id/edit',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return LessonFormScreen(lessonId: id);
+      },
+    ),
+    // CRUD Routes - Flashcard Management
+    GoRoute(
+      path: '/flashcards-crud',
+      builder: (context, state) => const FlashcardSetListScreen(),
     ),
     GoRoute(
       path: '/profile',

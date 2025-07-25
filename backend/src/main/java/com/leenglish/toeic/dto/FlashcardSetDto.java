@@ -28,4 +28,8 @@ public class FlashcardSetDto {
     private Boolean isPremium;
     private Integer estimatedTimeMinutes;
     private Integer viewCount;
+
+    // Multimedia support
+    private String imageUrl;
+    private String audioUrl;
 }

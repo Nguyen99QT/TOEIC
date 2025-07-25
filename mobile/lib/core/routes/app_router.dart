@@ -7,6 +7,7 @@ import 'package:toeic_mobile/features/home/pages/home_page.dart';
 import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
+import 'package:toeic_mobile/features/lessons/screens/lesson_manage_screen.dart';
 import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
 import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
@@ -103,6 +104,23 @@ class AppRouter {
         ),
       ),
 
+      // Lesson Management route for collaborators
+      GoRoute(
+        path: '/lessons-manage',
+        redirect: (context, state) {
+          final user = AuthService.instance.currentUser;
+          if (user == null || !user.canCreateContent) {
+            return '/dashboard';
+          }
+          return null;
+        },
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: LessonManageScreen(),
+          ),
+        ),
+      ),
+
       // Exercises routes
       GoRoute(
         path: '/exercises',
@@ -123,6 +141,36 @@ class AppRouter {
         ),
       ),
 
+      // Exercise Management route for collaborators
+      GoRoute(
+        path: '/exercises-crud',
+        redirect: (context, state) {
+          final user = AuthService.instance.currentUser;
+          if (user == null || !user.canCreateContent) {
+            return '/dashboard';
+          }
+          return null;
+        },
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: Scaffold(
+              appBar: AppBar(title: const Text('Manage Exercises')),
+              body: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.construction, size: 64, color: Colors.orange),
+                    SizedBox(height: 16),
+                    Text('Exercise Management'),
+                    Text('Coming Soon!', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+
       // Flashcards routes
       GoRoute(
         path: '/flashcards',
@@ -138,6 +186,36 @@ class AppRouter {
           child: MainLayout(
             child: FlashcardStudyPage(
               flashcardSetId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+
+      // Flashcard Management route for collaborators
+      GoRoute(
+        path: '/flashcards-crud',
+        redirect: (context, state) {
+          final user = AuthService.instance.currentUser;
+          if (user == null || !user.canCreateContent) {
+            return '/dashboard';
+          }
+          return null;
+        },
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: Scaffold(
+              appBar: AppBar(title: const Text('Manage Flashcards')),
+              body: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.construction, size: 64, color: Colors.orange),
+                    SizedBox(height: 16),
+                    Text('Flashcard Management'),
+                    Text('Coming Soon!', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

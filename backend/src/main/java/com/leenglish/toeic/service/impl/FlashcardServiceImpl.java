@@ -35,6 +35,8 @@ public class FlashcardServiceImpl implements FlashcardService {
         flashcardSet.setCategory(flashcardSetDto.getCategory());
         flashcardSet.setDifficultyLevel(flashcardSetDto.getDifficultyLevel());
         flashcardSet.setIsPublic(flashcardSetDto.getIsPublic() != null ? flashcardSetDto.getIsPublic() : false);
+        flashcardSet.setImageUrl(flashcardSetDto.getImageUrl());
+        flashcardSet.setAudioUrl(flashcardSetDto.getAudioUrl());
         flashcardSet.setCreatedAt(LocalDateTime.now());
         flashcardSet.setUpdatedAt(LocalDateTime.now());
 
@@ -55,6 +57,8 @@ public class FlashcardServiceImpl implements FlashcardService {
         existingSet.setCategory(flashcardSetDto.getCategory());
         existingSet.setDifficultyLevel(flashcardSetDto.getDifficultyLevel());
         existingSet.setIsPublic(flashcardSetDto.getIsPublic() != null ? flashcardSetDto.getIsPublic() : false);
+        existingSet.setImageUrl(flashcardSetDto.getImageUrl());
+        existingSet.setAudioUrl(flashcardSetDto.getAudioUrl());
         existingSet.setUpdatedAt(LocalDateTime.now());
 
         FlashcardSet updatedFlashcardSet = flashcardSetRepository.save(existingSet);
@@ -112,13 +116,17 @@ public class FlashcardServiceImpl implements FlashcardService {
         Flashcard flashcard = new Flashcard();
         flashcard.setFrontText(flashcardDto.getFrontText());
         flashcard.setBackText(flashcardDto.getBackText());
-        
+        flashcard.setImageUrl(flashcardDto.getImageUrl());
+        flashcard.setAudioUrl(flashcardDto.getAudioUrl());
+        flashcard.setExample(flashcardDto.getExample());
+        flashcard.setLevel(flashcardDto.getLevel());
+
         // Find the flashcard set
         Optional<FlashcardSet> setOpt = flashcardSetRepository.findById(setId);
         if (setOpt.isPresent()) {
             flashcard.setFlashcardSet(setOpt.get());
         }
-        
+
         flashcard.setCreatedAt(LocalDateTime.now());
         flashcard.setUpdatedAt(LocalDateTime.now());
 
@@ -136,6 +144,10 @@ public class FlashcardServiceImpl implements FlashcardService {
         Flashcard existingFlashcard = existingFlashcardOpt.get();
         existingFlashcard.setFrontText(flashcardDto.getFrontText());
         existingFlashcard.setBackText(flashcardDto.getBackText());
+        existingFlashcard.setImageUrl(flashcardDto.getImageUrl());
+        existingFlashcard.setAudioUrl(flashcardDto.getAudioUrl());
+        existingFlashcard.setExample(flashcardDto.getExample());
+        existingFlashcard.setLevel(flashcardDto.getLevel());
         existingFlashcard.setUpdatedAt(LocalDateTime.now());
 
         Flashcard updatedFlashcard = flashcardRepository.save(existingFlashcard);
@@ -174,9 +186,12 @@ public class FlashcardServiceImpl implements FlashcardService {
         List<FlashcardSet> flashcardSets = flashcardSetRepository.findByIsPublicTrue();
         return flashcardSets.stream()
                 .sorted((a, b) -> {
-                    if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
-                    if (a.getCreatedAt() == null) return 1;
-                    if (b.getCreatedAt() == null) return -1;
+                    if (a.getCreatedAt() == null && b.getCreatedAt() == null)
+                        return 0;
+                    if (a.getCreatedAt() == null)
+                        return 1;
+                    if (b.getCreatedAt() == null)
+                        return -1;
                     return b.getCreatedAt().compareTo(a.getCreatedAt());
                 })
                 .limit(limit)
@@ -218,6 +233,8 @@ public class FlashcardServiceImpl implements FlashcardService {
         dto.setCategory(flashcardSet.getCategory());
         dto.setDifficultyLevel(flashcardSet.getDifficultyLevel());
         dto.setIsPublic(flashcardSet.getIsPublic());
+        dto.setImageUrl(flashcardSet.getImageUrl());
+        dto.setAudioUrl(flashcardSet.getAudioUrl());
         dto.setCreatedAt(flashcardSet.getCreatedAt());
         dto.setUpdatedAt(flashcardSet.getUpdatedAt());
         return dto;
@@ -228,6 +245,10 @@ public class FlashcardServiceImpl implements FlashcardService {
         dto.setId(flashcard.getId());
         dto.setFrontText(flashcard.getFrontText());
         dto.setBackText(flashcard.getBackText());
+        dto.setImageUrl(flashcard.getImageUrl());
+        dto.setAudioUrl(flashcard.getAudioUrl());
+        dto.setExample(flashcard.getExample());
+        dto.setLevel(flashcard.getLevel());
         dto.setCreatedAt(flashcard.getCreatedAt());
         dto.setUpdatedAt(flashcard.getUpdatedAt());
         if (flashcard.getFlashcardSet() != null) {

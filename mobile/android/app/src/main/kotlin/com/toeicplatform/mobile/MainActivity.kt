@@ -1,4 +1,4 @@
-package com.example.toeic_mobile
+package com.toeicplatform.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

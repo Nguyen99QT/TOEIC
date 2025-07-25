@@ -6,14 +6,14 @@ plugins {
 }
 
 android {
-    compileSdk = 33
+    compileSdk = 34
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
         // ✅ Duy nhất một block defaultConfig
         applicationId = "com.toeicplatform.mobile"
         minSdk = 24 // ✅ quan trọng để chạy với flutter_sound
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
     }

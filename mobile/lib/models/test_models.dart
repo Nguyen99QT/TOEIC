@@ -79,6 +79,7 @@ class TestQuestion {
   final int questionOrder;
   final String? audioUrl;
   final String? imageUrl;
+  final String? content; // Add content field for reading comprehension parts
   final List<TestOption> options;
 
   TestQuestion({
@@ -88,6 +89,7 @@ class TestQuestion {
     required this.questionOrder,
     this.audioUrl,
     this.imageUrl,
+    this.content,
     required this.options,
   });
 
@@ -115,6 +117,7 @@ class TestQuestion {
       questionOrder: json['questionOrder'] ?? 0,
       audioUrl: json['audioUrl'],
       imageUrl: json['imageUrl'],
+      content: json['content'], // Add content from backend
       options: options,
     );
   }
@@ -127,6 +130,7 @@ class TestQuestion {
       'questionOrder': questionOrder,
       'audioUrl': audioUrl,
       'imageUrl': imageUrl,
+      'content': content,
       'options': options.map((option) => option.toJson()).toList(),
     };
   }

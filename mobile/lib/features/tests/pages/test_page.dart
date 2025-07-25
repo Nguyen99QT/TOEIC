@@ -351,6 +351,26 @@ class TestPage extends ConsumerWidget {
                         const SizedBox(height: 16),
                       ],
 
+                      // Reading content for Part 6 & 7
+                      if (currentQuestion.content != null && currentQuestion.content!.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Text(
+                            currentQuestion.content!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
                       // Question text
                       Text(
                         currentQuestion.questionText,
@@ -589,9 +609,23 @@ class TestPage extends ConsumerWidget {
                 await ref.read(testStateProvider(testId).notifier).submitTest(questions);
                 final result = ref.read(testStateProvider(testId)).submissionResult;
                 if (result != null && context.mounted) {
-                  // Navigate to simple result page with actual resultId
-                  final resultId = result.submissionId; // This is now the actual resultId from backend
-                  context.go('/test-result-simple?message=${Uri.encodeComponent(result.message)}&resultId=$resultId');
+                  // Navigate to result page with data compatible with TestResultScreen
+                  final totalScore = result.result?.totalScore ?? 0;
+                  final correctAnswers = result.result?.questions.where((q) => q.isCorrect).length ?? 0;
+                  final resultData = {
+                    'submissionId': result.submissionId,
+                    'message': result.message,
+                    'score': correctAnswers, // Use correct answers count as score
+                    'totalScore': totalScore,
+                    'scoreListen': result.result?.scoreListen ?? 0,
+                    'scoreRead': result.result?.scoreRead ?? 0,
+                    'totalQuestions': questions.length,
+                    'correctAnswers': correctAnswers,
+                    'wrongAnswers': questions.length - correctAnswers,
+                    'testTitle': result.result?.testTitle ?? 'Test',
+                    'timeTaken': 0, // We don't have this data yet
+                  };
+                  context.go('/test-result', extra: resultData);
                 }
               } catch (e) {
                 if (context.mounted) {

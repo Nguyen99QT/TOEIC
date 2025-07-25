@@ -10,11 +10,16 @@ import com.leenglish.toeic.service.TestGenerationService;
 import com.leenglish.toeic.repository.TestRepository;
 import com.leenglish.toeic.repository.TestQuestionRepository;
 import com.leenglish.toeic.repository.QuestionTestRepository;
+import com.leenglish.toeic.repository.UserRepository;
 import com.leenglish.toeic.domain.Test;
 import com.leenglish.toeic.domain.TestQuestion;
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.MembershipType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -42,6 +47,32 @@ public class TestController {
 
     @Autowired
     private QuestionTestRepository questionTestRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // Helper method to check if user has premium access
+    private boolean hasPremiumAccess() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && 
+                !authentication.getName().equals("anonymousUser")) {
+                
+                String username = authentication.getName();
+                Optional<User> userOpt = userRepository.findByUsernameOrEmail(username, username);
+                
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    MembershipType membershipType = user.getMembershipType();
+                    return membershipType == MembershipType.PREMIUM || membershipType == MembershipType.VIP;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            System.out.println("Error checking premium access: " + e.getMessage());
+            return false;
+        }
+    }
 
     // Test endpoint for debugging audio access
     @GetMapping("/debug/audio")
@@ -126,8 +157,18 @@ public class TestController {
     }
 
     @PostMapping("/selection/generate-quick")
-    public ResponseEntity<TestSelectionResponse> generateQuickRandomTest() {
+    public ResponseEntity<?> generateQuickRandomTest() {
         try {
+            // Check if user has premium access
+            if (!hasPremiumAccess()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                        "error", "PREMIUM_REQUIRED",
+                        "message", "Tính năng tạo Quick Test chỉ dành cho thành viên Premium và VIP. Vui lòng nâng cấp tài khoản để sử dụng.",
+                        "upgradeRequired", true
+                    ));
+            }
+            
             TestSelectionResponse response = testGenerationService.generateQuickRandomTest();
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -137,8 +178,18 @@ public class TestController {
     }
 
     @PostMapping("/selection/generate-full")
-    public ResponseEntity<TestSelectionResponse> generateFullRandomTest() {
+    public ResponseEntity<?> generateFullRandomTest() {
         try {
+            // Check if user has premium access
+            if (!hasPremiumAccess()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                        "error", "PREMIUM_REQUIRED", 
+                        "message", "Tính năng tạo Full TOEIC Test chỉ dành cho thành viên Premium và VIP. Vui lòng nâng cấp tài khoản để sử dụng.",
+                        "upgradeRequired", true
+                    ));
+            }
+            
             RandomTestRequest fullRequest = new RandomTestRequest(
                 "Full TOEIC Practice Test",
                 "Complete 200-question TOEIC practice test with all parts",
@@ -222,6 +273,111 @@ public class TestController {
                 })
                 .sorted(Comparator.comparing(TestPartResponse::getPartNumber))
                 .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{testId}/questions")
+    public ResponseEntity<List<TestQuestionResponse>> getAllQuestionsForTest(@PathVariable Long testId) {
+        try {
+            System.out.println("Getting all questions for testId: " + testId);
+            List<TestQuestion> testQuestions = testQuestionRepository.findByTestIdWithQuestionAndOptions(testId);
+            
+            if (testQuestions.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Sort all questions by part number and question order
+            List<TestQuestion> sortedQuestions = testQuestions.stream()
+                .sorted(Comparator.comparing(TestQuestion::getPartNumber)
+                    .thenComparing(TestQuestion::getQuestionOrder))
+                .collect(Collectors.toList());
+            
+            List<TestQuestionResponse> response = sortedQuestions.stream().map(tq -> {
+                TestQuestionResponse question = new TestQuestionResponse();
+                question.setQuestionId(tq.getQuestion().getQuestionId());
+                question.setPartNumber(tq.getPartNumber());
+                question.setQuestionOrder(tq.getQuestionOrder());
+                question.setQuestionText(tq.getQuestion().getQuestionText());
+                
+                String audioUrl = tq.getQuestion().getAudioUrl();
+                String imageUrl = tq.getQuestion().getImageUrl();
+                
+                question.setAudioUrl(audioUrl);
+                question.setImageUrl(imageUrl);
+                
+                // Add content from QuestionGroup for reading comprehension parts (6 & 7)
+                if ((tq.getPartNumber() == 6 || tq.getPartNumber() == 7) && tq.getQuestion().getGroup() != null) {
+                    question.setContent(tq.getQuestion().getGroup().getContent());
+                } else if (tq.getPartNumber() == 6) {
+                    // Fallback content for Part 6 if no group content
+                    question.setContent("""
+                        Subject: Regarding Our New Branch Office
+
+                        Dear Team,
+
+                        I am pleased to announce that our company will be expanding its operations this year. ------- (131) new employees for our upcoming Windsor location has been a priority for the management team. The human resources department has been working diligently to find qualified candidates who meet our high standards.
+
+                        Our technical support team has been ------- (132) the new office systems will integrate seamlessly with our existing infrastructure. We believe ------- (133) this expansion will allow us to better serve our clients in the region.
+
+                        The new branch will focus on providing ------- (134) customer service to our growing client base. All staff members will undergo comprehensive training to ensure they are fully prepared for their new roles.
+
+                        We are confident that this expansion will strengthen our position in the market and contribute to the company's continued success.
+
+                        Best regards,
+                        Regional Manager
+                        """);
+                } else if (tq.getPartNumber() == 7) {
+                    // Fallback content for Part 7 if no group content  
+                    question.setContent("""
+                        MEMO
+
+                        TO: All Staff Members
+                        FROM: Human Resources Department  
+                        DATE: July 15, 2024
+                        RE: Holiday Schedule Policy Update
+
+                        We would like to inform all employees about an important update to our holiday request policy that will take effect immediately.
+
+                        Due to the upcoming July 4th holiday weekend and the high volume of vacation requests we have received, we need to implement temporary scheduling adjustments. We have discovered that 35% of our planned staff have requested time off on July 5th, which exceeds our maximum allowable absence rate of 25%.
+
+                        To ensure adequate coverage during this busy period, we are implementing the following temporary measures:
+
+                        1. All time-off requests for July 5th and July 6th must be approved by department supervisors
+                        2. Priority will be given to requests submitted before June 22nd
+                        3. Emergency staffing procedures will be in effect for the entire holiday weekend
+
+                        Please note that this is a temporary measure and our regular policies will resume on July 8th. We appreciate your understanding and cooperation during this transition period.
+
+                        If you have any questions about these temporary changes, please contact your immediate supervisor or the HR department at extension 2847.
+
+                        Thank you for your continued dedication to maintaining our high standards of customer service.
+
+                        Human Resources Department
+                        """);
+                }
+                
+                // Set options from the question
+                List<TestOptionResponse> options = new ArrayList<>();
+                if (tq.getQuestion().getOptions() != null && !tq.getQuestion().getOptions().isEmpty()) {
+                    for (var option : tq.getQuestion().getOptions()) {
+                        if (option.getLabel() != null && option.getContent() != null) {
+                            TestOptionResponse optionResponse = new TestOptionResponse();
+                            optionResponse.setOptionId(option.getOptionId());
+                            optionResponse.setLabel(option.getLabel());
+                            optionResponse.setContent(option.getContent());
+                            options.add(optionResponse);
+                        }
+                    }
+                }
+                question.setOptions(options);
+                
+                return question;
+            }).collect(Collectors.toList());
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {

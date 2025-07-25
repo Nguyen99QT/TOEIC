@@ -3,6 +3,14 @@ import 'package:http/http.dart' as http;
 import '../models/test_models.dart';
 import '../core/services/auth_service.dart';
 
+// Custom exception for premium requirement
+class PremiumRequiredException implements Exception {
+  final String message;
+  final bool upgradeRequired;
+  
+  PremiumRequiredException(this.message, {this.upgradeRequired = true});
+}
+
 class TestService {
   static const String baseUrl = 'http://10.0.2.2:8080/api';
   static const String backendBaseUrl = 'http://10.0.2.2:8080';  // For media files
@@ -73,7 +81,7 @@ class TestService {
       }
       
       final response = await http.get(
-        Uri.parse('$baseUrl/tests/$testId/parts'),
+        Uri.parse('$baseUrl/tests/$testId/questions'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $authToken',
@@ -89,18 +97,17 @@ class TestService {
         List<TestQuestion> questions = data.map((item) {
           List<TestOption> options = [];
           
-          // Add options if they exist and are not null
-          if (item['optionA'] != null && item['optionA'].toString().isNotEmpty) {
-            options.add(TestOption(label: 'A', content: item['optionA']));
-          }
-          if (item['optionB'] != null && item['optionB'].toString().isNotEmpty) {
-            options.add(TestOption(label: 'B', content: item['optionB']));
-          }
-          if (item['optionC'] != null && item['optionC'].toString().isNotEmpty) {
-            options.add(TestOption(label: 'C', content: item['optionC']));
-          }
-          if (item['optionD'] != null && item['optionD'].toString().isNotEmpty) {
-            options.add(TestOption(label: 'D', content: item['optionD']));
+          // Add options from the new format
+          if (item['options'] != null) {
+            for (var option in item['options']) {
+              if (option['label'] != null && option['content'] != null && 
+                  option['content'].toString().isNotEmpty) {
+                options.add(TestOption(
+                  label: option['label'],
+                  content: option['content']
+                ));
+              }
+            }
           }
           
           return TestQuestion(
@@ -110,6 +117,7 @@ class TestService {
             questionOrder: item['questionOrder'] ?? 0,
             audioUrl: _buildFullUrl(item['audioUrl']),
             imageUrl: _buildFullUrl(item['imageUrl']),
+            content: item['content'], // Add content for reading parts
             options: options,
           );
         }).toList();
@@ -197,10 +205,23 @@ class TestService {
           testId: data['testId'] ?? 0,
           message: data['message'] ?? 'Quick test generated successfully',
         );
+      } else if (response.statusCode == 403) {
+        // Handle premium requirement
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        if (errorData['error'] == 'PREMIUM_REQUIRED') {
+          throw PremiumRequiredException(
+            errorData['message'] ?? 'Cần nâng cấp lên Premium để sử dụng tính năng này',
+            upgradeRequired: errorData['upgradeRequired'] ?? true,
+          );
+        }
+        throw Exception('Không có quyền truy cập tính năng này');
       } else {
         throw Exception('Failed to generate quick test: HTTP ${response.statusCode}');
       }
     } catch (e) {
+      if (e is PremiumRequiredException) {
+        rethrow;
+      }
       print('Error generating quick test: $e');
       throw Exception('Cannot generate quick test from backend: $e');
     }
@@ -229,10 +250,23 @@ class TestService {
           testId: data['testId'] ?? 0,
           message: data['message'] ?? 'Full TOEIC test generated successfully',
         );
+      } else if (response.statusCode == 403) {
+        // Handle premium requirement
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        if (errorData['error'] == 'PREMIUM_REQUIRED') {
+          throw PremiumRequiredException(
+            errorData['message'] ?? 'Cần nâng cấp lên Premium để sử dụng tính năng này',
+            upgradeRequired: errorData['upgradeRequired'] ?? true,
+          );
+        }
+        throw Exception('Không có quyền truy cập tính năng này');
       } else {
         throw Exception('Failed to generate full TOEIC test: HTTP ${response.statusCode}');
       }
     } catch (e) {
+      if (e is PremiumRequiredException) {
+        rethrow;
+      }
       print('Error generating full TOEIC test: $e');
       throw Exception('Cannot generate full TOEIC test from backend: $e');
     }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/test_models.dart';
 import '../../../services/test_service.dart';
+import '../../../core/services/auth_service.dart';
 
 // Provider cho danh sách tests
 final testsProvider = FutureProvider<List<Test>>((ref) async {
@@ -23,7 +24,12 @@ class QuickTestNotifier extends StateNotifier<AsyncValue<QuickTestResult?>> {
       final result = await TestService.generateQuickTest();
       state = AsyncValue.data(result);
     } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+      if (error is PremiumRequiredException) {
+        // Handle premium required exception separately
+        state = AsyncValue.error('PREMIUM_REQUIRED: ${error.message}', stackTrace);
+      } else {
+        state = AsyncValue.error(error, stackTrace);
+      }
     }
   }
 
@@ -33,7 +39,12 @@ class QuickTestNotifier extends StateNotifier<AsyncValue<QuickTestResult?>> {
       final result = await TestService.generateFullTOEICTest();
       state = AsyncValue.data(result);
     } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
+      if (error is PremiumRequiredException) {
+        // Handle premium required exception separately
+        state = AsyncValue.error('PREMIUM_REQUIRED: ${error.message}', stackTrace);
+      } else {
+        state = AsyncValue.error(error, stackTrace);
+      }
     }
   }
 
@@ -44,6 +55,62 @@ class QuickTestNotifier extends StateNotifier<AsyncValue<QuickTestResult?>> {
 
 class TestListPage extends ConsumerWidget {
   const TestListPage({super.key});
+
+  // Helper method to check if user has premium access
+  bool _hasPremiumAccess() {
+    final user = AuthService.instance.currentUser;
+    if (user == null) return false;
+    
+    final membershipType = user.membershipType.toUpperCase();
+    return membershipType == 'PREMIUM' || membershipType == 'VIP';
+  }
+
+  // Helper method to check if user is basic member (to show lock icon)
+  bool _isBasicMember() {
+    final user = AuthService.instance.currentUser;
+    if (user == null) return true; // Consider non-logged users as basic
+    
+    final membershipType = user.membershipType.toUpperCase();
+    return membershipType == 'BASIC';
+  }
+
+  // Helper method to show premium dialog
+  void _showPremiumDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Yêu cầu nâng cấp'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Tính năng này chỉ dành cho thành viên Premium và VIP.'),
+            SizedBox(height: 16),
+            Text('Với gói Premium/VIP bạn sẽ có:'),
+            SizedBox(height: 8),
+            Text('• Tạo test nhanh không giới hạn'),
+            Text('• Tạo full TOEIC test (200 câu)'),
+            Text('• Truy cập tất cả nội dung học'),
+            Text('• Báo cáo chi tiết kết quả'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Để sau'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to upgrade page
+              context.go('/profile'); // User can upgrade from profile
+            },
+            child: const Text('Nâng cấp ngay'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -119,12 +186,29 @@ class TestListPage extends ConsumerWidget {
                               // Quick Test Button
                               ElevatedButton.icon(
                                 onPressed: () {
-                                  ref.read(quickTestProvider.notifier).generateQuickTest();
+                                  if (_hasPremiumAccess()) {
+                                    ref.read(quickTestProvider.notifier).generateQuickTest();
+                                  } else {
+                                    _showPremiumDialog(context);
+                                  }
                                 },
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Tạo Quick Test (45 câu)'),
+                                icon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.play_arrow),
+                                    if (_isBasicMember()) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.lock, size: 16),
+                                    ],
+                                  ],
+                                ),
+                                label: Text(_hasPremiumAccess() 
+                                    ? 'Tạo Quick Test (45 câu)' 
+                                    : 'Tạo Quick Test (45 câu) - Premium'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.primary,
+                                  backgroundColor: _hasPremiumAccess() 
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey.shade600,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
@@ -133,12 +217,29 @@ class TestListPage extends ConsumerWidget {
                               // Full TOEIC Test Button
                               ElevatedButton.icon(
                                 onPressed: () {
-                                  ref.read(quickTestProvider.notifier).generateFullTOEICTest();
+                                  if (_hasPremiumAccess()) {
+                                    ref.read(quickTestProvider.notifier).generateFullTOEICTest();
+                                  } else {
+                                    _showPremiumDialog(context);
+                                  }
                                 },
-                                icon: const Icon(Icons.quiz),
-                                label: const Text('Tạo Full TOEIC Test (200 câu)'),
+                                icon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.quiz),
+                                    if (_isBasicMember()) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.lock, size: 16),
+                                    ],
+                                  ],
+                                ),
+                                label: Text(_hasPremiumAccess()
+                                    ? 'Tạo Full TOEIC Test (200 câu)'
+                                    : 'Tạo Full TOEIC Test (200 câu) - Premium'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                                  backgroundColor: _hasPremiumAccess()
+                                      ? Theme.of(context).colorScheme.secondary
+                                      : Colors.grey.shade600,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
@@ -158,27 +259,88 @@ class TestListPage extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
-                        error: (error, stack) => Column(
-                          children: [
-                            Text(
-                              'Lỗi: $error',
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                ref.read(quickTestProvider.notifier).generateQuickTest();
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Thử lại'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                        error: (error, stack) {
+                          // Check if it's a premium required error
+                          if (error.toString().startsWith('PREMIUM_REQUIRED:')) {
+                            final message = error.toString().replaceFirst('PREMIUM_REQUIRED: ', '');
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _showPremiumDialog(context);
+                            });
+                            return Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    border: Border.all(color: Colors.orange),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.lock, color: Colors.orange.shade700),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          message,
+                                          style: TextStyle(color: Colors.orange.shade700),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  onPressed: () => _showPremiumDialog(context),
+                                  icon: const Icon(Icons.upgrade),
+                                  label: const Text('Nâng cấp Premium'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          
+                          // Regular error handling
+                          return Column(
+                            children: [
+                              Text(
+                                'Lỗi: $error',
+                                style: const TextStyle(color: Colors.red),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  if (_hasPremiumAccess()) {
+                                    ref.read(quickTestProvider.notifier).generateQuickTest();
+                                  } else {
+                                    _showPremiumDialog(context);
+                                  }
+                                },
+                                icon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.refresh),
+                                    if (_isBasicMember()) ...[
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.lock, size: 16),
+                                    ],
+                                  ],
+                                ),
+                                label: const Text('Thử lại'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _hasPremiumAccess()
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey.shade600,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],

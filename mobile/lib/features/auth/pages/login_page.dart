@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:toeic_mobile/core/services/auth_service.dart';
+import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -99,18 +100,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
     setState(() => _isLoading = true);
 
     try {
-      final result = await AuthService.instance.login(
+      final success = await ref.read(authProvider.notifier).login(
         _usernameController.text.trim(),
         _passwordController.text,
       );
 
-      if (result.success) {
+      if (success) {
         if (mounted) {
           context.go('/dashboard');
         }
       } else {
         if (mounted) {
-          _showErrorSnackBar(result.error ?? 'Login failed');
+          final error = ref.read(authProvider).error;
+          _showErrorSnackBar(error ?? 'Login failed');
         }
       }
     } catch (e) {

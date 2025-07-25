@@ -42,6 +42,9 @@ class User {
   @HiveField(12)
   final DateTime? updatedAt;
 
+  @HiveField(13)
+  final DateTime? dateOfBirth;
+
   User({
     required this.id,
     required this.username,
@@ -56,6 +59,7 @@ class User {
     this.profilePicture,
     this.createdAt,
     this.updatedAt,
+    this.dateOfBirth,
   });
 
   factory User.fromMap(Map<String, dynamic> map) {
@@ -75,6 +79,8 @@ class User {
           map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
       updatedAt:
           map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
+      dateOfBirth:
+          map['dateOfBirth'] != null ? DateTime.parse(map['dateOfBirth']) : null,
     );
   }
 
@@ -93,6 +99,7 @@ class User {
       'profilePicture': profilePicture,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
     };
   }
 
@@ -119,6 +126,7 @@ class User {
     String? profilePicture,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? dateOfBirth,
   }) {
     return User(
       id: id ?? this.id,
@@ -134,6 +142,7 @@ class User {
       profilePicture: profilePicture ?? this.profilePicture,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
     );
   }
 

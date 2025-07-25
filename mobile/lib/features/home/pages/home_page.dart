@@ -15,21 +15,21 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
-          children: [
-            _buildHeroSection(context, isAuthenticated, user),
-            _buildStatisticsSection(),
-            _buildWhyChooseSection(),
-            _buildFeaturedFlashcardsSection(),
-            _buildFeaturedLessonsSection(),
-            _buildFooter(),
-          ],
+                      children: [
+              _buildHeroSection(context, isAuthenticated, user, ref),
+              _buildStatisticsSection(),
+              _buildWhyChooseSection(),
+              _buildFeaturedFlashcardsSection(),
+              _buildFeaturedLessonsSection(),
+              _buildFooter(),
+            ],
         ),
       ),
     );
   }
 
   Widget _buildHeroSection(
-      BuildContext context, bool isAuthenticated, dynamic user) {
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85, // Responsive height
       decoration: const BoxDecoration(
@@ -48,7 +48,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               // Navigation Bar - giống frontend
-              _buildNavigationBar(context, isAuthenticated, user),
+              _buildNavigationBar(context, isAuthenticated, user, ref),
 
               // Hero Content - responsive
               Expanded(
@@ -124,7 +124,7 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _buildNavigationBar(
-      BuildContext context, bool isAuthenticated, dynamic user) {
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -167,13 +167,13 @@ class HomePage extends ConsumerWidget {
           ],
         ),
         // Navigation menu - giống frontend
-        _buildNavMenu(context, isAuthenticated, user),
+        _buildNavMenu(context, isAuthenticated, user, ref),
       ],
     );
   }
 
   Widget _buildNavMenu(
-      BuildContext context, bool isAuthenticated, dynamic user) {
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Row(
       children: [
         // Navigation items
@@ -187,39 +187,98 @@ class HomePage extends ConsumerWidget {
         const SizedBox(width: 16),
         // User section
         if (isAuthenticated) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
+          PopupMenuButton<String>(
+            offset: const Offset(0, 40),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    (user?.fullName?.isNotEmpty == true
-                        ? user!.fullName.substring(0, 1).toUpperCase()
-                        : 'U'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      (user?.fullName?.isNotEmpty == true
+                          ? user!.fullName.substring(0, 1).toUpperCase()
+                          : 'U'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF667eea),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  user?.fullName ?? 'User',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(width: 8),
+                  Text(
+                    user?.fullName ?? 'User',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ],
+              ),
             ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    const Icon(Icons.person, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Profile'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Settings'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout, size: 18, color: Colors.red),
+                    const SizedBox(width: 8),
+                    const Text('Logout', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  context.go('/profile');
+                  break;
+                case 'settings':
+                  context.go('/settings');
+                  break;
+                case 'logout':
+                  ref.read(authProvider.notifier).logout();
+                  context.go('/');
+                  break;
+              }
+            },
           ),
         ] else ...[
           ElevatedButton(

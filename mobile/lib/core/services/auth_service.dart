@@ -19,36 +19,59 @@ class AuthService {
   String? get token => _token;
 
   Future<void> init() async {
+    print('🔐 Initializing AuthService...');
+    
     // Load saved authentication data
     _token = await _storageService.getString('auth_token');
     final userData = await _storageService.getString('user_data');
 
+    print('🔐 Loaded token: ${_token?.substring(0, 20)}...');
+    print('🔐 Loaded user data: $userData');
+
     if (userData != null) {
       _currentUser = User.fromJson(userData);
+      print('🔐 Current user: ${_currentUser?.fullName}');
     }
+    
+    print('🔐 AuthService initialized - isAuthenticated: $isAuthenticated');
   }
 
   Future<LoginResult> login(String username, String password) async {
     try {
+      print('🔐 Attempting login for user: $username');
+      
       final response = await _apiService.post('/auth/login', {
         'username': username,
         'password': password,
       });
+
+      print('🔐 Login response: ${response.success} - ${response.message}');
+      print('🔐 Response data: ${response.data}');
 
       if (response.success) {
         final data = response.data;
         _token = data['accessToken'] ?? data['token'];
         _currentUser = User.fromMap(data['user'] ?? data);
 
+        print('🔐 Token received: ${_token?.substring(0, 20)}...');
+        print('🔐 User data: ${_currentUser?.toJson()}');
+
         // Save authentication data
         await _storageService.saveString('auth_token', _token!);
         await _storageService.saveString('user_data', _currentUser!.toJson());
+
+        print('🔐 Token saved to storage');
+        
+        // Verify token was saved
+        final savedToken = await _storageService.getString('auth_token');
+        print('🔐 Token from storage: ${savedToken?.substring(0, 20)}...');
 
         return LoginResult(success: true, user: _currentUser);
       } else {
         return LoginResult(success: false, error: response.message);
       }
     } catch (e) {
+      print('🔐 Login error: $e');
       return LoginResult(success: false, error: e.toString());
     }
   }
@@ -127,12 +150,21 @@ class AuthService {
 
   Future<bool> validateToken() async {
     try {
-      if (_token == null) return false;
+      print('🔍 Validating token...');
+      print('🔍 Current token: ${_token?.substring(0, 20)}...');
+      
+      if (_token == null) {
+        print('🔍 No token found');
+        return false;
+      }
 
-      final response = await _apiService.get('/auth/validate');
+      final response = await _apiService.post('/auth/validate-token', {});
+      print('🔍 Validate response: ${response.success} - ${response.message}');
+      print('🔍 Response data: ${response.data}');
+      
       return response.success;
     } catch (e) {
-      print('Error validating token: $e');
+      print('🔍 Error validating token: $e');
       return false;
     }
   }

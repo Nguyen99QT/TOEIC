@@ -16,6 +16,9 @@ class ApiService {
 
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
+      print('🔧 API Headers - Token: ${token.substring(0, 20)}...');
+    } else {
+      print('🔧 API Headers - No token found');
     }
 
     return headers;

@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:toeic_mobile/core/theme/app_theme.dart';
 import 'package:toeic_mobile/core/router.dart';
 import 'package:toeic_mobile/core/services/storage_service.dart';
+import 'package:toeic_mobile/core/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,9 @@ void main() async {
 
   // Initialize Storage Service
   await StorageService.instance.init();
+
+  // Initialize Auth Service
+  await AuthService.instance.init();
 
   runApp(
     const ProviderScope(

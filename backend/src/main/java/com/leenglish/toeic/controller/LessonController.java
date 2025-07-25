@@ -78,9 +78,26 @@ public class LessonController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<LessonDto> updateLesson(@PathVariable Long id, @RequestBody LessonDto lessonDto) {
-        LessonDto updatedLesson = lessonService.updateLesson(id, lessonDto);
-        return ResponseEntity.ok().body(updatedLesson);
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<LessonDto> updateLesson(@PathVariable Long id, @RequestBody LessonDto lessonDto,
+            Authentication authentication) {
+        try {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            System.out.println("📝 Updating lesson ID: " + id + " by " + userDetails.getUsername());
+
+            // Set the updater information
+            lessonDto.setUpdatedBy(userDetails.getUsername());
+
+            LessonDto updatedLesson = lessonService.updateLesson(id, lessonDto);
+
+            System.out.println("✅ Lesson updated successfully: " + updatedLesson.getTitle());
+            return ResponseEntity.ok().body(updatedLesson);
+        } catch (Exception e) {
+            System.err.println("❌ Error updating lesson: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @DeleteMapping("/{id}")

@@ -24,7 +24,7 @@ dependencies:
   # State Management
   provider: ^6.0.5
   riverpod: ^2.3.6
-  flutter_riverpod: ^2.3.6
+  flutter_riverpod: ^2.4.9
 
   # HTTP & API
   dio: ^5.3.2
@@ -33,9 +33,10 @@ dependencies:
   http: ^1.1.0
 
   # Local Storage
-  shared_preferences: ^2.2.0
+  shared_preferences: ^2.2.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.0.0
 
   # Authentication
   jwt_decoder: ^2.0.1
@@ -84,15 +85,3 @@ flutter:
     - assets/icons/
     - assets/audio/
     - assets/animations/
-
-  # Use system fonts instead of custom fonts for now
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: assets/fonts/Inter-Regular.ttf
-  #       - asset: assets/fonts/Inter-Medium.ttf
-  #         weight: 500
-  #       - asset: assets/fonts/Inter-SemiBold.ttf
-  #         weight: 600
-  #       - asset: assets/fonts/Inter-Bold.ttf
-  #         weight: 700

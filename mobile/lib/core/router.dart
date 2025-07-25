@@ -2,7 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:toeic_mobile/features/auth/pages/login_page.dart';
 import 'package:toeic_mobile/features/auth/pages/register_page.dart';
 import 'package:toeic_mobile/features/home/pages/home_page.dart';
-import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
+import 'package:toeic_mobile/features/dashboard/pages/modern_dashboard_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
 import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
@@ -33,7 +33,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => const DashboardPage(),
+      builder: (context, state) => const ModernDashboardPage(),
     ),
     GoRoute(
       path: '/lessons',

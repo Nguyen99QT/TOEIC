@@ -126,18 +126,19 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    /**
-     * Update user role (Admin only)
-     */
-    public User updateUserRole(Long userId, Role newRole) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+    // /**
+    // * Update user role (Admin only)
+    // */
+    // public User updateUserRole(Long userId, Role newRole) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new EntityNotFoundException("User not found with id: " +
+    // userId));
 
-        user.setRole(newRole);
-        user.setUpdatedAt(LocalDateTime.now());
+    // user.setRole(newRole);
+    // user.setUpdatedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
-    }
+    // return userRepository.save(user);
+    // }
 
     /**
      * Change user password
@@ -402,6 +403,54 @@ public class UserService {
             user.setPasswordHash(passwordEncoder.encode(newPassword));
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
+        }
+    }
+
+    /**
+     * Promote user to collaborator role by ID
+     */
+    public void promoteToCollaborator(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setRole(Role.COLLABORATOR);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            System.out.println("✅ User ID " + userId + " promoted to COLLABORATOR");
+        } else {
+            throw new EntityNotFoundException("User not found with ID: " + userId);
+        }
+    }
+
+    /**
+     * Promote user to collaborator role by username
+     */
+    public void promoteToCollaboratorByUsername(String username) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setRole(Role.COLLABORATOR);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            System.out.println("✅ User " + username + " promoted to COLLABORATOR");
+        } else {
+            throw new EntityNotFoundException("User not found with username: " + username);
+        }
+    }
+
+    /**
+     * Update user role (admin function)
+     */
+    public void updateUserRole(Long userId, Role newRole) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setRole(newRole);
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+            System.out.println("✅ User ID " + userId + " role updated to " + newRole);
+        } else {
+            throw new EntityNotFoundException("User not found with ID: " + userId);
         }
     }
 }

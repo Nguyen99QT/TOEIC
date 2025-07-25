@@ -37,8 +37,10 @@ class DashboardPage extends ConsumerWidget {
                         radius: 30,
                         backgroundColor: Colors.white,
                         child: Text(
-                          (user != null && user.fullName.isNotEmpty
-                              ? user.fullName.substring(0, 1).toUpperCase()
+                          (user != null &&
+                                  user.fullName != null &&
+                                  user.fullName!.isNotEmpty
+                              ? user.fullName!.substring(0, 1).toUpperCase()
                               : 'U'),
                           style: TextStyle(
                             fontSize: 24,
@@ -198,7 +200,7 @@ class DashboardPage extends ConsumerWidget {
                     Icons.play_arrow,
                     Colors.blue,
                     () {
-                      Navigator.pushNamed(context, '/lessons');
+                      context.push('/lessons');
                     },
                   ),
                 ),
@@ -209,7 +211,7 @@ class DashboardPage extends ConsumerWidget {
                     Icons.fitness_center,
                     Colors.green,
                     () {
-                      Navigator.pushNamed(context, '/exercises');
+                      context.push('/exercises');
                     },
                   ),
                 ),
@@ -226,7 +228,7 @@ class DashboardPage extends ConsumerWidget {
                     Icons.credit_card,
                     Colors.orange,
                     () {
-                      Navigator.pushNamed(context, '/flashcards');
+                      context.push('/flashcards');
                     },
                   ),
                 ),
@@ -237,7 +239,7 @@ class DashboardPage extends ConsumerWidget {
                     Icons.person,
                     Colors.purple,
                     () {
-                      Navigator.pushNamed(context, '/profile');
+                      context.push('/profile');
                     },
                   ),
                 ),
@@ -293,7 +295,7 @@ class DashboardPage extends ConsumerWidget {
       String title, String time, IconData icon, Color color) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         child: Icon(icon, color: color),
       ),
       title: Text(title),

@@ -326,44 +326,6 @@ public class LessonService {
     // lesson.getLevel()
     // // Add other fields as needed
     // );
-    // }// Remove any duplicate convertToDto method
-    public LessonDto convertToDto(Lesson lesson) {
-        LessonDto dto = new LessonDto();
-        dto.setId(lesson.getId());
-        dto.setTitle(lesson.getTitle());
-        dto.setDescription(lesson.getDescription());
-        dto.setContent(lesson.getContent());
-        dto.setType(lesson.getType());
-        dto.setDifficulty(lesson.getDifficulty());
-        dto.setLevel(lesson.getLevel());
-        dto.setAudioUrl(lesson.getAudioUrl());
-        dto.setImageUrl(lesson.getImageUrl());
-        dto.setDuration(lesson.getDuration());
-        dto.setIsActive(lesson.getIsActive());
-        dto.setIsPremium(lesson.getIsPremium());
-        dto.setIsPublic(lesson.getIsPublic());
-        dto.setCreatedAt(lesson.getCreatedAt());
-        dto.setUpdatedAt(lesson.getUpdatedAt());
-        return dto;
-    }
-
-    public Lesson convertToEntity(LessonDto dto) {
-        Lesson lesson = new Lesson();
-        lesson.setId(dto.getId());
-        lesson.setTitle(dto.getTitle());
-        lesson.setDescription(dto.getDescription());
-        lesson.setContent(dto.getContent());
-        lesson.setType(dto.getType());
-        lesson.setDifficulty(dto.getDifficulty());
-        lesson.setLevel(dto.getLevel());
-        lesson.setAudioUrl(dto.getAudioUrl());
-        lesson.setImageUrl(dto.getImageUrl());
-        lesson.setDuration(dto.getDuration());
-        lesson.setIsActive(dto.getIsActive());
-        lesson.setCreatedAt(dto.getCreatedAt());
-        lesson.setUpdatedAt(dto.getUpdatedAt());
-        return lesson;
-    }
 
     public List<LessonDto> findAllLessonsAsDto() {
         return lessonRepository.findAll().stream()
@@ -494,5 +456,79 @@ public class LessonService {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    // Get all lessons as DTOs
+    public List<LessonDto> getAllLessonsAsDto() {
+        try {
+            System.out.println("🔄 Getting all lessons as DTOs");
+            List<Lesson> lessons = lessonRepository.findAll();
+
+            List<LessonDto> result = lessons.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+            System.out.println("✅ Found " + result.size() + " lessons");
+            return result;
+        } catch (Exception e) {
+            System.err.println("❌ Error getting all lessons as DTOs: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    // Convert Lesson entity to LessonDto
+    public LessonDto convertToDto(Lesson lesson) {
+        if (lesson == null) {
+            return null;
+        }
+
+        LessonDto dto = new LessonDto();
+        dto.setId(lesson.getId());
+        dto.setTitle(lesson.getTitle());
+        dto.setDescription(lesson.getDescription());
+        dto.setContent(lesson.getContent());
+        dto.setType(lesson.getType());
+        dto.setDifficulty(lesson.getDifficulty());
+        dto.setLevel(lesson.getLevel());
+        dto.setAudioUrl(lesson.getAudioUrl());
+        dto.setImageUrl(lesson.getImageUrl());
+        dto.setDuration(lesson.getDuration());
+        dto.setIsActive(lesson.getIsActive());
+        dto.setIsPremium(lesson.getIsPremium());
+        dto.setIsPublic(lesson.getIsPublic());
+        dto.setCreatedAt(lesson.getCreatedAt());
+        dto.setUpdatedAt(lesson.getUpdatedAt());
+        dto.setCreatedBy(lesson.getCreatedBy());
+        dto.setUpdatedBy(lesson.getUpdatedBy());
+        dto.setCategoryId(null); // Set if needed based on your business logic
+
+        return dto;
+    }
+
+    // Convert LessonDto to Lesson entity
+    public Lesson convertToEntity(LessonDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        Lesson lesson = new Lesson();
+        lesson.setId(dto.getId());
+        lesson.setTitle(dto.getTitle());
+        lesson.setDescription(dto.getDescription());
+        lesson.setContent(dto.getContent());
+        lesson.setType(dto.getType());
+        lesson.setDifficulty(dto.getDifficulty());
+        lesson.setLevel(dto.getLevel());
+        lesson.setAudioUrl(dto.getAudioUrl());
+        lesson.setImageUrl(dto.getImageUrl());
+        lesson.setDuration(dto.getDuration());
+        lesson.setIsActive(dto.getIsActive());
+        lesson.setIsPremium(dto.getIsPremium());
+        lesson.setIsPublic(dto.getIsPublic());
+        lesson.setCreatedBy(dto.getCreatedBy());
+        lesson.setUpdatedBy(dto.getUpdatedBy());
+
+        return lesson;
     }
 }

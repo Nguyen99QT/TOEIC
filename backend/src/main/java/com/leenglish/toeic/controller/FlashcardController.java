@@ -331,3 +331,134 @@ public class FlashcardController {
         }
     }
 }
+
+/**
+ * Alternative FlashcardController for different API paths
+ * Handles /api/flashcards/* endpoints for frontend compatibility
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/flashcards")
+@CrossOrigin(origins = "*")
+@RequiredArgsConstructor
+class FlashcardAltController {
+
+    private final FlashcardService flashcardService;
+    private final UserRepository userRepository;
+
+    /**
+     * Helper method to get user ID from authentication
+     */
+    private Long getUserId(Authentication auth) {
+        if (auth == null || auth.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
+
+        Optional<User> userOpt = userRepository.findByUsername(auth.getName());
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found: " + auth.getName());
+        }
+
+        return userOpt.get().getId();
+    }
+
+    /**
+     * Get flashcard set by ID - Alternative endpoint for frontend compatibility
+     */
+    @GetMapping("/set/{id}")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> getFlashcardSetByIdAlt(@PathVariable Long id) {
+        try {
+            log.info("🔍 Fetching flashcard set {} (alternative endpoint)", id);
+            FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
+        } catch (Exception e) {
+            log.error("❌ Error fetching flashcard set with id: {}", id, e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Flashcard set not found: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all public flashcard sets
+     */
+    @GetMapping("/public")
+    public ResponseEntity<ApiResponse<List<FlashcardSetDto>>> getPublicFlashcardSetsAlt() {
+        try {
+            log.info("🔍 Fetching public flashcard sets (alternative endpoint)");
+            List<FlashcardSetDto> publicSets = flashcardService.getPopularFlashcardSets(50);
+            return ResponseEntity.ok(ApiResponse.success("Public flashcard sets retrieved successfully", publicSets));
+        } catch (Exception e) {
+            log.error("❌ Error fetching public flashcard sets", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to fetch public flashcard sets: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Create new flashcard set
+     */
+    @PostMapping("/set")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> createFlashcardSetAlt(
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("📝 Creating new flashcard set by {}", auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+        } catch (Exception e) {
+            log.error("❌ Error creating flashcard set", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to create flashcard set: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Update flashcard set
+     */
+    @PutMapping("/set/{id}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<FlashcardSetDto>> updateFlashcardSetAlt(
+            @PathVariable Long id,
+            @Valid @RequestBody FlashcardSetDto flashcardSetDto,
+            Authentication auth) {
+        try {
+            log.info("✏️ Updating flashcard set {} by {}", id, auth.getName());
+
+            Long userId = getUserId(auth);
+            FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(id, flashcardSetDto, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set updated successfully", updatedSet));
+        } catch (Exception e) {
+            log.error("❌ Error updating flashcard set {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to update flashcard set: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete flashcard set
+     */
+    @DeleteMapping("/set/{id}")
+    @PreAuthorize("hasRole('COLLABORATOR') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteFlashcardSetAlt(
+            @PathVariable Long id,
+            Authentication auth) {
+        try {
+            log.info("🗑️ Deleting flashcard set {} by {}", id, auth.getName());
+
+            Long userId = getUserId(auth);
+            flashcardService.deleteFlashcardSet(id, userId);
+
+            return ResponseEntity.ok(ApiResponse.success("Flashcard set deleted successfully", null));
+        } catch (Exception e) {
+            log.error("❌ Error deleting flashcard set {}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to delete flashcard set: " + e.getMessage()));
+        }
+    }
+}

@@ -121,24 +121,24 @@ public class JwtService {
     }
 
     /**
-     * Check if token is a refresh token (AuthController needs this)
-     */
-    public boolean isRefreshToken(String token) {
-        try {
-            String tokenType = extractClaim(token, claims -> claims.get("tokenType", String.class));
-            return "refresh".equals(tokenType);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
      * Validate token without user details - for refresh tokens (AuthController
      * needs this)
      */
     public boolean isTokenValid(String token) {
         try {
             return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if token is a refresh token based on its type claim
+     */
+    public boolean isRefreshToken(String token) {
+        try {
+            String tokenType = extractClaim(token, claims -> claims.get("tokenType", String.class));
+            return "refresh".equals(tokenType);
         } catch (Exception e) {
             return false;
         }

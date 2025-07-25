@@ -18,8 +18,8 @@ class AppDrawer extends StatelessWidget {
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Text(
-                (user?.fullName.isNotEmpty == true
-                    ? user!.fullName.substring(0, 1).toUpperCase()
+                (user?.fullName != null && user!.fullName!.isNotEmpty
+                    ? user.fullName!.substring(0, 1).toUpperCase()
                     : 'U'),
                 style: TextStyle(
                   color: Theme.of(context).primaryColor,

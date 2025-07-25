@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test New Features - TOEIC Platform</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .section {
+        margin-bottom: 40px;
+        padding: 20px;
+        border: 2px solid #f0f0f0;
+        border-radius: 15px;
+        background: #f9f9f9;
+      }
+
+      .section h2 {
+        color: #4caf50;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4caf50;
+        padding-bottom: 10px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        margin: 5px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: #4caf50;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: #2196f3;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #1976d2;
+      }
+
+      .btn-danger {
+        background: #f44336;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #d32f2f;
+      }
+
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #e8f5e8;
+        border: 1px solid #4caf50;
+        white-space: pre-wrap;
+        font-family: monospace;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .error {
+        background: #ffebee;
+        border-color: #f44336;
+        color: #d32f2f;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      .form-group textarea {
+        height: 80px;
+        resize: vertical;
+      }
+
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      .auth-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #2196f3;
+      }
+
+      .file-input {
+        margin: 10px 0;
+      }
+
+      .preview {
+        margin: 10px 0;
+        padding: 10px;
+        background: #f0f0f0;
+        border-radius: 5px;
+      }
+
+      .preview img {
+        max-width: 200px;
+        max-height: 150px;
+        border-radius: 5px;
+      }
+
+      .preview audio {
+        width: 100%;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧪 Test New Features</h1>
+
+      <!-- Auth Info -->
+      <div class="auth-info">
+        <h3>Authentication Status</h3>
+        <div id="authInfo">Not logged in</div>
+      </div>
+
+      <!-- FlashCard API Test -->
+      <div class="section">
+        <h2>🃏 FlashCard API Test</h2>
+        <p>Testing the new /api/flashcards/set/{id} endpoint</p>
+
+        <div class="form-group">
+          <label>FlashCard Set ID:</label>
+          <input
+            type="number"
+            id="flashcardSetId"
+            value="1"
+            min="1"
+            title="Enter FlashCard Set ID"
+            placeholder="Enter FlashCard Set ID"
+          />
+        </div>
+
+        <button class="btn btn-primary" onclick="testFlashcardGet()">
+          Get FlashCard Set
+        </button>
+        <button class="btn btn-secondary" onclick="testFlashcardPublic()">
+          Get Public FlashCards
+        </button>
+
+        <div id="flashcardResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Lesson Media Upload Test -->
+      <div class="section">
+        <h2>🎨 Lesson Media Upload Test</h2>
+        <p>Testing image and audio upload for lessons</p>
+
+        <div class="two-column">
+          <div>
+            <div class="form-group">
+              <label>Lesson ID:</label>
+              <input
+                type="number"
+                id="lessonId"
+                value="43"
+                min="1"
+                title="Enter Lesson ID"
+                placeholder="Enter Lesson ID"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Upload Image:</label>
+              <input
+                type="file"
+                id="imageFile"
+                accept="image/*"
+                class="file-input"
+                title="Upload an image file"
+                placeholder="Choose an image file"
+              />
+              <button class="btn btn-primary" onclick="uploadLessonImage()">
+                Upload Image
+              </button>
+            </div>
+
+            <div className="form-group">
+  <label htmlFor="audioFile">Upload Audio:</label>
+  <input
+    type="file"
+    id="audioFile"
+    accept="audio/*"
+    className="file-input"
+    title="Choose an audio file to upload"
+    aria-label="Audio File Upload"
+  />
+  <button className="btn btn-primary" onClick={uploadLessonAudio}>
+    Upload Audio
+  </button>
+</div>
+
+            </div>
+          </div>
+
+          <div>
+            <div id="mediaPreview" class="preview" style="display: none">
+              <h4>Preview:</h4>
+            </div>
+          </div>
+        </div>
+
+        <div id="mediaResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Exercise Questions Test -->
+      <div class="section">
+        <h2>❓ Exercise Questions Management</h2>
+        <p>Testing the new ExerciseQuestionController</p>
+
+        <div class="two-column">
+          <div>
+            <div class="form-group">
+              <label>Exercise ID:</label>
+              <input
+                type="number"
+                id="exerciseId"
+                value="1"
+                min="1"
+                title="Enter Exercise ID"
+                placeholder="Enter Exercise ID"
+              />
+            </div>
+
+            <button class="btn btn-primary" onclick="getExerciseQuestions()">
+              Get Questions
+            </button>
+            <button class="btn btn-secondary" onclick="getExerciseStats()">
+              Get Stats
+            </button>
+          </div>
+
+          <div>
+            <h4>Create New Question:</h4>
+            <div class="form-group">
+              <label>Question Text:</label>
+              <textarea
+                id="questionText"
+                placeholder="Enter question text..."
+              ></textarea>
+            </div>
+            <div class="form-group">
+              <label for="correctAnswer">Correct Answer:</label>
+              <select id="correctAnswer" title="Select the correct answer">
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="createExerciseQuestion()">
+              Create Question
+            </button>
+          </div>
+        </div>
+
+        <div id="questionsResult" class="result" style="display: none"></div>
+      </div>
+
+      <!-- Enhanced Lesson Editor Link -->
+      <div class="section">
+        <h2>📝 Enhanced Lesson Editor</h2>
+        <p>Test the new lesson editor with media upload capabilities</p>
+
+        <button class="btn btn-primary" onclick="openLessonEditor()">
+          Open Lesson Editor
+        </button>
+        <button class="btn btn-secondary" onclick="openLessonEditor(43)">
+          Edit Lesson 43
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Check authentication on load
+      document.addEventListener("DOMContentLoaded", function () {
+        checkAuth();
+      });
+
+      function checkAuth() {
+        const token = localStorage.getItem("authToken");
+        const authInfo = document.getElementById("authInfo");
+
+        if (token) {
+          // Decode token to get user info (basic)
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            authInfo.innerHTML = `
+                        <strong>Logged in as:</strong> ${payload.sub}<br>
+                        <strong>Token expires:</strong> ${new Date(
+                          payload.exp * 1000
+                        ).toLocaleString()}<br>
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    `;
+          } catch (e) {
+            authInfo.innerHTML = `
+                        <strong>Token found but invalid</strong><br>
+                        <button class="btn btn-danger" onclick="logout()">Clear Token</button>
+                    `;
+          }
+        } else {
+          authInfo.innerHTML = `
+                    <strong>Not logged in</strong><br>
+                    <button class="btn btn-primary" onclick="window.open('test-auth-endpoints.html', '_blank')">Login</button>
+                `;
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("authToken");
+        checkAuth();
+      }
+
+      async function makeAuthenticatedRequest(url, options = {}) {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found. Please login first.");
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...options.headers,
+        };
+
+        return await fetch(url, {
+          ...options,
+          headers,
+        });
+      }
+
+      // FlashCard API Tests
+      async function testFlashcardGet() {
+        const setId = document.getElementById("flashcardSetId").value;
+        const resultDiv = document.getElementById("flashcardResult");
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Loading...";
+
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/flashcards/set/${setId}`
+          );
+          const result = await response.json();
+
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (!response.ok) {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function testFlashcardPublic() {
+        const resultDiv = document.getElementById("flashcardResult");
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Loading...";
+
+          const response = await fetch(
+            `http://localhost:8080/api/flashcards/public`
+          );
+          const result = await response.json();
+
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (!response.ok) {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      // Media Upload Tests
+      async function uploadLessonImage() {
+        const lessonId = document.getElementById("lessonId").value;
+        const imageFile = document.getElementById("imageFile").files[0];
+        const resultDiv = document.getElementById("mediaResult");
+
+        if (!imageFile) {
+          alert("Please select an image file");
+          return;
+        }
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Uploading image...";
+
+          const formData = new FormData();
+          formData.append("image", imageFile);
+
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(
+            `http://localhost:8080/api/collaborator/lessons/${lessonId}/upload-image`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            }
+          );
+
+          const result = await response.json();
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (response.ok && result.success) {
+            showImagePreview(result.data.imageUrl);
+          } else {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function uploadLessonAudio() {
+        const lessonId = document.getElementById("lessonId").value;
+        const audioFile = document.getElementById("audioFile").files[0];
+        const resultDiv = document.getElementById("mediaResult");
+
+        if (!audioFile) {
+          alert("Please select an audio file");
+          return;
+        }
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Uploading audio...";
+
+          const formData = new FormData();
+          formData.append("audio", audioFile);
+
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(
+            `http://localhost:8080/api/collaborator/lessons/${lessonId}/upload-audio`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            }
+          );
+
+          const result = await response.json();
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (response.ok && result.success) {
+            showAudioPreview(result.data.audioUrl);
+          } else {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      function showImagePreview(imageUrl) {
+        const previewDiv = document.getElementById("mediaPreview");
+        previewDiv.style.display = "block";
+        previewDiv.innerHTML = `
+                <h4>Image Preview:</h4>
+                <img src="http://localhost:8080${imageUrl}" alt="Uploaded Image">
+            `;
+      }
+
+      function showAudioPreview(audioUrl) {
+        const previewDiv = document.getElementById("mediaPreview");
+        previewDiv.style.display = "block";
+        previewDiv.innerHTML = `
+                <h4>Audio Preview:</h4>
+                <audio controls>
+                    <source src="http://localhost:8080${audioUrl}" type="audio/mpeg">
+                </audio>
+            `;
+      }
+
+      // Exercise Questions Tests
+      async function getExerciseQuestions() {
+        const exerciseId = document.getElementById("exerciseId").value;
+        const resultDiv = document.getElementById("questionsResult");
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Loading questions...";
+
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/collaborator/exercises/${exerciseId}/questions`
+          );
+          const result = await response.json();
+
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (!response.ok) {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function getExerciseStats() {
+        const exerciseId = document.getElementById("exerciseId").value;
+        const resultDiv = document.getElementById("questionsResult");
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Loading stats...";
+
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/collaborator/exercises/${exerciseId}/questions/stats`
+          );
+          const result = await response.json();
+
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (!response.ok) {
+            resultDiv.className = "result error";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function createExerciseQuestion() {
+        const exerciseId = document.getElementById("exerciseId").value;
+        const questionText = document.getElementById("questionText").value;
+        const correctAnswer = document.getElementById("correctAnswer").value;
+        const resultDiv = document.getElementById("questionsResult");
+
+        if (!questionText.trim()) {
+          alert("Please enter question text");
+          return;
+        }
+
+        const questionData = {
+          questionText: questionText,
+          correctAnswer: correctAnswer,
+          optionA: "Option A",
+          optionB: "Option B",
+          optionC: "Option C",
+          optionD: "Option D",
+          points: 10,
+          questionOrder: 1,
+          type: "READING",
+          difficulty: "EASY",
+        };
+
+        try {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result";
+          resultDiv.textContent = "Creating question...";
+
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/collaborator/exercises/${exerciseId}/questions`,
+            {
+              method: "POST",
+              body: JSON.stringify(questionData),
+            }
+          );
+          const result = await response.json();
+
+          resultDiv.textContent = `Status: ${
+            response.status
+          }\n\n${JSON.stringify(result, null, 2)}`;
+
+          if (!response.ok) {
+            resultDiv.className = "result error";
+          } else {
+            // Clear form
+            document.getElementById("questionText").value = "";
+          }
+        } catch (error) {
+          resultDiv.style.display = "block";
+          resultDiv.className = "result error";
+          resultDiv.textContent = `Error: ${error.message}`;
+        }
+      }
+
+      // Open Lesson Editor
+      function openLessonEditor(lessonId = null) {
+        const url = lessonId
+          ? `enhanced-lesson-editor.html?id=${lessonId}`
+          : "enhanced-lesson-editor.html";
+        window.open(url, "_blank");
+      }
+    </script>
+  </body>
+</html>

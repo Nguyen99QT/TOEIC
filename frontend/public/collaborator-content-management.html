@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Management - TOEIC Platform</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #4caf50;
+      }
+
+      .header h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .header .subtitle {
+        color: #666;
+        font-size: 16px;
+      }
+
+      .tabs {
+        display: flex;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .tab {
+        padding: 15px 25px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 16px;
+        font-weight: bold;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .tab.active {
+        color: #4caf50;
+        border-bottom-color: #4caf50;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .section {
+        background: #f9f9f9;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        border: 2px solid #f0f0f0;
+      }
+
+      .section h3 {
+        color: #4caf50;
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #4caf50;
+      }
+
+      .form-group textarea {
+        height: 100px;
+        resize: vertical;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        margin: 5px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-primary {
+        background: #4caf50;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: #2196f3;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #1976d2;
+      }
+
+      .btn-danger {
+        background: #f44336;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #d32f2f;
+      }
+
+      .btn-warning {
+        background: #ff9800;
+        color: white;
+      }
+
+      .btn-warning:hover {
+        background: #f57c00;
+      }
+
+      .file-upload {
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin: 10px 0;
+        transition: border-color 0.3s ease;
+      }
+
+      .file-upload:hover {
+        border-color: #4caf50;
+      }
+
+      .file-upload.dragover {
+        border-color: #4caf50;
+        background: #f0f8f0;
+      }
+
+      .preview {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f0f0f0;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .preview img {
+        max-width: 200px;
+        max-height: 150px;
+        border-radius: 5px;
+      }
+
+      .preview audio {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .items-list {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .items-header {
+        background: #4caf50;
+        color: white;
+        padding: 15px;
+        font-weight: bold;
+      }
+
+      .item {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .item:last-child {
+        border-bottom: none;
+      }
+
+      .item:hover {
+        background: #f9f9f9;
+      }
+
+      .item-info h4 {
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      .item-info p {
+        color: #666;
+        margin-bottom: 3px;
+      }
+
+      .item-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background: white;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      .modal-title {
+        color: #333;
+        font-size: 24px;
+      }
+
+      .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: #333;
+      }
+
+      .auth-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #2196f3;
+      }
+
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #e8f5e8;
+        border: 1px solid #4caf50;
+        white-space: pre-wrap;
+        font-family: monospace;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+      }
+
+      .result.error {
+        background: #ffebee;
+        border-color: #f44336;
+        color: #d32f2f;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #4caf50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .search-bar {
+        margin-bottom: 20px;
+      }
+
+      .search-bar input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card h3 {
+        color: #4caf50;
+        margin-bottom: 10px;
+      }
+
+      .stat-card .number {
+        font-size: 32px;
+        font-weight: bold;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📚 Content Management Dashboard</h1>
+        <p class="subtitle">Manage your lessons, flashcards, and exercises</p>
+      </div>
+
+      <!-- Auth Info -->
+      <div class="auth-info">
+        <h3>Authentication Status</h3>
+        <div id="authInfo">Loading...</div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('lessons')">
+          📖 Lessons
+        </button>
+        <button class="tab" onclick="showTab('flashcards')">
+          🃏 Flashcards
+        </button>
+        <button class="tab" onclick="showTab('exercises')">❓ Exercises</button>
+        <button class="tab" onclick="showTab('analytics')">📊 Analytics</button>
+      </div>
+
+      <!-- Lessons Tab -->
+      <div id="lessons" class="tab-content active">
+        <div class="section">
+          <h3>📖 Lesson Management</h3>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Lessons</h3>
+              <div class="number" id="totalLessons">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Published</h3>
+              <div class="number" id="publishedLessons">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Draft</h3>
+              <div class="number" id="draftLessons">-</div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <button class="btn btn-primary" onclick="showCreateLessonModal()">
+                ➕ Create New Lesson
+              </button>
+              <button class="btn btn-secondary" onclick="loadLessons()">
+                🔄 Refresh Lessons
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="lessonSearch"
+                placeholder="Search lessons..."
+                onkeyup="filterLessons()"
+              />
+            </div>
+          </div>
+
+          <div id="lessonsList" class="items-list">
+            <div class="items-header">Your Lessons</div>
+            <div id="lessonsContent">Loading lessons...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcards Tab -->
+      <div id="flashcards" class="tab-content">
+        <div class="section">
+          <h3>🃏 Flashcard Sets Management</h3>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Sets</h3>
+              <div class="number" id="totalFlashcards">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Total Cards</h3>
+              <div class="number" id="totalCards">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Public Sets</h3>
+              <div class="number" id="publicSets">-</div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <button
+                class="btn btn-primary"
+                onclick="showCreateFlashcardModal()"
+              >
+                ➕ Create New Flashcard Set
+              </button>
+              <button class="btn btn-secondary" onclick="loadFlashcards()">
+                🔄 Refresh Flashcards
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="flashcardSearch"
+                placeholder="Search flashcard sets..."
+                onkeyup="filterFlashcards()"
+              />
+            </div>
+          </div>
+
+          <div id="flashcardsList" class="items-list">
+            <div class="items-header">Your Flashcard Sets</div>
+            <div id="flashcardsContent">Loading flashcard sets...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exercises Tab -->
+      <div id="exercises" class="tab-content">
+        <div class="section">
+          <h3>❓ Exercise Management</h3>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Exercises</h3>
+              <div class="number" id="totalExercises">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Total Questions</h3>
+              <div class="number" id="totalQuestions">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Active</h3>
+              <div class="number" id="activeExercises">-</div>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div>
+              <button
+                class="btn btn-primary"
+                onclick="showCreateExerciseModal()"
+              >
+                ➕ Create New Exercise
+              </button>
+              <button class="btn btn-secondary" onclick="loadExercises()">
+                🔄 Refresh Exercises
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="exerciseSearch"
+                placeholder="Search exercises..."
+                onkeyup="filterExercises()"
+              />
+            </div>
+          </div>
+
+          <div id="exercisesList" class="items-list">
+            <div class="items-header">Your Exercises</div>
+            <div id="exercisesContent">Loading exercises...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div id="analytics" class="tab-content">
+        <div class="section">
+          <h3>📊 Analytics Dashboard</h3>
+          <p>Content usage statistics and insights</p>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h3>Total Content</h3>
+              <div class="number" id="totalContent">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Views This Month</h3>
+              <div class="number" id="monthlyViews">-</div>
+            </div>
+            <div class="stat-card">
+              <h3>Engagement Rate</h3>
+              <div class="number" id="engagementRate">-%</div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="loadAnalytics()">
+            📈 Load Analytics Data
+          </button>
+
+          <div id="analyticsResult" class="result"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create/Edit Lesson Modal -->
+    <div id="lessonModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="lessonModalTitle">Create New Lesson</h2>
+          <span class="close" onclick="closeLessonModal()">&times;</span>
+        </div>
+
+        <form id="lessonForm">
+          <input type="hidden" id="lessonId" value="" />
+
+          <div class="form-group">
+            <label for="lessonTitle">Title *</label>
+            <input type="text" id="lessonTitle" required />
+          </div>
+
+          <div class="form-group">
+            <label for="lessonDescription">Description</label>
+            <textarea
+              id="lessonDescription"
+              placeholder="Enter lesson description..."
+            ></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="lessonDifficulty">Difficulty Level *</label>
+              <select id="lessonDifficulty" required>
+                <option value="">Select Difficulty</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="lessonCategory">Category</label>
+              <input
+                type="text"
+                id="lessonCategory"
+                placeholder="e.g., Business, Travel, Academic..."
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="lessonPublic" /> Make this content
+              public
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="lessonFeatured" /> Feature this content
+            </label>
+          </div>
+
+          <!-- Media Upload Section -->
+          <div class="form-group">
+            <label>Lesson Image</label>
+            <div class="file-upload" id="imageUpload">
+              <input
+                type="file"
+                id="lessonImage"
+                accept="image/*"
+                style="display: none"
+              />
+              <p>Click or drag image here</p>
+            </div>
+            <div id="imagePreview" class="preview"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Lesson Audio</label>
+            <div class="file-upload" id="audioUpload">
+              <input
+                type="file"
+                id="lessonAudio"
+                accept="audio/*"
+                style="display: none"
+              />
+              <p>Click or drag audio here</p>
+            </div>
+            <div id="audioPreview" class="preview"></div>
+          </div>
+
+          <div style="text-align: right; margin-top: 30px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeLessonModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" id="lessonSubmitBtn">
+              Create Lesson
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create/Edit Flashcard Modal -->
+    <div id="flashcardModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="flashcardModalTitle">
+            Create New Flashcard Set
+          </h2>
+          <span class="close" onclick="closeFlashcardModal()">&times;</span>
+        </div>
+
+        <form id="flashcardForm">
+          <input type="hidden" id="flashcardSetId" value="" />
+
+          <div class="form-group">
+            <label for="flashcardTitle">Title *</label>
+            <input type="text" id="flashcardTitle" required />
+          </div>
+
+          <div class="form-group">
+            <label for="flashcardDescription">Description</label>
+            <textarea
+              id="flashcardDescription"
+              placeholder="Enter flashcard set description..."
+            ></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="flashcardCategory">Category</label>
+              <input
+                type="text"
+                id="flashcardCategory"
+                placeholder="e.g., Vocabulary, Grammar..."
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="flashcardDifficulty">Difficulty Level</label>
+              <select id="flashcardDifficulty">
+                <option value="">Select Difficulty</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="flashcardPublic" /> Make this set
+              public
+            </label>
+          </div>
+
+          <div style="text-align: right; margin-top: 30px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeFlashcardModal()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="flashcardSubmitBtn"
+            >
+              Create Flashcard Set
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create/Edit Exercise Modal -->
+    <div id="exerciseModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="exerciseModalTitle">
+            Create New Exercise
+          </h2>
+          <span class="close" onclick="closeExerciseModal()">&times;</span>
+        </div>
+
+        <form id="exerciseForm">
+          <input type="hidden" id="exerciseIdHidden" value="" />
+
+          <div class="form-group">
+            <label for="exerciseTitle">Title *</label>
+            <input type="text" id="exerciseTitle" required />
+          </div>
+
+          <div class="form-group">
+            <label for="exerciseDescription">Description</label>
+            <textarea
+              id="exerciseDescription"
+              placeholder="Enter exercise description..."
+            ></textarea>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="exerciseType">Exercise Type *</label>
+              <select id="exerciseType" required>
+                <option value="">Select Type</option>
+                <option value="READING">Reading</option>
+                <option value="LISTENING">Listening</option>
+                <option value="GRAMMAR">Grammar</option>
+                <option value="VOCABULARY">Vocabulary</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="exerciseDifficulty">Difficulty Level *</label>
+              <select id="exerciseDifficulty" required>
+                <option value="">Select Difficulty</option>
+                <option value="EASY">Easy</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HARD">Hard</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="exerciseTimeLimit">Time Limit (minutes)</label>
+              <input
+                type="number"
+                id="exerciseTimeLimit"
+                min="1"
+                placeholder="30"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="exerciseMaxScore">Max Score</label>
+              <input
+                type="number"
+                id="exerciseMaxScore"
+                min="1"
+                placeholder="100"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="exerciseActive" /> Make this exercise
+              active
+            </label>
+          </div>
+
+          <div style="text-align: right; margin-top: 30px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              onclick="closeExerciseModal()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="exerciseSubmitBtn"
+            >
+              Create Exercise
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Global variables
+      let currentUser = null;
+      let allLessons = [];
+      let allFlashcards = [];
+      let allExercises = [];
+
+      // Initialize page
+      document.addEventListener("DOMContentLoaded", function () {
+        checkAuth();
+        setupFileUploads();
+        loadInitialData();
+      });
+
+      // Authentication functions
+      function checkAuth() {
+        const token = localStorage.getItem("authToken");
+        const authInfo = document.getElementById("authInfo");
+
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            currentUser = payload.sub;
+            authInfo.innerHTML = `
+                        <strong>Logged in as:</strong> ${payload.sub}<br>
+                        <strong>Token expires:</strong> ${new Date(
+                          payload.exp * 1000
+                        ).toLocaleString()}<br>
+                        <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    `;
+          } catch (e) {
+            authInfo.innerHTML = `
+                        <strong>Token found but invalid</strong><br>
+                        <button class="btn btn-danger" onclick="logout()">Clear Token</button>
+                    `;
+          }
+        } else {
+          authInfo.innerHTML = `
+                    <strong>Not logged in</strong><br>
+                    <button class="btn btn-primary" onclick="window.open('test-auth-endpoints.html', '_blank')">Login</button>
+                `;
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("authToken");
+        currentUser = null;
+        checkAuth();
+      }
+
+      async function makeAuthenticatedRequest(url, options = {}) {
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          throw new Error("No authentication token found. Please login first.");
+        }
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...options.headers,
+        };
+
+        return await fetch(url, {
+          ...options,
+          headers,
+        });
+      }
+
+      // Tab functions
+      function showTab(tabName) {
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll(".tab-content");
+        tabContents.forEach((content) => content.classList.remove("active"));
+
+        // Remove active class from all tabs
+        const tabs = document.querySelectorAll(".tab");
+        tabs.forEach((tab) => tab.classList.remove("active"));
+
+        // Show selected tab content
+        document.getElementById(tabName).classList.add("active");
+
+        // Add active class to clicked tab
+        event.target.classList.add("active");
+
+        // Load data for the selected tab
+        switch (tabName) {
+          case "lessons":
+            loadLessons();
+            break;
+          case "flashcards":
+            loadFlashcards();
+            break;
+          case "exercises":
+            loadExercises();
+            break;
+          case "analytics":
+            loadAnalytics();
+            break;
+        }
+      }
+
+      // Load initial data
+      async function loadInitialData() {
+        if (!currentUser) return;
+
+        await Promise.all([loadLessons(), loadFlashcards(), loadExercises()]);
+      }
+
+      // File upload setup
+      function setupFileUploads() {
+        setupFileUpload("imageUpload", "lessonImage", "imagePreview", "image");
+        setupFileUpload("audioUpload", "lessonAudio", "audioPreview", "audio");
+      }
+
+      function setupFileUpload(uploadAreaId, inputId, previewId, type) {
+        const uploadArea = document.getElementById(uploadAreaId);
+        const fileInput = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+
+        uploadArea.addEventListener("click", () => fileInput.click());
+
+        uploadArea.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+          uploadArea.classList.remove("dragover");
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            fileInput.files = files;
+            handleFilePreview(files[0], preview, type);
+          }
+        });
+
+        fileInput.addEventListener("change", (e) => {
+          if (e.target.files.length > 0) {
+            handleFilePreview(e.target.files[0], preview, type);
+          }
+        });
+      }
+
+      function handleFilePreview(file, previewElement, type) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewElement.style.display = "block";
+          if (type === "image") {
+            previewElement.innerHTML = `
+                        <h4>Image Preview:</h4>
+                        <img src="${e.target.result}" alt="Preview">
+                        <p>${file.name} (${(file.size / 1024 / 1024).toFixed(
+              2
+            )} MB)</p>
+                    `;
+          } else if (type === "audio") {
+            previewElement.innerHTML = `
+                        <h4>Audio Preview:</h4>
+                        <audio controls>
+                            <source src="${e.target.result}">
+                        </audio>
+                        <p>${file.name} (${(file.size / 1024 / 1024).toFixed(
+              2
+            )} MB)</p>
+                    `;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Lesson Management Functions
+      async function loadLessons() {
+        const lessonsContent = document.getElementById("lessonsContent");
+
+        try {
+          lessonsContent.innerHTML =
+            '<div class="loading"></div> Loading lessons...';
+
+          const response = await makeAuthenticatedRequest(
+            "http://localhost:8080/api/collaborator/lessons"
+          );
+          const lessons = await response.json();
+
+          if (response.ok) {
+            allLessons = lessons.data || lessons;
+            displayLessons(allLessons);
+            updateLessonStats(allLessons);
+          } else {
+            lessonsContent.innerHTML = `<div class="item">Error loading lessons: ${
+              lessons.message || "Unknown error"
+            }</div>`;
+          }
+        } catch (error) {
+          lessonsContent.innerHTML = `<div class="item">Error: ${error.message}</div>`;
+        }
+      }
+
+      function displayLessons(lessons) {
+        const lessonsContent = document.getElementById("lessonsContent");
+
+        if (!lessons || lessons.length === 0) {
+          lessonsContent.innerHTML =
+            '<div class="item">No lessons found. Create your first lesson!</div>';
+          return;
+        }
+
+        lessonsContent.innerHTML = lessons
+          .map(
+            (lesson) => `
+                <div class="item">
+                    <div class="item-info">
+                        <h4>${lesson.title || "Untitled Lesson"}</h4>
+                        <p><strong>Description:</strong> ${
+                          lesson.description || "No description"
+                        }</p>
+                        <p><strong>Difficulty:</strong> ${
+                          lesson.difficultyLevel || "Not set"
+                        }</p>
+                        <p><strong>Category:</strong> ${
+                          lesson.category || "Uncategorized"
+                        }</p>
+                        <p><strong>Status:</strong> ${
+                          lesson.isPublic ? "Public" : "Private"
+                        } ${lesson.isFeatured ? "⭐ Featured" : ""}</p>
+                        <p><strong>Created:</strong> ${new Date(
+                          lesson.createdAt
+                        ).toLocaleDateString()}</p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-secondary" onclick="editLesson(${
+                          lesson.id
+                        })">✏️ Edit</button>
+                        <button class="btn btn-warning" onclick="manageLessonMedia(${
+                          lesson.id
+                        })">🎨 Media</button>
+                        <button class="btn btn-primary" onclick="viewLesson(${
+                          lesson.id
+                        })">👁️ View</button>
+                        <button class="btn btn-danger" onclick="deleteLesson(${
+                          lesson.id
+                        })">🗑️ Delete</button>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function updateLessonStats(lessons) {
+        const total = lessons.length;
+        const published = lessons.filter((l) => l.isPublic).length;
+        const draft = total - published;
+
+        document.getElementById("totalLessons").textContent = total;
+        document.getElementById("publishedLessons").textContent = published;
+        document.getElementById("draftLessons").textContent = draft;
+      }
+
+      function filterLessons() {
+        const searchTerm = document
+          .getElementById("lessonSearch")
+          .value.toLowerCase();
+        const filtered = allLessons.filter(
+          (lesson) =>
+            (lesson.title || "").toLowerCase().includes(searchTerm) ||
+            (lesson.description || "").toLowerCase().includes(searchTerm) ||
+            (lesson.category || "").toLowerCase().includes(searchTerm)
+        );
+        displayLessons(filtered);
+      }
+
+      // Lesson Modal Functions
+      function showCreateLessonModal() {
+        document.getElementById("lessonModalTitle").textContent =
+          "Create New Lesson";
+        document.getElementById("lessonSubmitBtn").textContent =
+          "Create Lesson";
+        document.getElementById("lessonForm").reset();
+        document.getElementById("lessonId").value = "";
+        document.getElementById("imagePreview").style.display = "none";
+        document.getElementById("audioPreview").style.display = "none";
+        document.getElementById("lessonModal").style.display = "block";
+      }
+
+      function closeLessonModal() {
+        document.getElementById("lessonModal").style.display = "none";
+      }
+
+      async function editLesson(lessonId) {
+        try {
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/collaborator/lessons/${lessonId}`
+          );
+          const lesson = await response.json();
+
+          if (response.ok) {
+            const lessonData = lesson.data || lesson;
+
+            document.getElementById("lessonModalTitle").textContent =
+              "Edit Lesson";
+            document.getElementById("lessonSubmitBtn").textContent =
+              "Update Lesson";
+            document.getElementById("lessonId").value = lessonId;
+            document.getElementById("lessonTitle").value =
+              lessonData.title || "";
+            document.getElementById("lessonDescription").value =
+              lessonData.description || "";
+            document.getElementById("lessonDifficulty").value =
+              lessonData.difficultyLevel || "";
+            document.getElementById("lessonCategory").value =
+              lessonData.category || "";
+            document.getElementById("lessonPublic").checked =
+              lessonData.isPublic || false;
+            document.getElementById("lessonFeatured").checked =
+              lessonData.isFeatured || false;
+
+            document.getElementById("lessonModal").style.display = "block";
+          } else {
+            alert(
+              "Error loading lesson details: " +
+                (lesson.message || "Unknown error")
+            );
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      async function deleteLesson(lessonId) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this lesson? This action cannot be undone."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/collaborator/lessons/${lessonId}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (response.ok) {
+            alert("Lesson deleted successfully");
+            loadLessons();
+          } else {
+            const error = await response.json();
+            alert(
+              "Error deleting lesson: " + (error.message || "Unknown error")
+            );
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      function viewLesson(lessonId) {
+        window.open(`http://localhost:3000/lessons/${lessonId}`, "_blank");
+      }
+
+      function manageLessonMedia(lessonId) {
+        window.open(`enhanced-lesson-editor.html?id=${lessonId}`, "_blank");
+      }
+
+      // Lesson Form Submit
+      document
+        .getElementById("lessonForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const lessonId = document.getElementById("lessonId").value;
+          const isEdit = !!lessonId;
+
+          const lessonData = {
+            title: document.getElementById("lessonTitle").value,
+            description: document.getElementById("lessonDescription").value,
+            difficultyLevel: document.getElementById("lessonDifficulty").value,
+            category: document.getElementById("lessonCategory").value,
+            isPublic: document.getElementById("lessonPublic").checked,
+            isFeatured: document.getElementById("lessonFeatured").checked,
+          };
+
+          try {
+            const url = isEdit
+              ? `http://localhost:8080/api/collaborator/lessons/${lessonId}`
+              : "http://localhost:8080/api/collaborator/lessons";
+
+            const method = isEdit ? "PUT" : "POST";
+
+            const response = await makeAuthenticatedRequest(url, {
+              method: method,
+              body: JSON.stringify(lessonData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              alert(`Lesson ${isEdit ? "updated" : "created"} successfully!`);
+              closeLessonModal();
+              loadLessons();
+
+              // Handle media uploads if lesson was created
+              if (!isEdit && result.data && result.data.id) {
+                await handleMediaUploads(result.data.id);
+              } else if (isEdit) {
+                await handleMediaUploads(lessonId);
+              }
+            } else {
+              alert(
+                `Error ${isEdit ? "updating" : "creating"} lesson: ` +
+                  (result.message || "Unknown error")
+              );
+            }
+          } catch (error) {
+            alert("Error: " + error.message);
+          }
+        });
+
+      async function handleMediaUploads(lessonId) {
+        const imageFile = document.getElementById("lessonImage").files[0];
+        const audioFile = document.getElementById("lessonAudio").files[0];
+
+        if (imageFile) {
+          await uploadLessonMedia(lessonId, imageFile, "image");
+        }
+
+        if (audioFile) {
+          await uploadLessonMedia(lessonId, audioFile, "audio");
+        }
+      }
+
+      async function uploadLessonMedia(lessonId, file, type) {
+        try {
+          const formData = new FormData();
+          formData.append(type, file);
+
+          const token = localStorage.getItem("authToken");
+          const response = await fetch(
+            `http://localhost:8080/api/collaborator/lessons/${lessonId}/upload-${type}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            }
+          );
+
+          const result = await response.json();
+          if (!response.ok) {
+            console.error(`Error uploading ${type}:`, result.message);
+          }
+        } catch (error) {
+          console.error(`Error uploading ${type}:`, error.message);
+        }
+      }
+
+      // Flashcard Management Functions
+      async function loadFlashcards() {
+        const flashcardsContent = document.getElementById("flashcardsContent");
+
+        try {
+          flashcardsContent.innerHTML =
+            '<div class="loading"></div> Loading flashcard sets...';
+
+          const response = await makeAuthenticatedRequest(
+            "http://localhost:8080/api/flashcards/public"
+          );
+          const flashcards = await response.json();
+
+          if (response.ok) {
+            allFlashcards = flashcards.data || flashcards;
+            displayFlashcards(allFlashcards);
+            updateFlashcardStats(allFlashcards);
+          } else {
+            flashcardsContent.innerHTML = `<div class="item">Error loading flashcards: ${
+              flashcards.message || "Unknown error"
+            }</div>`;
+          }
+        } catch (error) {
+          flashcardsContent.innerHTML = `<div class="item">Error: ${error.message}</div>`;
+        }
+      }
+
+      function displayFlashcards(flashcards) {
+        const flashcardsContent = document.getElementById("flashcardsContent");
+
+        if (!flashcards || flashcards.length === 0) {
+          flashcardsContent.innerHTML =
+            '<div class="item">No flashcard sets found. Create your first set!</div>';
+          return;
+        }
+
+        flashcardsContent.innerHTML = flashcards
+          .map(
+            (flashcard) => `
+                <div class="item">
+                    <div class="item-info">
+                        <h4>${flashcard.title || "Untitled Set"}</h4>
+                        <p><strong>Description:</strong> ${
+                          flashcard.description || "No description"
+                        }</p>
+                        <p><strong>Cards:</strong> ${
+                          flashcard.cardCount || 0
+                        }</p>
+                        <p><strong>Category:</strong> ${
+                          flashcard.category || "Uncategorized"
+                        }</p>
+                        <p><strong>Difficulty:</strong> ${
+                          flashcard.difficultyLevel || "Not set"
+                        }</p>
+                        <p><strong>Status:</strong> ${
+                          flashcard.isPublic ? "Public" : "Private"
+                        }</p>
+                        <p><strong>Created:</strong> ${new Date(
+                          flashcard.createdAt
+                        ).toLocaleDateString()}</p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-secondary" onclick="editFlashcard(${
+                          flashcard.id
+                        })">✏️ Edit</button>
+                        <button class="btn btn-warning" onclick="manageFlashcardCards(${
+                          flashcard.id
+                        })">🃏 Cards</button>
+                        <button class="btn btn-primary" onclick="viewFlashcard(${
+                          flashcard.id
+                        })">👁️ View</button>
+                        <button class="btn btn-danger" onclick="deleteFlashcard(${
+                          flashcard.id
+                        })">🗑️ Delete</button>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function updateFlashcardStats(flashcards) {
+        const totalSets = flashcards.length;
+        const totalCards = flashcards.reduce(
+          (sum, set) => sum + (set.cardCount || 0),
+          0
+        );
+        const publicSets = flashcards.filter((set) => set.isPublic).length;
+
+        document.getElementById("totalFlashcards").textContent = totalSets;
+        document.getElementById("totalCards").textContent = totalCards;
+        document.getElementById("publicSets").textContent = publicSets;
+      }
+
+      function filterFlashcards() {
+        const searchTerm = document
+          .getElementById("flashcardSearch")
+          .value.toLowerCase();
+        const filtered = allFlashcards.filter(
+          (flashcard) =>
+            (flashcard.title || "").toLowerCase().includes(searchTerm) ||
+            (flashcard.description || "").toLowerCase().includes(searchTerm) ||
+            (flashcard.category || "").toLowerCase().includes(searchTerm)
+        );
+        displayFlashcards(filtered);
+      }
+
+      // Flashcard Modal Functions
+      function showCreateFlashcardModal() {
+        document.getElementById("flashcardModalTitle").textContent =
+          "Create New Flashcard Set";
+        document.getElementById("flashcardSubmitBtn").textContent =
+          "Create Flashcard Set";
+        document.getElementById("flashcardForm").reset();
+        document.getElementById("flashcardSetId").value = "";
+        document.getElementById("flashcardModal").style.display = "block";
+      }
+
+      function closeFlashcardModal() {
+        document.getElementById("flashcardModal").style.display = "none";
+      }
+
+      async function editFlashcard(flashcardId) {
+        try {
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/flashcards/set/${flashcardId}`
+          );
+          const flashcard = await response.json();
+
+          if (response.ok) {
+            const flashcardData = flashcard.data || flashcard;
+
+            document.getElementById("flashcardModalTitle").textContent =
+              "Edit Flashcard Set";
+            document.getElementById("flashcardSubmitBtn").textContent =
+              "Update Flashcard Set";
+            document.getElementById("flashcardSetId").value = flashcardId;
+            document.getElementById("flashcardTitle").value =
+              flashcardData.title || "";
+            document.getElementById("flashcardDescription").value =
+              flashcardData.description || "";
+            document.getElementById("flashcardCategory").value =
+              flashcardData.category || "";
+            document.getElementById("flashcardDifficulty").value =
+              flashcardData.difficultyLevel || "";
+            document.getElementById("flashcardPublic").checked =
+              flashcardData.isPublic || false;
+
+            document.getElementById("flashcardModal").style.display = "block";
+          } else {
+            alert(
+              "Error loading flashcard details: " +
+                (flashcard.message || "Unknown error")
+            );
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      async function deleteFlashcard(flashcardId) {
+        if (
+          !confirm(
+            "Are you sure you want to delete this flashcard set? This action cannot be undone."
+          )
+        ) {
+          return;
+        }
+
+        try {
+          const response = await makeAuthenticatedRequest(
+            `http://localhost:8080/api/flashcards/set/${flashcardId}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (response.ok) {
+            alert("Flashcard set deleted successfully");
+            loadFlashcards();
+          } else {
+            const error = await response.json();
+            alert(
+              "Error deleting flashcard set: " +
+                (error.message || "Unknown error")
+            );
+          }
+        } catch (error) {
+          alert("Error: " + error.message);
+        }
+      }
+
+      function viewFlashcard(flashcardId) {
+        window.open(
+          `http://localhost:3000/flashcards/set/${flashcardId}`,
+          "_blank"
+        );
+      }
+
+      function manageFlashcardCards(flashcardId) {
+        alert(
+          `Flashcard management for set ${flashcardId} will be implemented in the next update.`
+        );
+      }
+
+      // Flashcard Form Submit
+      document
+        .getElementById("flashcardForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const flashcardSetId =
+            document.getElementById("flashcardSetId").value;
+          const isEdit = !!flashcardSetId;
+
+          const flashcardData = {
+            title: document.getElementById("flashcardTitle").value,
+            description: document.getElementById("flashcardDescription").value,
+            category: document.getElementById("flashcardCategory").value,
+            difficultyLevel: document.getElementById("flashcardDifficulty")
+              .value,
+            isPublic: document.getElementById("flashcardPublic").checked,
+          };
+
+          try {
+            let url, method;
+            if (isEdit) {
+              url = `http://localhost:8080/api/flashcards/set/${flashcardSetId}`;
+              method = "PUT";
+            } else {
+              url = "http://localhost:8080/api/flashcard-sets";
+              method = "POST";
+            }
+
+            const response = await makeAuthenticatedRequest(url, {
+              method: method,
+              body: JSON.stringify(flashcardData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              alert(
+                `Flashcard set ${isEdit ? "updated" : "created"} successfully!`
+              );
+              closeFlashcardModal();
+              loadFlashcards();
+            } else {
+              alert(
+                `Error ${isEdit ? "updating" : "creating"} flashcard set: ` +
+                  (result.message || "Unknown error")
+              );
+            }
+          } catch (error) {
+            alert("Error: " + error.message);
+          }
+        });
+
+      // Exercise Management Functions
+      async function loadExercises() {
+        const exercisesContent = document.getElementById("exercisesContent");
+
+        try {
+          exercisesContent.innerHTML =
+            '<div class="loading"></div> Loading exercises...';
+
+          // Since we don't have a direct exercises endpoint, we'll simulate it
+          // In a real app, you'd call something like: /api/collaborator/exercises
+          allExercises = []; // Placeholder
+          displayExercises(allExercises);
+          updateExerciseStats(allExercises);
+
+          exercisesContent.innerHTML =
+            '<div class="item">Exercise management coming soon! Use the Exercise Questions section in the test page for now.</div>';
+        } catch (error) {
+          exercisesContent.innerHTML = `<div class="item">Error: ${error.message}</div>`;
+        }
+      }
+
+      function displayExercises(exercises) {
+        const exercisesContent = document.getElementById("exercisesContent");
+
+        if (!exercises || exercises.length === 0) {
+          exercisesContent.innerHTML =
+            '<div class="item">No exercises found. Create your first exercise!</div>';
+          return;
+        }
+
+        exercisesContent.innerHTML = exercises
+          .map(
+            (exercise) => `
+                <div class="item">
+                    <div class="item-info">
+                        <h4>${exercise.title || "Untitled Exercise"}</h4>
+                        <p><strong>Description:</strong> ${
+                          exercise.description || "No description"
+                        }</p>
+                        <p><strong>Type:</strong> ${
+                          exercise.type || "Not set"
+                        }</p>
+                        <p><strong>Difficulty:</strong> ${
+                          exercise.difficulty || "Not set"
+                        }</p>
+                        <p><strong>Questions:</strong> ${
+                          exercise.questionCount || 0
+                        }</p>
+                        <p><strong>Time Limit:</strong> ${
+                          exercise.timeLimit || "N/A"
+                        } minutes</p>
+                        <p><strong>Status:</strong> ${
+                          exercise.isActive ? "Active" : "Inactive"
+                        }</p>
+                        <p><strong>Created:</strong> ${new Date(
+                          exercise.createdAt
+                        ).toLocaleDateString()}</p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-secondary" onclick="editExercise(${
+                          exercise.id
+                        })">✏️ Edit</button>
+                        <button class="btn btn-warning" onclick="manageExerciseQuestions(${
+                          exercise.id
+                        })">❓ Questions</button>
+                        <button class="btn btn-primary" onclick="viewExercise(${
+                          exercise.id
+                        })">👁️ View</button>
+                        <button class="btn btn-danger" onclick="deleteExercise(${
+                          exercise.id
+                        })">🗑️ Delete</button>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function updateExerciseStats(exercises) {
+        const total = exercises.length;
+        const totalQuestions = exercises.reduce(
+          (sum, ex) => sum + (ex.questionCount || 0),
+          0
+        );
+        const active = exercises.filter((ex) => ex.isActive).length;
+
+        document.getElementById("totalExercises").textContent = total;
+        document.getElementById("totalQuestions").textContent = totalQuestions;
+        document.getElementById("activeExercises").textContent = active;
+      }
+
+      function filterExercises() {
+        const searchTerm = document
+          .getElementById("exerciseSearch")
+          .value.toLowerCase();
+        const filtered = allExercises.filter(
+          (exercise) =>
+            (exercise.title || "").toLowerCase().includes(searchTerm) ||
+            (exercise.description || "").toLowerCase().includes(searchTerm) ||
+            (exercise.type || "").toLowerCase().includes(searchTerm)
+        );
+        displayExercises(filtered);
+      }
+
+      // Exercise Modal Functions
+      function showCreateExerciseModal() {
+        document.getElementById("exerciseModalTitle").textContent =
+          "Create New Exercise";
+        document.getElementById("exerciseSubmitBtn").textContent =
+          "Create Exercise";
+        document.getElementById("exerciseForm").reset();
+        document.getElementById("exerciseIdHidden").value = "";
+        document.getElementById("exerciseModal").style.display = "block";
+      }
+
+      function closeExerciseModal() {
+        document.getElementById("exerciseModal").style.display = "none";
+      }
+
+      function editExercise(exerciseId) {
+        alert(
+          `Exercise editing for ID ${exerciseId} will be implemented in the next update.`
+        );
+      }
+
+      function deleteExercise(exerciseId) {
+        alert(
+          `Exercise deletion for ID ${exerciseId} will be implemented in the next update.`
+        );
+      }
+
+      function viewExercise(exerciseId) {
+        window.open(`http://localhost:3000/exercises/${exerciseId}`, "_blank");
+      }
+
+      function manageExerciseQuestions(exerciseId) {
+        window.open(`test-new-features.html#exercise-${exerciseId}`, "_blank");
+      }
+
+      // Exercise Form Submit
+      document
+        .getElementById("exerciseForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          alert(
+            "Exercise creation will be implemented in the next update. Please use the Exercise Questions section in the test page for now."
+          );
+        });
+
+      // Analytics Functions
+      async function loadAnalytics() {
+        const analyticsResult = document.getElementById("analyticsResult");
+
+        try {
+          analyticsResult.style.display = "block";
+          analyticsResult.className = "result";
+          analyticsResult.textContent = "Loading analytics data...";
+
+          // Simulate analytics data
+          const analytics = {
+            totalContent:
+              allLessons.length + allFlashcards.length + allExercises.length,
+            monthlyViews: Math.floor(Math.random() * 10000) + 1000,
+            engagementRate: Math.floor(Math.random() * 100) + 1,
+          };
+
+          document.getElementById("totalContent").textContent =
+            analytics.totalContent;
+          document.getElementById("monthlyViews").textContent =
+            analytics.monthlyViews.toLocaleString();
+          document.getElementById("engagementRate").textContent =
+            analytics.engagementRate;
+
+          analyticsResult.textContent = `Analytics loaded successfully!\n\nDetailed breakdown:\n- Lessons: ${
+            allLessons.length
+          }\n- Flashcard Sets: ${allFlashcards.length}\n- Exercises: ${
+            allExercises.length
+          }\n- Monthly Views: ${analytics.monthlyViews.toLocaleString()}\n- Engagement Rate: ${
+            analytics.engagementRate
+          }%`;
+        } catch (error) {
+          analyticsResult.style.display = "block";
+          analyticsResult.className = "result error";
+          analyticsResult.textContent = `Error loading analytics: ${error.message}`;
+        }
+      }
+
+      // Close modals when clicking outside
+      window.addEventListener("click", function (event) {
+        if (event.target.classList.contains("modal")) {
+          event.target.style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>

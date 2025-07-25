@@ -1,165 +1,156 @@
-import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
-import 'package:toeic_mobile/core/services/auth_service.dart';
-import 'package:toeic_mobile/features/auth/pages/login_page.dart';
-import 'package:toeic_mobile/features/auth/pages/register_page.dart';
-import 'package:toeic_mobile/features/home/pages/home_page.dart';
-import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
-import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
-import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
-import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
-import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
-import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
-import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
-import 'package:toeic_mobile/shared/widgets/layout/main_layout.dart';
-import 'package:toeic_mobile/shared/widgets/layout/auth_layout.dart' as auth;
+import 'package:provider/provider.dart';
+import '../services/simple_auth_service.dart';
+import '../../features/auth/pages/login_page.dart';
+import '../../features/blogs/pages/blogs_page.dart';
+import '../../features/blogs/pages/blog_detail_page.dart';
 
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/',
-    redirect: (context, state) {
-      final authService = AuthService.instance;
-      final isAuthenticated = authService.isAuthenticated;
-      final location = state.uri.toString();
-
-      // Public routes
-      final publicRoutes = [
-        '/',
-        '/login',
-        '/register',
-      ];
-
-      // If user is not authenticated and trying to access protected route
-      if (!isAuthenticated && !publicRoutes.contains(location)) {
-        return '/login';
-      }
-
-      // If user is authenticated and trying to access auth routes
-      if (isAuthenticated &&
-          (location == '/login' || location == '/register')) {
-        return '/dashboard';
-      }
-
-      return null;
-    },
-    routes: [
-      // Home route
-      GoRoute(
-        path: '/',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: HomePage(),
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case '/':
+        return MaterialPageRoute(
+          builder: (_) => Consumer<AuthService>(
+            builder: (context, authService, _) {
+              if (authService.isLoggedIn) {
+                return const MainScreen();
+              } else {
+                return const LoginPage();
+              }
+            },
           ),
-        ),
-      ),
-
-      // Auth routes
-      GoRoute(
-        path: '/login',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: auth.AuthLayout(
-            child: LoginPage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/register',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: auth.AuthLayout(
-            child: RegisterPage(),
-          ),
-        ),
-      ),
-
-      // Dashboard route
-      GoRoute(
-        path: '/dashboard',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: DashboardPage(),
-          ),
-        ),
-      ),
-
-      // Lessons routes
-      GoRoute(
-        path: '/lessons',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: LessonsPage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/lessons/:id',
-        pageBuilder: (context, state) => MaterialPage(
-          child: MainLayout(
-            child: LessonDetailPage(
-              lessonId: state.pathParameters['id']!,
+        );
+      case '/login':
+        return MaterialPageRoute(builder: (_) => const LoginPage());
+      case '/main':
+        return MaterialPageRoute(builder: (_) => const MainScreen());
+      case '/blogs':
+        return MaterialPageRoute(builder: (_) => const BlogsPage());
+      default:
+        if (settings.name?.startsWith('/blog/') == true) {
+          final blogId = settings.name!.split('/')[2];
+          return MaterialPageRoute(
+            builder: (_) => BlogDetailPage(blogId: blogId),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(
+              child: Text('Page not found'),
             ),
           ),
-        ),
-      ),
+        );
+    }
+  }
+}
 
-      // Exercises routes
-      GoRoute(
-        path: '/exercises',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: ExercisesPage(),
+class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = [
+    const BlogsPage(),
+    const ProfilePage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.article),
+            label: 'Blogs',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
       ),
-      GoRoute(
-        path: '/exercises/:id',
-        pageBuilder: (context, state) => MaterialPage(
-          child: MainLayout(
-            child: ExerciseDetailPage(
-              exerciseId: state.pathParameters['id']!,
+    );
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome!',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Username: ${authService.currentUser?.username ?? 'Unknown'}',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Email: ${authService.currentUser?.email ?? 'Unknown'}',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
-
-      // Flashcards routes
-      GoRoute(
-        path: '/flashcards',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: FlashcardsPage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/flashcards/:id/study',
-        pageBuilder: (context, state) => MaterialPage(
-          child: MainLayout(
-            child: FlashcardStudyPage(
-              flashcardSetId: state.pathParameters['id']!,
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await authService.logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login',
+                      (route) => false,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('Logout'),
+              ),
             ),
-          ),
+          ],
         ),
       ),
-
-      // Profile routes
-      GoRoute(
-        path: '/profile',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: ProfilePage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/settings',
-        pageBuilder: (context, state) => const MaterialPage(
-          child: MainLayout(
-            child: SettingsPage(),
-          ),
-        ),
-      ),
-    ],
-  );
+    );
+  }
 }

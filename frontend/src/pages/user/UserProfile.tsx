@@ -40,17 +40,9 @@ const UserProfile: React.FC = () => {
       const loadMembershipStatus = async () => {
         try {
           const membershipData = await getMembershipStatus();
-          console.log('🔍 Membership Status Data:', membershipData); // Debug log
           setMembershipStatus(membershipData);
         } catch (error) {
           console.log('Membership status not available:', error);
-          // Set default FREE status if API fails
-          setMembershipStatus({
-            membershipType: 'FREE',
-            expiresAt: null,
-            isExpired: false,
-            daysRemaining: null
-          });
         }
       };
 
@@ -176,12 +168,12 @@ const UserProfile: React.FC = () => {
                             <span className="text-sm text-gray-600">Status</span>
                             <span className={`px-2 py-1 rounded text-xs font-medium ${membershipStatus.isExpired
                                 ? 'bg-red-100 text-red-700'
-                                : (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7)
+                                : membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining <= 7
                                   ? 'bg-orange-100 text-orange-700'
                                   : 'bg-green-100 text-green-700'
                               }`}>
                               {membershipStatus.isExpired ? 'Expired' :
-                                (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7) ? 'Expiring Soon' : 'Active'}
+                                membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining <= 7 ? 'Expiring Soon' : 'Active'}
                             </span>
                           </div>
 
@@ -189,7 +181,7 @@ const UserProfile: React.FC = () => {
                             <span className="text-sm text-gray-600">Time Remaining</span>
                             <span className={`text-sm font-semibold ${membershipStatus.isExpired
                                 ? 'text-red-600'
-                                : (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7)
+                                : membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining <= 7
                                   ? 'text-orange-600'
                                   : 'text-green-600'
                               }`}>

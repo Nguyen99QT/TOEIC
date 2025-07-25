@@ -50,13 +50,14 @@ dependencies:
   intl: ^0.18.1
   uuid: ^3.0.7
   equatable: ^2.0.5
-  url_launcher: ^6.1.12
+  url_launcher: ^6.3.2
   permission_handler: ^10.4.3
 
   # UI Components
   flutter_staggered_grid_view: ^0.6.2
   flutter_card_swiper: ^6.0.0
   pull_to_refresh: ^2.0.0
+  video_player: ^2.10.0
 
 dev_dependencies:
   flutter_test:

@@ -135,8 +135,8 @@ class _ExercisesPageState extends ConsumerState<ExercisesPage> {
         onPressed: () {
           ref.read(exerciseListProvider.notifier).refresh();
         },
-        child: const Icon(Icons.refresh),
         tooltip: 'Refresh Exercises',
+        child: const Icon(Icons.refresh),
       ),
     );
   }

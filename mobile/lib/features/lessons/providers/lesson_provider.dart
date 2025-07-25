@@ -251,7 +251,7 @@ class LessonDetailNotifier extends FamilyAsyncNotifier<Lesson?, String> {
       final lesson = await apiService.getLessonById(id);
       return lesson;
     } catch (error) {
-      throw error;
+      rethrow;
     }
   }
 

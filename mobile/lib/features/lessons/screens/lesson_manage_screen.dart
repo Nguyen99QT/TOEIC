@@ -106,7 +106,7 @@ class _LessonManageScreenState extends ConsumerState<LessonManageScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Lesson'),
-        content: Text('Are you sure you want to delete \"${lesson.title}\"?'),
+        content: Text('Are you sure you want to delete "${lesson.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -194,18 +194,18 @@ class _LessonManageScreenState extends ConsumerState<LessonManageScreen> {
                       isDense: true,
                     ),
                     value: _selectedCategory.isEmpty ? null : _selectedCategory,
-                    items: [
-                      const DropdownMenuItem(
+                    items: const [
+                      DropdownMenuItem(
                           value: '', child: Text('All Categories')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'GENERAL', child: Text('General')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'LISTENING', child: Text('Listening')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'READING', child: Text('Reading')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'VOCABULARY', child: Text('Vocabulary')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'GRAMMAR', child: Text('Grammar')),
                     ],
                     onChanged: _onCategoryChanged,
@@ -222,14 +222,14 @@ class _LessonManageScreenState extends ConsumerState<LessonManageScreen> {
                     value: _selectedDifficulty.isEmpty
                         ? null
                         : _selectedDifficulty,
-                    items: [
-                      const DropdownMenuItem(
+                    items: const [
+                      DropdownMenuItem(
                           value: '', child: Text('All Levels')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'EASY', child: Text('Easy')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'MEDIUM', child: Text('Medium')),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                           value: 'HARD', child: Text('Hard')),
                     ],
                     onChanged: _onDifficultyChanged,

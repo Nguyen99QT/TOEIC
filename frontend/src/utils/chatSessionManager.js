@@ -229,7 +229,11 @@ class ChatSessionManager {
   generateSessionId(userId = 'guest') {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2);
-    return `toeic_${userId}_${timestamp}_${random}`;
+    const userHash = userId.toString().split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return `toeic_${userId}_${userHash}_${timestamp}_${random}`;
   }
 
   /**
@@ -239,13 +243,26 @@ class ChatSessionManager {
     // Clear previous session if different user
     if (this.currentUserId && this.currentUserId !== (user?.id || 'guest')) {
       this.clearSession(this.currentUserId);
+      console.log('🔄 Cleared previous user session:', this.currentUserId);
     }
+
+    // Clear all sessions to force fresh start
+    this.sessions.clear();
+    this.userContexts.clear();
+    console.log('🧹 All sessions cleared for user switch');
 
     // Set new current user
     this.currentUserId = user?.id || 'guest';
     
-    // Create new session for user
-    return this.getOrCreateSession(user, currentPath);
+    // Create completely new session for user
+    const newSessionId = this.generateSessionId(this.currentUserId);
+    console.log('🆔 Generated new session for user:', {
+      userId: this.currentUserId,
+      sessionId: newSessionId,
+      username: user?.username || 'Guest'
+    });
+    
+    return newSessionId;
   }
 
   /**
@@ -384,6 +401,17 @@ class ChatSessionManager {
   }
 
   /**
+   * Clear all sessions (called on logout)
+   */
+  clearAllSessions() {
+    console.log('🧹 Clearing all chat sessions...');
+    this.sessions.clear();
+    this.userContexts.clear();
+    this.currentUserId = null;
+    console.log('✅ All chat sessions cleared');
+  }
+
+  /**
    * Get user-specific data from backend/local storage
    */
   async getUserData(userId) {
@@ -490,9 +518,20 @@ class ChatSessionManager {
    * Get enhanced configuration with current context
    */
   getEnhancedConfig(user, currentPath = '/') {
-    const sessionId = this.getOrCreateSession(user, currentPath);
-    const context = this.getSessionContext(sessionId);
+    // Use switchUser to ensure fresh session
+    const sessionId = this.switchUser(user, currentPath);
     
+    // Create fresh context for new session
+    const context = {
+      userId: user?.id || 'guest',
+      username: user?.username || 'Guest',
+      role: user?.role || 'USER',
+      isAuthenticated: !!user,
+      currentPath,
+      sessionStartTime: new Date().toISOString(),
+      interactionCount: 0
+    };
+
     // Get user-specific data (using mock data for demo)
     const userData = this.generateUserTestData(user);
     
@@ -502,11 +541,19 @@ class ChatSessionManager {
     // Get context-aware suggestions
     const contextSuggestions = this.getPersonalizedSuggestions(currentPath, user, userData);
     
-    // Update context with fresh user data
-    this.updateContext(sessionId, {
+    // Store context with fresh user data
+    this.userContexts.set(sessionId, {
+      ...context,
       userData,
-      currentPath,
       lastConfigUpdate: new Date().toISOString()
+    });
+    
+    console.log('🎯 Enhanced config created:', {
+      sessionId,
+      userId: user?.id || 'guest',
+      username: user?.username || 'Guest',
+      hasTestHistory: !!userData?.testHistory?.length,
+      averageScore: userData?.progress?.averageScore
     });
     
     return {

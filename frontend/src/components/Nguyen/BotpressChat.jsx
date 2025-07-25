@@ -13,18 +13,39 @@ export default function BotpressChat() {
   // Function to reinitialize chat with new user data
   const reinitializeChatWithUserData = useCallback(async (config) => {
     try {
-      // Close existing chat
+      // Close existing chat and clear data
       if (window.botpressWebChat) {
+        // Force close and destroy previous instance
         window.botpressWebChat.close();
+        window.botpressWebChat.destroy?.();
+        
+        // Clear any cached data
+        if (window.botpressWebChat.store) {
+          window.botpressWebChat.store.clear?.();
+        }
+        
+        // Remove from DOM
+        const chatContainer = document.querySelector('#bp-web-widget');
+        if (chatContainer) {
+          chatContainer.remove();
+        }
+        
+        // Clear window reference
+        delete window.botpressWebChat;
+        
+        console.log('🧹 Previous chat instance cleared');
       }
 
-      // Create user-specific configuration
+      // Wait a moment before reinitializing
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Create user-specific configuration with unique session
       const botpressConfig = {
         botId: 'UA3DI17D',
         hostUrl: 'https://cdn.botpress.cloud/webchat/v0/inject.js',
         messagingUrl: 'https://messaging.botpress.cloud',
         clientId: 'UA3DI17D',
-        sessionId: config.sessionId,
+        sessionId: config.sessionId + '_' + Date.now(), // Make session unique
         userContext: config.userContext,
         theme: {
           primaryColor: '#2563eb',
@@ -45,11 +66,21 @@ export default function BotpressChat() {
         }
       };
 
-      // Initialize with new config
-      window.botpressWebChat.init(botpressConfig);
+      // Reinitialize with new config
+      if (window.botpressWebChat && typeof window.botpressWebChat.init === 'function') {
+        window.botpressWebChat.init(botpressConfig);
+      } else {
+        // If botpress not loaded yet, reload scripts
+        await reloadBotpressScripts();
+        if (window.botpressWebChat) {
+          window.botpressWebChat.init(botpressConfig);
+        }
+      }
       
-      console.log('✅ Chat reinitialized with user data:', {
+      console.log('✅ Chat reinitialized with fresh user data:', {
         sessionId: config.sessionId,
+        userId: currentUser?.id || 'guest',
+        username: currentUser?.username || 'Guest',
         hasTestHistory: !!config.userContext.userData?.testHistory?.length,
         averageScore: config.userContext.userData?.progress?.averageScore,
         testCount: config.userContext.userData?.testHistory?.length || 0
@@ -91,13 +122,56 @@ export default function BotpressChat() {
 
   // Initialize or switch user session when user changes
   useEffect(() => {
-    if (chatInitialized) {
+    if (currentUser && chatInitialized) {
+      // User logged in or switched
       configureBotpressForUser();
+    } else if (!currentUser && chatInitialized) {
+      // User logged out - cleanup chatbot immediately
+      console.log('🔄 User logged out, cleaning up chatbot...');
+      
+      // Clear chat session
+      if (window.botpressWebChat) {
+        try {
+          window.botpressWebChat.close();
+          window.botpressWebChat.destroy?.();
+          
+          // Clear any cached data
+          if (window.botpressWebChat.store) {
+            window.botpressWebChat.store.clear?.();
+          }
+          
+          // Remove from DOM
+          const chatContainer = document.querySelector('#bp-web-widget');
+          if (chatContainer) {
+            chatContainer.remove();
+          }
+          
+          // Clear window reference
+          delete window.botpressWebChat;
+          
+          console.log('🧹 Chatbot cleaned up after logout');
+        } catch (error) {
+          console.warn('⚠️ Error cleaning up chatbot:', error);
+        }
+      }
+      
+      // Reset component state
+      setChatInitialized(false);
+      setLoading(false);
+      setError(null);
+      
+      // Clear session manager data
+      chatSessionManager.clearAllSessions();
     }
   }, [currentUser, location.pathname, chatInitialized, configureBotpressForUser]); // Re-run when user or path changes
 
   // Load Botpress scripts and initialize
   useEffect(() => {
+    // Chỉ load khi user đã đăng nhập
+    if (!currentUser) {
+      return;
+    }
+
     setLoading(true);
 
     const loadScript = (src, id) => {
@@ -168,18 +242,87 @@ export default function BotpressChat() {
         console.warn('⚠️ Error cleaning up Botpress scripts:', error);
       }
     };
-  }, []); // Only run once on mount
+  }, [currentUser]); // Run when currentUser changes
 
   // Cleanup session when component unmounts or user logs out
   useEffect(() => {
     return () => {
       if (currentUser) {
         chatSessionManager.clearSession(currentUser.id);
-      } else {
-        chatSessionManager.clearSession('guest');
       }
     };
   }, [currentUser]);
+
+  // Cleanup chatbot when user logs out
+  useEffect(() => {
+    if (!currentUser && window.botpressWebChat) {
+      try {
+        window.botpressWebChat.close();
+        window.botpressWebChat.destroy?.();
+        
+        // Remove from DOM
+        const chatContainer = document.querySelector('#bp-web-widget');
+        if (chatContainer) {
+          chatContainer.remove();
+        }
+        
+        // Clear window reference
+        delete window.botpressWebChat;
+        
+        console.log('🧹 Chatbot cleaned up - no user');
+      } catch (error) {
+        console.warn('⚠️ Error cleaning up chatbot on logout:', error);
+      }
+    }
+  }, [currentUser]);
+
+  // Chỉ hiển thị chatbot khi user đã đăng nhập
+  if (!currentUser) {
+    return null;
+  }
+
+  // Function to reload Botpress scripts
+  const reloadBotpressScripts = async () => {
+    try {
+      // Remove existing scripts
+      const existingInject = document.getElementById('botpress-inject');
+      const existingConfig = document.getElementById('botpress-config');
+      
+      if (existingInject) {
+        existingInject.remove();
+      }
+      if (existingConfig) {
+        existingConfig.remove();
+      }
+
+      // Load inject script
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.id = 'botpress-inject';
+        script.src = 'https://cdn.botpress.cloud/webchat/v3.0/inject.js';
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+
+      // Load config script
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.id = 'botpress-config';
+        script.src = 'https://files.bpcontent.cloud/2025/06/27/05/20250627051442-UA3DI17D.js';
+        script.defer = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+
+      console.log('🔄 Botpress scripts reloaded');
+    } catch (error) {
+      console.error('Error reloading Botpress scripts:', error);
+      throw error;
+    }
+  };
 
   // Optional: Show loading state or error
   if (loading) {

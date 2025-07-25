@@ -131,7 +131,7 @@ const AppContent: React.FC = () => {
         </main>
         {showFooter && <Footer />}
         {isAuthenticated && <FloatingActionButton />}
-        <BotpressChat />
+        {isAuthenticated && <BotpressChat />}
       </div>
     );
   };

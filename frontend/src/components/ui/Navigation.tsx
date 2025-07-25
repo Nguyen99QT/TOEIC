@@ -9,6 +9,9 @@ const Navigation: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Debug logging
+    console.log('🔍 Navigation: Auth state:', { isAuthenticated, currentUser: currentUser?.username });
+
     const isActivePath = (path: string) => {
         // Special handling for dashboard routes
         if (path === '/dashboard' || path === '/admin/dashboard' || path === '/collaborator/dashboard') {
@@ -71,7 +74,7 @@ const Navigation: React.FC = () => {
 
                     {/* Desktop Navigation */}
                     {isAuthenticated && (
-                        <div className="hidden lg:flex items-center space-x-2 flex-shrink-0">
+                        <div className="hidden md:flex items-center space-x-2 flex-shrink-0">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.path}
@@ -85,7 +88,7 @@ const Navigation: React.FC = () => {
                   `}
                                 >
                                     <span className="text-base">{link.icon}</span>
-                                    <span className="hidden xl:inline">{link.label}</span>
+                                    <span className="hidden lg:inline">{link.label}</span>
                                 </Link>
                             ))}
                         </div>
@@ -220,16 +223,18 @@ const Navigation: React.FC = () => {
                         )}
 
                         {/* Mobile Menu Button */}
-                        <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="lg:hidden p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
-                            title="Open navigation menu"
-                            aria-label="Open navigation menu"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+                        {isAuthenticated && (
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="md:hidden p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                                title="Open navigation menu"
+                                aria-label="Open navigation menu"
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        )}
                     </div>
                 </div>
 

@@ -7,12 +7,12 @@
  */
 
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import AppRoutes from '../routing/AppRoutes';
 
 const Layout: React.FC = () => {
   const { currentUser, isAuthenticated } = useAuth();
@@ -44,7 +44,7 @@ const Layout: React.FC = () => {
           {/* Main content */}
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <Outlet />
+              <AppRoutes />
             </div>
           </main>
           
@@ -60,7 +60,7 @@ const Layout: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <Outlet />
+        <AppRoutes />
       </main>
       <Footer />
     </div>

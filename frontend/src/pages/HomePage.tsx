@@ -35,6 +35,9 @@ const HomePage: React.FC = () => {
     lessonsCount: lessons.length
   });
 
+  // Additional debug for navigation
+  console.log('🔍 HomePage: Navigation should show?', isAuthenticated);
+
   useEffect(() => {
     if (authLoading) {
       console.log('🔄 HomePage: Waiting for auth to complete...');

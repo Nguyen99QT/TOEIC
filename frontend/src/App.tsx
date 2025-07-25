@@ -7,13 +7,12 @@
  * Provides comprehensive TOEIC learning platform features
  */
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 
 import BlogList from './components/blog/BlogList';
 import BlogDetail from './components/blog/BlogDetail';
 import CreateBlog from './components/blog/CreateBlog';
-import EditBlog from './components/blog/EditBlog';
 import CollaboratorBlogList from './components/blog/CollaboratorBlogList';
 // Authentication
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -24,11 +23,13 @@ import './index.css';
 
 // Components
 import LoadingFallback from './components/ui/LoadingFallback';
-import Layout from './components/ui/Layout';
 import Navigation from './components/ui/Navigation';
+import Sidebar from './components/ui/Sidebar';
+import SimpleNavigation from './components/ui/SimpleNavigation';
 import Footer from './components/ui/Footer';
 import FloatingActionButton from './components/ui/FloatingActionButton';
 import TokenRefreshIndicator from './components/auth/TokenRefreshIndicator';
+import BotpressChat from './components/Nguyen/BotpressChat';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -39,7 +40,6 @@ import LogoutPage from './pages/auth/LogoutPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
 import CollaboratorDashboard from './pages/CollaboratorDashboard';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
 import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
@@ -55,9 +55,8 @@ import UserProfile from './pages/user/UserProfile';
 import EditProfilePage from './pages/user/EditProfilePage';
 import ChangePasswordPage from './pages/user/ChangePasswordPage';
 import FeedbackPage from './pages/user/FeedbackPage';
-import AdminFeedbackPage from './pages/admin/AdminFeedbackPage';
 import ContactPage from './pages/contact/ContactPage';
-import AdminContactPage from './pages/admin/AdminContactPage';
+import DashboardPage from './pages/DashboardPage';
 // import SettingsPage from './pages/user/SettingsPage';
 
 // Admin Pages
@@ -118,20 +117,45 @@ const AppContent: React.FC = () => {
     console.log('🔄 App Authentication State:', { loading, isAuthenticated, currentUser });
   }, [loading, isAuthenticated, currentUser]);
 
-  // Enhanced Layout component with Navigation and Footer
-  const Layout: React.FC<{ children: React.ReactNode; showNavigation?: boolean; showFooter?: boolean }> = ({
+  // Simple Layout component for non-authenticated or special pages
+  const SimpleLayout: React.FC<{ children: React.ReactNode; showNavigation?: boolean; showFooter?: boolean }> = ({
     children,
     showNavigation = true,
     showFooter = true
   }) => {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        {showNavigation && <Navigation key={`nav-${isAuthenticated}-${currentUser?.id || 'guest'}`} />}
+        {showNavigation && <SimpleNavigation key={`nav-${isAuthenticated}-${currentUser?.id || 'guest'}`} />}
         <main className="flex-1">
           {children}
         </main>
         {showFooter && <Footer />}
         {isAuthenticated && <FloatingActionButton />}
+        <BotpressChat />
+      </div>
+    );
+  };
+
+  // Enhanced Layout component with Navigation, Sidebar and Footer
+  const Layout: React.FC<{ children: React.ReactNode; showNavigation?: boolean; showFooter?: boolean }> = ({
+    children,
+    showNavigation = true,
+    showFooter = true
+  }) => {
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {showNavigation && <Navigation key={`nav-${isAuthenticated}-${currentUser?.id || 'guest'}`} />}
+        <div className="flex flex-1 pt-16">
+          {isAuthenticated && <Sidebar isCollapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />}
+          <main className={`flex-1 transition-all duration-300 ${isAuthenticated ? (sidebarCollapsed ? 'ml-16' : 'ml-64') : ''} p-4`}>
+            {children}
+          </main>
+        </div>
+        {showFooter && <Footer />}
+        {isAuthenticated && <FloatingActionButton />}
+        {isAuthenticated && <BotpressChat />}
       </div>
     );
   };
@@ -160,7 +184,7 @@ const AppContent: React.FC = () => {
               (() => {
                 console.log('🏠 HomePage Route: isAuthenticated =', isAuthenticated, 'user =', currentUser?.username || 'guest');
                 return (
-                  <Layout showSidebar={isAuthenticated} showNavigation={!isAuthenticated} showFooter={true}>
+                  <Layout showNavigation={true} showFooter={true}>
                     {isAuthenticated ? <HomePage /> : <SimpleHomePage />}
                   </Layout>
                 );
@@ -177,7 +201,7 @@ const AppContent: React.FC = () => {
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
-                    <Layout showSidebar={false} showNavigation={false} showFooter={false}>
+                    <Layout showNavigation={false} showFooter={false}>
                       <LoginPage />
                     </Layout>
                   </ProtectedRoute>
@@ -195,7 +219,7 @@ const AppContent: React.FC = () => {
                   <Navigate to="/" replace />
                 ) : (
                   <ProtectedRoute requireAuth={false}>
-                    <Layout showSidebar={false} showNavigation={false} showFooter={false}>
+                    <Layout showNavigation={false} showFooter={false}>
                       <RegisterPage />
                     </Layout>
                   </ProtectedRoute>
@@ -206,7 +230,7 @@ const AppContent: React.FC = () => {
             <Route
               path="/logout"
               element={
-                <Layout showSidebar={false} showNavigation={false} showFooter={false}>
+                <Layout showNavigation={false} showFooter={false}>
                   <LogoutPage />
                 </Layout>
               }
@@ -216,7 +240,7 @@ const AppContent: React.FC = () => {
             <Route
               path="/verify-email"
               element={
-                <Layout showSidebar={false} showNavigation={false} showFooter={false}>
+                <Layout showNavigation={false} showFooter={false}>
                   <EmailVerificationPage />
                 </Layout>
               }
@@ -270,7 +294,7 @@ const AppContent: React.FC = () => {
             } />
 
             {/* Protected Routes */}
-            {/* <Route
+            <Route
               path="/dashboard"
               element={
                 <ProtectedRoute
@@ -282,7 +306,7 @@ const AppContent: React.FC = () => {
                   </Layout>
                 </ProtectedRoute>
               }
-            /> */}
+            />
 
             {/* Collaborator Dashboard */}
             <Route
@@ -810,7 +834,7 @@ const AppContent: React.FC = () => {
               path="/admin/blog/create"
               element={
                 <AdminRoute>
-                  <Layout showSidebar={true} showNavigation={false} showFooter={false}>
+                  <Layout showNavigation={false} showFooter={false}>
                     <CreateBlog />
                   </Layout>
                 </AdminRoute>

@@ -38,17 +38,6 @@ public class JwtResponse {
         this.username = username;
         this.email = email;
         this.roles = roles;
-        this.membershipType = MembershipType.BASIC; // Default to BASIC
-    }
-
-    public JwtResponse(String token, Long id, String username, String email, List<String> roles,
-            MembershipType membershipType) {
-        this.token = token;
-        this.accessToken = token; // Set both for compatibility
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.roles = roles;
-        this.membershipType = membershipType;
+        this.membershipType = MembershipType.FREE; // Default to FREE
     }
 }

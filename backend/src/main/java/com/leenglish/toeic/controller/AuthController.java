@@ -109,9 +109,6 @@ public class AuthController {
             System.out.println("✅ Login successful for user: " + loginRequest.getUsername() + " with membership: "
                     + membershipType);
 
-            // Get membershipType from existing userOpt
-            MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(MembershipType.BASIC);
-
             return ResponseEntity.ok(new JwtResponse(
                     jwt,
                     userDetails.getId(),

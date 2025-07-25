@@ -1,0 +1,31 @@
+Platform Navigation Guide:
+
+DASHBOARD:
+- Trang tổng quan hiển thị tiến trình học tập
+- Thống kê điểm số và thời gian học
+- Gợi ý bài học tiếp theo
+- Lịch sử hoạt động gần đây
+
+TESTS:
+- Chọn loại bài thi phù hợp trình độ
+- Xem hướng dẫn trước khi làm bài
+- Quản lý thời gian hiệu quả
+- Xem đáp án sau khi hoàn thành
+
+LESSONS:
+- Học theo trình tự từ cơ bản đến nâng cao
+- Hoàn thành bài tập cuối mỗi bài học
+- Ghi chú những điểm quan trọng
+- Ôn tập định kỳ
+
+FLASHCARDS:
+- Tạo bộ thẻ theo chủ đề
+- Học theo phương pháp spaced repetition
+- Đánh dấu từ khó để ôn tập thêm
+- Theo dõi tiến trình học từ vựng
+
+PROFILE:
+- Cập nhật thông tin cá nhân
+- Đặt mục tiêu học tập
+- Xem thống kê chi tiết
+- Quản lý cài đặt tài khoản

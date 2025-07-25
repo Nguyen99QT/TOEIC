@@ -1,0 +1,30 @@
+TOEIC Learning Platform Features:
+
+1. TESTS:
+- Listening Test: 100 questions, 45 minutes, includes Photos, Question-Response, Conversations, Talks
+- Reading Test: 100 questions, 75 minutes, includes Incomplete Sentences, Text Completion, Reading Comprehension  
+- Full TOEIC Test: 200 questions, 2 hours, complete listening and reading sections
+
+2. LESSONS:
+- Grammar lessons organized by difficulty
+- Vocabulary building with themed content
+- Pronunciation practice with audio
+- Progressive learning path
+
+3. FLASHCARDS:
+- Vocabulary flashcard system
+- Spaced repetition learning
+- Custom study sets
+- Progress tracking
+
+4. PROGRESS TRACKING:
+- Detailed score history
+- Performance analytics
+- Improvement recommendations
+- Study time tracking
+
+5. COMMUNITY:
+- Blog posts with TOEIC tips
+- Student experience sharing
+- Study group discussions
+- Expert advice articles

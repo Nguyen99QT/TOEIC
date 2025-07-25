@@ -1,0 +1,19 @@
+TOEIC Platform FAQ:
+
+Q: Làm sao để bắt đầu học TOEIC?
+A: Đăng ký tài khoản → Chọn "Bài học" để học từ cơ bản → Hoặc "Bài thi" để đánh giá trình độ hiện tại
+
+Q: Làm bài thi như thế nào?
+A: Vào mục "Tests" → Chọn loại bài thi (Listening/Reading/Full) → Nhấn "Bắt đầu làm bài" → Làm theo thời gian quy định
+
+Q: Xem điểm ở đâu?
+A: Sau khi hoàn thành bài thi, điểm hiển thị ngay → Xem chi tiết trong "Test History" → Dashboard cho tổng quan tiến trình
+
+Q: Cách học từ vựng hiệu quả?
+A: Sử dụng Flashcards hàng ngày → Học theo chủ đề trong Lessons → Ghi chép từ mới → Ôn tập định kỳ
+
+Q: Thay đổi thông tin cá nhân ở đâu?
+A: Vào "Profile" từ menu → "Edit Profile" để cập nhật → "Change Password" để đổi mật khẩu
+
+Q: Liên hệ hỗ trợ như thế nào?
+A: Dùng trang "Contact" → Hoặc chat trực tiếp qua chatbot → Email support team

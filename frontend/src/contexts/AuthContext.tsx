@@ -223,24 +223,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     email: response.email || '',
                     fullName: responseAny.fullName || response.user?.fullName || response.username || '',
                     role: userRole,
-<<<<<<< HEAD
-                    membershipType: "BASIC",
-                    // Add additional fields from response if available
-                    phone: responseAny.phone || response.user?.phone,
-                    dateOfBirth: responseAny.dateOfBirth || response.user?.dateOfBirth,
-                    country: responseAny.country || response.user?.country,
-                    gender: responseAny.gender || response.user?.gender,
-                    totalScore: responseAny.totalScore || response.user?.totalScore,
-                    isActive: responseAny.isActive !== false, // Default to true if not specified
-                    createdAt: responseAny.createdAt || response.user?.createdAt,
-                    updatedAt: responseAny.updatedAt || response.user?.updatedAt
-=======
-                    const initialUser: User = {
-                    id: response.id || 0,
-                    username: response.username || '',
-                    email: response.email || '',
-                    fullName: responseAny.fullName || response.user?.fullName || response.username || '',
-                    role: userRole,
                     membershipType: response.membershipType || responseAny.membershipType || "FREE",
                     // Add additional fields from response if available
                     phone: responseAny.phone || response.user?.phone,

@@ -297,7 +297,7 @@ public class FlashcardCrudController {
             flashcardService.deleteFlashcardSet(id, userId);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard set deleted successfully", null));
+                    ApiResponse.successMessage("Flashcard set deleted successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error deleting flashcard set {}", id, e);

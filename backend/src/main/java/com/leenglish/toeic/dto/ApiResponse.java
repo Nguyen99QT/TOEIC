@@ -55,16 +55,18 @@ public class ApiResponse<T> {
     }
 
     // Static factory methods for convenience
-    public static <T> ApiResponse<T> success(T data, String message) {
-        return new ApiResponse<>(true, message, data);
+    public static <T> ApiResponse<T> success(T data) {
+        return new ApiResponse<>(true, "Success", data);
     }
 
+    // Primary success method - message first, then data
     public static <T> ApiResponse<T> success(String message, T data) {
         return new ApiResponse<>(true, message, data);
     }
 
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(true, "Success", data);
+    // Success method for operations without data (like deletions)
+    public static ApiResponse<Void> successMessage(String message) {
+        return new ApiResponse<>(true, message, null);
     }
 
     public static <T> ApiResponse<T> error(String message) {

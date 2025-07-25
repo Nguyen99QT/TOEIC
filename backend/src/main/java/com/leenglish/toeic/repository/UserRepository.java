@@ -28,6 +28,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.username = :usernameOrEmail OR u.email = :usernameOrEmail")
     Optional<User> findByUsernameOrEmail(@Param("usernameOrEmail") String usernameOrEmail);
 
+    // Additional overload for backward compatibility
+    default Optional<User> findByUsernameOrEmail(String username, String email) {
+        return findByUsernameOrEmail(username);
+    }
+
     // ========== USER MANAGEMENT ==========
 
     List<User> findByRole(Role role);

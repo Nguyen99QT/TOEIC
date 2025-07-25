@@ -564,4 +564,40 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
     }
+
+    /**
+     * Promote user to COLLABORATOR role by user ID
+     */
+    public User promoteToCollaborator(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + userId));
+
+        user.setRole(Role.COLLABORATOR);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        User savedUser = userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(savedUser.getUsername());
+
+        return savedUser;
+    }
+
+    /**
+     * Promote user to COLLABORATOR role by username
+     */
+    public User promoteToCollaboratorByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+
+        user.setRole(Role.COLLABORATOR);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        User savedUser = userRepository.save(user);
+        
+        // Clear user cache to ensure fresh data is loaded on next authentication
+        userDetailsService.evictUserFromCache(savedUser.getUsername());
+
+        return savedUser;
+    }
 }

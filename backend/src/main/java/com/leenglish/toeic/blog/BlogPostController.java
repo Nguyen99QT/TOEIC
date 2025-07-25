@@ -86,6 +86,17 @@ public class BlogPostController {
             @RequestParam(value = "video", required = false) MultipartFile video,
             @RequestParam(value = "pdf", required = false) MultipartFile pdf) {
         try {
+            System.out.println("📝 Blog upload request received:");
+            System.out.println("Title: " + title);
+            System.out.println("Content length: " + (content != null ? content.length() : 0));
+            System.out.println("Author: " + author);
+            System.out.println("Image: "
+                    + (image != null ? image.getOriginalFilename() + " (" + image.getSize() + " bytes)" : "none"));
+            System.out.println("Video: "
+                    + (video != null ? video.getOriginalFilename() + " (" + video.getSize() + " bytes)" : "none"));
+            System.out.println(
+                    "PDF: " + (pdf != null ? pdf.getOriginalFilename() + " (" + pdf.getSize() + " bytes)" : "none"));
+
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             
             if (auth == null || !auth.isAuthenticated()) {
@@ -119,7 +130,6 @@ public class BlogPostController {
             System.out.println("🔐 Create Blog with Upload - User: " + auth.getName() + 
                              ", Roles: " + auth.getAuthorities() + 
                              ", Title: " + title);
-
             String uploadDir = "Upload";
             File uploadFolder = new File(uploadDir);
             if (!uploadFolder.exists()) {
@@ -128,7 +138,8 @@ public class BlogPostController {
 
             // Lưu file ảnh (nếu có)
             if (image != null && !image.isEmpty()) {
-                String imageName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(image.getOriginalFilename());
+                String imageName = System.currentTimeMillis() + "_"
+                        + StringUtils.cleanPath(image.getOriginalFilename());
                 Path imagePath = Paths.get("Upload", imageName);
                 Files.copy(image.getInputStream(), imagePath);
                 blogPost.setImageUrl("/Upload/" + imageName);
@@ -136,7 +147,8 @@ public class BlogPostController {
 
             // Lưu file video (nếu có)
             if (video != null && !video.isEmpty()) {
-                String videoName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(video.getOriginalFilename());
+                String videoName = System.currentTimeMillis() + "_"
+                        + StringUtils.cleanPath(video.getOriginalFilename());
                 Path videoPath = Paths.get(uploadDir, videoName);
                 Files.copy(video.getInputStream(), videoPath);
                 blogPost.setVideoUrl("/Upload/" + videoName);
@@ -151,6 +163,7 @@ public class BlogPostController {
             }
 
             BlogPost createdPost = blogPostService.createBlogPost(blogPost);
+            System.out.println("✅ Blog post created successfully with ID: " + createdPost.getId());
             return ResponseEntity.ok(createdPost);
             
         } catch (IOException e) {

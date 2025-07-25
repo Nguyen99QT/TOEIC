@@ -23,7 +23,7 @@ import { useToast } from '../../components/ui/SimpleToast';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
-import { getUserProfile, getUserStats, updateUser, uploadProfilePicture } from '../../services/users';
+import { getUserProfile, getUserStats, updateUserProfile, uploadProfilePicture } from '../../services/users';
 import { User } from '../../types';
 
 interface UserProfile extends User {
@@ -73,11 +73,6 @@ const ProfilePage: React.FC = () => {
 
         // Load basic profile info
         const profileData = await getUserProfile(currentUser.id);
-        
-        // Check if profileData is valid
-        if (!profileData) {
-          throw new Error('Profile data not found');
-        }
 
         // Load user statistics
         let statsData = null;
@@ -85,7 +80,6 @@ const ProfilePage: React.FC = () => {
           statsData = await getUserStats(currentUser.id);
         } catch (error) {
           console.log('Stats not available:', error);
-          // Don't fail the whole component if stats are not available
         }
 
         const combinedProfile: UserProfile = {
@@ -114,7 +108,7 @@ const ProfilePage: React.FC = () => {
     };
 
     loadProfile();
-  }, [currentUser, toast]);
+  }, [currentUser]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -167,13 +161,13 @@ const ProfilePage: React.FC = () => {
     try {
       setIsSaving(true);
 
-      const updatedProfile = await updateUser(currentUser.id, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+      // Only update fields that backend supports
+      const updatedProfile = await updateUserProfile({
+        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        targetScore: formData.targetScore
+        phone: formData.phoneNumber,
+        // Note: firstName, lastName, address, targetScore are not supported by current backend
+        // These would need additional API endpoints or DTO changes
       });
 
       setProfile(prev => prev ? { ...prev, ...updatedProfile } : null);

@@ -83,11 +83,11 @@ public class AuthController {
                     return ResponseEntity
                             .status(HttpStatus.FORBIDDEN)
                             .body(Map.of(
-                                "error", "Email not verified",
-                                "message", "Please verify your email before logging in. Check your inbox or request a new verification email.",
-                                "email", user.getEmail(),
-                                "needsVerification", true
-                            ));
+                                    "error", "Email not verified",
+                                    "message",
+                                    "Please verify your email before logging in. Check your inbox or request a new verification email.",
+                                    "email", user.getEmail(),
+                                    "needsVerification", true));
                 }
             }
 
@@ -102,8 +102,12 @@ public class AuthController {
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
 
+            // Lấy membershipType từ user đã có
+            MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(MembershipType.FREE);
+
             // Tạo và trả về response với JwtResponse
-            System.out.println("✅ Login successful for user: " + loginRequest.getUsername());
+            System.out.println("✅ Login successful for user: " + loginRequest.getUsername() + " with membership: "
+                    + membershipType);
 
             // Get membershipType from existing userOpt
             MembershipType membershipType = userOpt.map(User::getMembershipType).orElse(MembershipType.BASIC);
@@ -272,14 +276,12 @@ public class AuthController {
                     savedUser.getEmail(),
                     savedUser.getFullName(),
                     savedUser.getRole().toString(),
-                    savedUser.getIsEmailVerified()
-            );
+                    savedUser.getIsEmailVerified());
 
             RegistrationResponse response = new RegistrationResponse(
                     "Registration successful! Please check your email to verify your account.",
                     userInfo,
-                    true
-            );
+                    true);
 
             System.out.println("✅ Registration successful for user: " + username);
             return ResponseEntity.ok(response);
@@ -308,7 +310,7 @@ public class AuthController {
             // Validate refresh token
             try {
                 String username = jwtUtils.extractUsername(refreshToken);
-                
+
                 if (username == null) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(Map.of("message", "Invalid refresh token"));
@@ -328,7 +330,7 @@ public class AuthController {
 
                 // Load user details
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                
+
                 if (userDetails == null) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(Map.of("message", "User not found"));
@@ -411,17 +413,17 @@ public class AuthController {
 
             // Verify password reset token
             Optional<User> userOpt = emailVerificationService.verifyPasswordResetToken(token);
-            
+
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("message", "Invalid or expired token"));
             }
 
             User user = userOpt.get();
-            
+
             // Update password
             userService.changePassword(user.getId(), newPassword);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Password reset successfully");
 
@@ -445,7 +447,7 @@ public class AuthController {
             }
 
             boolean isVerified = emailVerificationService.verifyEmailToken(token);
-            
+
             if (isVerified) {
                 // Redirect to frontend with success message
                 String redirectUrl = "http://localhost:3000/verify-email?status=success&message=Email verified successfully! You can now log in to your account.";
@@ -461,7 +463,8 @@ public class AuthController {
         } catch (Exception e) {
             try {
                 // Redirect to frontend with error message
-                String redirectUrl = "http://localhost:3000/verify-email?status=error&message=Email verification failed: " + e.getMessage();
+                String redirectUrl = "http://localhost:3000/verify-email?status=error&message=Email verification failed: "
+                        + e.getMessage();
                 response.sendRedirect(redirectUrl);
                 return null; // Response already sent
             } catch (Exception redirectException) {
@@ -485,7 +488,7 @@ public class AuthController {
             }
 
             boolean isSent = emailVerificationService.resendVerificationEmail(email);
-            
+
             if (isSent) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("message", "Verification email sent successfully. Please check your inbox.");
@@ -516,17 +519,17 @@ public class AuthController {
 
             // Find user by email
             Optional<User> userOpt = userService.findByEmail(email);
-            
+
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("message", "No account found with this email address"));
             }
 
             User user = userOpt.get();
-            
+
             // Create and send password reset token
             emailVerificationService.createPasswordResetToken(user);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Password reset email sent to " + email);
 
@@ -537,7 +540,7 @@ public class AuthController {
                     .body(Map.of("message", "Password reset request failed: " + e.getMessage()));
         }
     }
-    
+
     /**
      * Test email sending functionality
      */
@@ -559,14 +562,13 @@ public class AuthController {
             emailService.sendVerificationEmail(testUser, "test-token-123");
 
             return ResponseEntity.ok(Map.of(
-                "message", "Test email sent successfully",
-                "email", testEmail
-            ));
+                    "message", "Test email sent successfully",
+                    "email", testEmail));
         } catch (Exception e) {
             System.err.println("❌ Test email failed: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Failed to send test email: " + e.getMessage()));
+                    .body(Map.of("error", "Failed to send test email: " + e.getMessage()));
         }
     }
 
@@ -598,7 +600,6 @@ public class AuthController {
             }
 
             UserDetailsImpl userDetails = (UserDetailsImpl) finalAuth.getPrincipal();
-            
             Map<String, Object> response = new HashMap<>();
             response.put("id", userDetails.getId());
             response.put("username", userDetails.getUsername());

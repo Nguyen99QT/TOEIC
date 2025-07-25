@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import apiClient from '../../services/apiClient';
 import { toast } from 'react-hot-toast';
 import { User } from '../../types';
+import { getMembershipStatus, formatRemainingTime, formatExpiryDate, MembershipStatus } from '../../services/membership';
 
 interface UpdateProfileRequest {
   fullName?: string;
@@ -13,7 +14,8 @@ interface UpdateProfileRequest {
 }
 
 const UserProfile: React.FC = () => {
-  const { user, updateCurrentUser } = useAuth();
+  const { currentUser, updateCurrentUser } = useAuth();
+  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -25,19 +27,36 @@ const UserProfile: React.FC = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      console.log('🔄 UserProfile: User data updated, refreshing form');
-      const userBirthDate = user.dateOfBirth || user.birthDate;
+    if (currentUser) {
       setFormData({
-        fullName: user.fullName || '',
-        phone: user.phone || user.phoneNumber || '',
-        dateOfBirth: userBirthDate ? 
-          new Date(userBirthDate as string).toISOString().split('T')[0] : '',
-        country: user.country || '',
-        gender: user.gender || ''
+        fullName: currentUser.fullName || '',
+        phone: currentUser.phone || '',
+        dateOfBirth: currentUser.dateOfBirth ? new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+        country: currentUser.country || '',
+        gender: currentUser.gender || ''
       });
+
+      // Load membership status
+      const loadMembershipStatus = async () => {
+        try {
+          const membershipData = await getMembershipStatus();
+          console.log('🔍 Membership Status Data:', membershipData); // Debug log
+          setMembershipStatus(membershipData);
+        } catch (error) {
+          console.log('Membership status not available:', error);
+          // Set default FREE status if API fails
+          setMembershipStatus({
+            membershipType: 'FREE',
+            expiresAt: null,
+            isExpired: false,
+            daysRemaining: null
+          });
+        }
+      };
+
+      loadMembershipStatus();
     }
-  }, [user, user?.fullName, user?.phone, user?.dateOfBirth]); // ⚡ ADDED: More specific dependencies
+  }, [currentUser]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -52,17 +71,14 @@ const UserProfile: React.FC = () => {
     setLoading(true);
 
     try {
-      console.log("📤 Sending profile update request...");
-      const response = await apiClient.put(`/api/users/${user?.id}`, formData);
-      
+      const response = await apiClient.put(`/api/users/${currentUser?.id}`, formData);
+
       if (response.data) {
         toast.success('Profile updated successfully!');
         updateCurrentUser(response.data);
         setIsEditing(false);
       }
     } catch (error: any) {
-      console.error("❌ Profile update failed:", error);
-      console.error("❌ Error response:", error.response);
       toast.error(error.response?.data || 'Failed to update profile');
     } finally {
       setLoading(false);
@@ -70,21 +86,19 @@ const UserProfile: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (user) {
-      const userBirthDate = user.dateOfBirth || user.birthDate;
+    if (currentUser) {
       setFormData({
-        fullName: user.fullName || '',
-        phone: user.phone || user.phoneNumber || '',
-        dateOfBirth: userBirthDate ? 
-          new Date(userBirthDate as string).toISOString().split('T')[0] : '',
-        country: user.country || '',
-        gender: user.gender || ''
+        fullName: currentUser.fullName || '',
+        phone: currentUser.phone || '',
+        dateOfBirth: currentUser.dateOfBirth ? new Date(currentUser.dateOfBirth).toISOString().split('T')[0] : '',
+        country: currentUser.country || '',
+        gender: currentUser.gender || ''
       });
     }
     setIsEditing(false);
   };
 
-  if (!user) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -111,38 +125,97 @@ const UserProfile: React.FC = () => {
               <div className="text-center">
                 <div className="relative inline-block">
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold mb-4">
-                    {user.fullName ? user.fullName.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+                    {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : currentUser.username.charAt(0).toUpperCase()}
                   </div>
                   <div className="absolute bottom-2 right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white"></div>
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                  {user.fullName || user.username}
+                  {currentUser.fullName || currentUser.username}
                 </h2>
-                <p className="text-gray-600 mb-4">{user.email}</p>
-                
+                <p className="text-gray-600 mb-4">{currentUser.email}</p>
+
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <span className="text-sm text-gray-600">Role</span>
                     <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-                      {user.role}
+                      {currentUser.role}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm text-gray-600">Membership</span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      user.isPremium 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.isPremium ? 'Premium' : 'Free'}
+                    <span className="text-sm text-gray-600">Status</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentUser.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}>
+                      {currentUser.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <span className="text-sm text-gray-600">Total Score</span>
                     <span className="text-lg font-semibold text-indigo-600">
-                      {user.totalScore || 0}
+                      {currentUser.totalScore || 0}
                     </span>
                   </div>
+
+                  {/* Membership Information */}
+                  {membershipStatus && (
+                    <>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-600">Membership</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${membershipStatus.membershipType === 'PREMIUM'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {membershipStatus.membershipType === 'PREMIUM' ? '⭐ Premium' : '🆓 Free'}
+                        </span>
+                      </div>
+
+                      {membershipStatus.membershipType === 'PREMIUM' && (
+                        <>
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span className="text-sm text-gray-600">Status</span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${membershipStatus.isExpired
+                                ? 'bg-red-100 text-red-700'
+                                : (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7)
+                                  ? 'bg-orange-100 text-orange-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                              {membershipStatus.isExpired ? 'Expired' :
+                                (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7) ? 'Expiring Soon' : 'Active'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <span className="text-sm text-gray-600">Time Remaining</span>
+                            <span className={`text-sm font-semibold ${membershipStatus.isExpired
+                                ? 'text-red-600'
+                                : (membershipStatus.daysRemaining !== null && membershipStatus.daysRemaining !== undefined && membershipStatus.daysRemaining <= 7)
+                                  ? 'text-orange-600'
+                                  : 'text-green-600'
+                              }`}>
+                              {formatRemainingTime(membershipStatus.daysRemaining)}
+                            </span>
+                          </div>
+
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="text-sm text-gray-600 mb-1">Expires On</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatExpiryDate(membershipStatus.expiresAt)}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {membershipStatus.membershipType === 'FREE' && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="text-sm text-blue-800 font-medium mb-1">🚀 Upgrade to Premium</div>
+                          <div className="text-xs text-blue-600">
+                            Get unlimited access to all TOEIC materials
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -188,7 +261,7 @@ const UserProfile: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      value={user.username}
+                      value={currentUser.username}
                       disabled
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                     />
@@ -202,7 +275,7 @@ const UserProfile: React.FC = () => {
                     </label>
                     <input
                       type="email"
-                      value={user.email}
+                      value={currentUser.email}
                       disabled
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                     />
@@ -220,11 +293,10 @@ const UserProfile: React.FC = () => {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${
-                        isEditing 
-                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' 
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${isEditing
+                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                           : 'bg-gray-50'
-                      }`}
+                        }`}
                     />
                   </div>
 
@@ -239,11 +311,10 @@ const UserProfile: React.FC = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${
-                        isEditing 
-                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' 
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${isEditing
+                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                           : 'bg-gray-50'
-                      }`}
+                        }`}
                     />
                   </div>
 
@@ -258,11 +329,10 @@ const UserProfile: React.FC = () => {
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${
-                        isEditing 
-                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' 
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${isEditing
+                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                           : 'bg-gray-50'
-                      }`}
+                        }`}
                     />
                   </div>
 
@@ -276,11 +346,10 @@ const UserProfile: React.FC = () => {
                       value={formData.gender}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${
-                        isEditing 
-                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' 
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${isEditing
+                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                           : 'bg-gray-50'
-                      }`}
+                        }`}
                     >
                       <option value="">Select gender</option>
                       <option value="MALE">Male</option>
@@ -300,11 +369,10 @@ const UserProfile: React.FC = () => {
                       value={formData.country}
                       onChange={handleInputChange}
                       disabled={!isEditing}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${
-                        isEditing 
-                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500' 
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg ${isEditing
+                          ? 'bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                           : 'bg-gray-50'
-                      }`}
+                        }`}
                     />
                   </div>
                 </div>
@@ -319,7 +387,7 @@ const UserProfile: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        value={user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                        value={currentUser.createdAt ? new Date(currentUser.createdAt).toLocaleDateString() : 'N/A'}
                         disabled
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                       />
@@ -330,7 +398,7 @@ const UserProfile: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        value={user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'N/A'}
+                        value={currentUser.updatedAt ? new Date(currentUser.updatedAt).toLocaleDateString() : 'N/A'}
                         disabled
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                       />

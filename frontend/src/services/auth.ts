@@ -34,7 +34,7 @@ export interface LoginResponse {
   role?: string;
   roles?: string[];
   type?: string;
-  membershipType?: string;
+  membershipType?: "FREE" | "PREMIUM";
 }
 
 export interface AuthResponse {
@@ -58,8 +58,7 @@ export const setToken = (token: string): void => {
     localStorage.setItem("accessToken", token);
     localStorage.setItem("toeic_access_token", token);
     localStorage.setItem("authToken", token);
-    localStorage.setItem("token", token); // ✅ FIX: Add compatibility for "token" key
-    console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken", "token");
+    console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken");
   } catch (error) {
     console.error("❌ Failed to store token in localStorage:", error);
     // Try to diagnose localStorage issues
@@ -79,7 +78,6 @@ export const getToken = (): string | null => {
     localStorage.getItem(TOKEN_KEY) ||
     localStorage.getItem("authToken") ||
     localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") || // ✅ FIX: Add compatibility for "token" key
     null; // Thêm null fallback
 
   if (token) {
@@ -193,41 +191,8 @@ export const isAuthenticated = (): boolean => {
     return false;
   }
 
-  // Special handling for development test token
-  if (process.env.NODE_ENV === "development") {
-    try {
-      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-      if (tokenPayload.dev === true) {
-        console.log("🔧 Development mode: Using development test token");
-        return true;
-      }
-    } catch (error) {
-      // If it's the old test token format, still allow it
-      if (
-        token.includes("test_token_for_development_only") ||
-        token.includes("dev-signature")
-      ) {
-        console.log("🔧 Development mode: Using legacy test token");
-        return true;
-      }
-    }
-  }
-
-  // Check if token is valid JWT format
-  try {
-    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
-    const currentTime = Date.now() / 1000;
-    
-    // If token is expired, log but don't immediately invalidate
-    // Let the API interceptor handle refresh
-    if (tokenPayload.exp && tokenPayload.exp <= currentTime) {
-      console.warn("⚠️ Token appears expired, but allowing API interceptor to handle refresh");
-      // Don't return false here - let refresh mechanism handle it
-    }
-  } catch (error) {
-    console.warn("⚠️ Token payload parsing failed, but continuing:", error);
-  }
-
+  // Don't check token expiration here - let the API interceptor handle refresh
+  // This prevents premature logout when token can still be refreshed
   console.log(
     "✅ Authentication check passed: User is authenticated as",
     user.username || user.email
@@ -260,60 +225,18 @@ export const startAutoRefresh = (): void => {
     clearInterval(refreshInterval);
   }
 
-  console.log("🔄 Starting smart auto-refresh timer");
+  console.log("🔄 Starting auto-refresh timer");
 
-  // Check every 5 minutes instead of waiting 45 minutes
+  // Refresh token every 55 minutes (tokens usually expire in 1 hour)
   refreshInterval = setInterval(async () => {
     try {
-      const currentToken = getToken();
-      if (!currentToken) {
-        console.log("⚠️ No token found, stopping auto-refresh");
-        stopAutoRefresh();
-        return;
-      }
-      
-      // Check token expiration
-      try {
-        const payload = JSON.parse(atob(currentToken.split('.')[1]));
-        const now = Math.floor(Date.now() / 1000);
-        const timeLeft = payload.exp - now;
-        const minutesLeft = Math.floor(timeLeft / 60);
-        
-        console.log(`🕐 Token expires in ${minutesLeft} minutes`);
-        
-        // Refresh if less than 10 minutes left (more proactive)
-        if (timeLeft < 600) { // Less than 10 minutes left
-          console.log("🔄 Token expiring soon, refreshing...");
-          await refreshAuthToken();
-          // Reset fail count on successful refresh
-          localStorage.removeItem('refresh_fail_count');
-        } else if (timeLeft < 0) {
-          console.log("⚠️ Token already expired, refreshing...");
-          await refreshAuthToken();
-        } else {
-          console.log(`✅ Token still valid for ${minutesLeft} minutes`);
-          // Reset fail count when token is healthy
-          localStorage.removeItem('refresh_fail_count');
-        }
-      } catch (parseError) {
-        console.error("❌ Error parsing token for refresh check:", parseError);
-        await refreshAuthToken(); // Try to refresh anyway
-      }
-      
+      console.log("🔄 Auto-refreshing token...");
+      await refreshAuthToken();
     } catch (error) {
       console.error("❌ Auto-refresh failed:", error);
-      // If refresh fails multiple times, logout user
-      const failCount = parseInt(localStorage.getItem('refresh_fail_count') || '0');
-      if (failCount >= 2) { // Reduced from 3 to 2 for faster response
-        console.error("❌ Too many refresh failures, logging out");
-        const { removeToken } = await import('../services/auth');
-        removeToken();
-        window.location.href = '/login';
-      } else {
-        localStorage.setItem('refresh_fail_count', (failCount + 1).toString());
-      }
+      // If refresh fails, user will be logged out on next API call
     }
-  }, 5 * 60 * 1000); // Check every 5 minutes instead of 45
+  }, 55 * 60 * 1000); // 55 minutes
 };
 
 export const stopAutoRefresh = (): void => {
@@ -553,7 +476,7 @@ export const register = async (userData: RegisterRequest): Promise<RegistrationR
       if (error.response.status === 400) {
         throw new Error(
           error.response.data?.message ||
-            "Invalid registration data. Please check your inputs."
+          "Invalid registration data. Please check your inputs."
         );
       } else if (error.response.status === 409) {
         throw new Error(
@@ -813,6 +736,7 @@ export const debugJwtToken = (token: string | null): void => {
   }
 };
 
+// Add this to your utility functions section
 export const diagnosePossibleAuthIssues = (): void => {
   console.group("🔍 Authentication Diagnostic Check");
 

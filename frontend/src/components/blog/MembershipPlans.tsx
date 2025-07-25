@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { motion } from 'framer-motion';
 import PayPalButton from "./PayPalButton";
+import { useAuth } from "../../contexts/AuthContext";
+import axios from "axios";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
 
 interface Plan {
     id: string;
@@ -61,8 +65,10 @@ const plans: Plan[] = [
 ];
 
 const MembershipPlans: React.FC = () => {
+    const { currentUser, updateCurrentUser } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
     const [paidOrder, setPaidOrder] = useState<any>(null);
+    const [upgrading, setUpgrading] = useState(false);
 
     const handleSelect = (planId: string) => {
         const plan = plans.find((p) => p.id === planId);
@@ -70,9 +76,62 @@ const MembershipPlans: React.FC = () => {
         setPaidOrder(null);
     };
 
-    const handleSuccess = (order: any) => {
+    const handleSuccess = async (order: any) => {
         setPaidOrder(order);
-        alert("✅ Thanh toán thành công!");
+
+        if (!selectedPlan || !currentUser) {
+            alert("❌ Lỗi: Thông tin không hợp lệ!");
+            return;
+        }
+
+        setUpgrading(true);
+
+        try {
+            // Get token from localStorage
+            const token = localStorage.getItem('toeic_access_token') ||
+                localStorage.getItem('authToken');
+
+            if (!token) {
+                alert("❌ Bạn cần đăng nhập để nâng cấp membership!");
+                return;
+            }
+
+            console.log("🚀 Upgrading membership...");
+
+            const response = await axios.post(`${BACKEND_URL}/api/membership/upgrade`, null, {
+                params: {
+                    planId: selectedPlan.id,
+                    paypalOrderId: order.id
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.status === 200) {
+                // Update user context to PREMIUM
+                const updatedUser = {
+                    ...currentUser,
+                    membershipType: 'PREMIUM' as const
+                };
+
+                updateCurrentUser(updatedUser);
+
+                // Also update localStorage
+                localStorage.setItem('toeic_current_user', JSON.stringify(updatedUser));
+
+                alert("✅ Nâng cấp membership thành công! Chào mừng bạn đến với Premium!");
+                console.log("✅ Membership upgraded successfully!");
+            } else {
+                throw new Error("Upgrade failed");
+            }
+        } catch (error: any) {
+            console.error("❌ Membership upgrade error:", error);
+            alert("❌ Lỗi nâng cấp membership: " + (error.response?.data || error.message));
+        } finally {
+            setUpgrading(false);
+        }
     };
 
     return (
@@ -168,12 +227,24 @@ const MembershipPlans: React.FC = () => {
                         <p className="text-center text-gray-600 mb-6">
                             Giá: <span className="text-2xl font-bold text-purple-600">${selectedPlan.price}</span>
                         </p>
-                        <PayPalButton
-                            {...({
-                                amount: selectedPlan.price,
-                                onSuccess: handleSuccess
-                            } as any)}
-                        />
+                        {upgrading ? (
+                            <div className="text-center py-8">
+                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                                <p className="mt-4 text-purple-600 font-semibold">
+                                    Đang nâng cấp membership...
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Vui lòng không tắt trang này
+                                </p>
+                            </div>
+                        ) : (
+                            <PayPalButton
+                                {...({
+                                    amount: selectedPlan.price,
+                                    onSuccess: handleSuccess
+                                } as any)}
+                            />
+                        )}
                     </motion.div>
                 )}
 
@@ -186,13 +257,30 @@ const MembershipPlans: React.FC = () => {
                         transition={{ duration: 0.6 }}
                     >
                         <div className="text-center">
-                            <div className="text-4xl mb-4">🎉</div>
-                            <h3 className="text-xl font-bold text-green-800 mb-2">
-                                Giao dịch thành công!
-                            </h3>
-                            <p className="text-green-600">
-                                Mã đơn hàng: <span className="font-mono font-bold">{paidOrder.id}</span>
-                            </p>
+                            {upgrading ? (
+                                <>
+                                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+                                    <h3 className="text-xl font-bold text-green-800 mb-2">
+                                        Đang xử lý nâng cấp...
+                                    </h3>
+                                    <p className="text-green-600">
+                                        Mã đơn hàng: <span className="font-mono font-bold">{paidOrder.id}</span>
+                                    </p>
+                                    <p className="text-sm text-gray-500 mt-2">
+                                        Đang cập nhật tài khoản của bạn...
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-4xl mb-4">🎉</div>
+                                    <h3 className="text-xl font-bold text-green-800 mb-2">
+                                        Giao dịch thành công!
+                                    </h3>
+                                    <p className="text-green-600">
+                                        Mã đơn hàng: <span className="font-mono font-bold">{paidOrder.id}</span>
+                                    </p>
+                                </>
+                            )}
                         </div>
                     </motion.div>
                 )}

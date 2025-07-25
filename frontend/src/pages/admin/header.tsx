@@ -1,4 +1,4 @@
-import { Bell, Search, User, Settings, LogOut, ChevronDown } from "lucide-react"
+import { Bell, Search, User, LogOut, ChevronDown, Crown, Lock } from "lucide-react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Badge } from "./ui/badge"
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-import { ModeToggle } from "./mode-toggle"
 
 export function Header() {
   return (
@@ -37,8 +36,6 @@ export function Header() {
             <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs bg-blue-500 border-2 border-white dark:border-slate-900">3</Badge>
           </Button>
 
-          <ModeToggle />
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-auto rounded-full px-3 gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200">
@@ -48,7 +45,6 @@ export function Header() {
                 </Avatar>
                 <div className="hidden sm:flex flex-col items-start">
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Admin User</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">admin@toeic.com</span>
                 </div>
                 <ChevronDown className="h-4 w-4 text-slate-400" />
               </Button>
@@ -57,22 +53,24 @@ export function Header() {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none text-slate-900 dark:text-slate-100">Admin User</p>
-                  <p className="text-xs leading-none text-slate-500 dark:text-slate-400">admin@toeic.com</p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150">
                 <User className="mr-2 h-4 w-4" />
-                <span>Hồ sơ</span>
+                <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-150">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Cài đặt</span>
+                <Lock className="mr-2 h-4 w-4" />
+                <span>Change Password</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors duration-150">
+                <Crown className="mr-2 h-4 w-4" />
+                <span>User Panel</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors duration-150">
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Đăng xuất</span>
+                <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

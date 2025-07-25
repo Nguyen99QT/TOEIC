@@ -9,9 +9,9 @@ const AdminFeedbackPage: React.FC = () => {
     <div className="space-y-6">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý Feedback</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Feedback Management</h1>
           <p className="text-gray-600">
-            Xem và quản lý tất cả feedback từ người dùng
+            View and manage all feedback from users
           </p>
         </div>
 
@@ -26,7 +26,7 @@ const AdminFeedbackPage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Danh sách Feedback
+              Feedback List
             </button>
             <button
               onClick={() => setActiveTab('statistics')}
@@ -36,7 +36,7 @@ const AdminFeedbackPage: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Thống kê
+              Statistics
             </button>
           </nav>
         </div>
@@ -52,24 +52,24 @@ const AdminFeedbackPage: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Hướng dẫn quản lý</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Management Guide</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Trạng thái feedback:</h4>
+              <h4 className="font-medium text-gray-700 mb-2">Feedback Status:</h4>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• <span className="text-orange-600 font-medium">Chờ xử lý:</span> Feedback mới cần xem xét</li>
-                <li>• <span className="text-blue-600 font-medium">Đang xử lý:</span> Đang trong quá trình xử lý</li>
-                <li>• <span className="text-green-600 font-medium">Đã giải quyết:</span> Đã xử lý xong</li>
-                <li>• <span className="text-gray-600 font-medium">Đã đóng:</span> Đã đóng feedback</li>
+                <li>• <span className="text-orange-600 font-medium">Pending:</span> New feedback needs review</li>
+                <li>• <span className="text-blue-600 font-medium">In Progress:</span> Currently being processed</li>
+                <li>• <span className="text-green-600 font-medium">Resolved:</span> Already processed</li>
+                <li>• <span className="text-gray-600 font-medium">Closed:</span> Feedback has been closed</li>
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-gray-700 mb-2">Độ ưu tiên:</h4>
+              <h4 className="font-medium text-gray-700 mb-2">Priority:</h4>
               <ul className="space-y-1 text-sm text-gray-600">
-                <li>• <span className="text-red-600 font-medium">Khẩn cấp:</span> Cần xử lý ngay lập tức</li>
-                <li>• <span className="text-orange-600 font-medium">Cao:</span> Cần xử lý trong thời gian ngắn</li>
-                <li>• <span className="text-yellow-600 font-medium">Trung bình:</span> Có thể xử lý trong thời gian bình thường</li>
-                <li>• <span className="text-green-600 font-medium">Thấp:</span> Có thể xử lý khi có thời gian</li>
+                <li>• <span className="text-red-600 font-medium">Urgent:</span> Needs immediate attention</li>
+                <li>• <span className="text-orange-600 font-medium">High:</span> Needs attention soon</li>
+                <li>• <span className="text-yellow-600 font-medium">Medium:</span> Can be processed normally</li>
+                <li>• <span className="text-green-600 font-medium">Low:</span> Can be processed when time allows</li>
               </ul>
             </div>
           </div>

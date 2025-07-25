@@ -13,11 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw, Bug } from "lucide-react"
+import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Ban, UserCheck, Mail, Calendar, Loader2, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 import { getUsers, toggleUserStatus, updateUserRole } from "../../services/users"
 import { User, Role } from "../../types"
 import { toast } from "react-hot-toast"
-import apiClient from "../../services/apiClient"
 
 // Helper function to get user display name
 const getUserDisplayName = (user: User): string => {
@@ -41,10 +40,11 @@ export function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(0)
   const [totalUsers, setTotalUsers] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [totalStudents, setTotalStudents] = useState(0)
   const [totalInstructors, setTotalInstructors] = useState(0)
   const [pendingUsers, setPendingUsers] = useState(0)
-
+  const pageSize = 10
 
   // Load users from API
   const loadUsers = async () => {
@@ -55,13 +55,13 @@ export function UsersPage() {
       console.log("🔄 Loading users from API...")
       console.log("📝 Request params:", {
         page: currentPage,
-        size: 20,
+        size: pageSize,
         search: searchTerm || undefined
       })
       
       const response = await getUsers({
         page: currentPage,
-        size: 20,
+        size: pageSize,
         search: searchTerm || undefined
       })
       
@@ -81,6 +81,7 @@ export function UsersPage() {
       
       setUsers(response.content)
       setTotalUsers(response.totalElements || 0)
+      setTotalPages(response.totalPages || 0)
       
       // Calculate stats
       const students = response.content.filter(user => user.role === 'USER')
@@ -97,37 +98,6 @@ export function UsersPage() {
       toast.error('Không thể tải danh sách người dùng: ' + error.message)
     } finally {
       setLoading(false)
-    }
-  }
-
-  // Debug function to test user count
-  const debugUserCount = async () => {
-    try {
-      console.log("🐛 [DEBUG] Testing user count endpoint...")
-      const response = await apiClient.get('/api/users/count')
-      console.log("🐛 [DEBUG] User count response:", response.data)
-      toast.success('Debug info logged to console')
-    } catch (error: any) {
-      console.error("🐛 [DEBUG] User count error:", error)
-      toast.error('Debug failed: ' + error.message)
-    }
-  }
-
-  // Debug function to test main users endpoint
-  const debugUsersAPI = async () => {
-    try {
-      console.log("🐛 [DEBUG] Testing main users endpoint...")
-      console.log("🐛 [DEBUG] Auth token:", localStorage.getItem('toeic_access_token') ? 'Present' : 'Missing')
-      console.log("🐛 [DEBUG] Current user:", localStorage.getItem('toeic_current_user'))
-      
-      const response = await apiClient.get('/api/users?page=0&size=5')
-      console.log("🐛 [DEBUG] Main users API response:", response.data)
-      toast.success('Debug users API logged to console')
-    } catch (error: any) {
-      console.error("🐛 [DEBUG] Main users API error:", error)
-      console.error("🐛 [DEBUG] Error response:", error.response?.data)
-      console.error("🐛 [DEBUG] Error status:", error.response?.status)
-      toast.error('Debug users API failed: ' + (error.response?.data?.message || error.message))
     }
   }
 
@@ -153,7 +123,51 @@ export function UsersPage() {
     }
   }
 
-  // Load users on component mount and when search term changes
+  // Handle search
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    setCurrentPage(0) // Reset to first page when searching
+  }
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1)
+    }
+  }
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = []
+    const maxPagesToShow = 5
+    const halfRange = Math.floor(maxPagesToShow / 2)
+    
+    let startPage = Math.max(0, currentPage - halfRange)
+    let endPage = Math.min(totalPages - 1, startPage + maxPagesToShow - 1)
+    
+    // Adjust start if we're near the end
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(0, endPage - maxPagesToShow + 1)
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+    
+    return pages
+  }
+
+  // Load users on component mount and when search term or page changes
   useEffect(() => {
     loadUsers()
   }, [currentPage, searchTerm])
@@ -179,25 +193,25 @@ export function UsersPage() {
             <Plus className="mr-2 h-4 w-4" />
             Thêm giảng viên
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={debugUserCount}
-            className="border-study-200 hover:bg-study-50 hover:text-study-600"
-          >
-            <Bug className="mr-2 h-4 w-4" />
-            Debug User Count
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={debugUsersAPI}
-            className="border-yellow-200 hover:bg-yellow-50 hover:text-yellow-600"
-          >
-            <Bug className="mr-2 h-4 w-4" />
-            Debug Users API
-          </Button>
         </div>
       </div>
 
+      {/* Search and Filters */}
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Tìm kiếm theo tên hoặc email..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button variant="outline" className="border-study-200 hover:bg-study-50">
+          <Filter className="mr-2 h-4 w-4" />
+          Bộ lọc
+        </Button>
+      </div>
 
 
       {/* Stats Cards */}
@@ -251,18 +265,21 @@ export function UsersPage() {
           <div className="flex items-center justify-between">
             <CardTitle>Danh sách người dùng</CardTitle>
             <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm kiếm người dùng..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-80 focus-visible:ring-study-500"
-                />
-              </div>
-              <Button variant="outline" className="border-study-200 hover:bg-study-50 hover:text-study-600">
-                <Filter className="mr-2 h-4 w-4" />
-                Lọc
+              <Button variant="outline" onClick={handlePreviousPage} disabled={currentPage === 0}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {getPageNumbers().map((page) => (
+                <Button
+                  key={page}
+                  variant={page === currentPage ? "default" : "outline"}
+                  onClick={() => handlePageClick(page)}
+                  className="h-8 w-8"
+                >
+                  {page + 1}
+                </Button>
+              ))}
+              <Button variant="outline" onClick={handleNextPage} disabled={currentPage === totalPages - 1}>
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -413,6 +430,90 @@ export function UsersPage() {
             </TableBody>
           </Table>
         </CardContent>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="text-sm text-gray-500">
+              Hiển thị {currentPage * pageSize + 1} - {Math.min((currentPage + 1) * pageSize, totalUsers)} 
+              trong tổng số {totalUsers} người dùng
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {/* Previous button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 0}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              {/* Page numbers */}
+              <div className="flex items-center space-x-1">
+                {/* First page if not in range */}
+                {getPageNumbers()[0] > 0 && (
+                  <>
+                    <Button
+                      variant={currentPage === 0 ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageClick(0)}
+                      className="h-8 w-8 p-0"
+                    >
+                      1
+                    </Button>
+                    {getPageNumbers()[0] > 1 && (
+                      <span className="text-gray-400">...</span>
+                    )}
+                  </>
+                )}
+                
+                {/* Page range */}
+                {getPageNumbers().map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageClick(page)}
+                    className="h-8 w-8 p-0"
+                  >
+                    {page + 1}
+                  </Button>
+                ))}
+                
+                {/* Last page if not in range */}
+                {getPageNumbers()[getPageNumbers().length - 1] < totalPages - 1 && (
+                  <>
+                    {getPageNumbers()[getPageNumbers().length - 1] < totalPages - 2 && (
+                      <span className="text-gray-400">...</span>
+                    )}
+                    <Button
+                      variant={currentPage === totalPages - 1 ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageClick(totalPages - 1)}
+                      className="h-8 w-8 p-0"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              {/* Next button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage >= totalPages - 1}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   )

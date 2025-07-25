@@ -8,12 +8,12 @@ export function ContentPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý nội dung</h1>
-          <p className="text-black">Quản lý tất cả nội dung học tập trên Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Content Management</h1>
+          <p className="text-black">Manage all learning content on Toeic.com</p>
         </div>
         <Button className="bg-study-600 hover:bg-study-700">
           <Plus className="mr-2 h-4 w-4" />
-          Thêm nội dung
+          Add Content
         </Button>
       </div>
 
@@ -21,50 +21,50 @@ export function ContentPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="bg-gradient-to-br from-study-500 to-study-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bài giảng</CardTitle>
+            <CardTitle className="text-sm font-medium">Lessons</CardTitle>
             <FileText className="h-4 w-4 text-white/80" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,234</div>
             <p className="text-xs text-white/80">
-              <span className="text-white font-medium">+12</span> bài mới tuần này
+              <span className="text-white font-medium">+12</span> new this week
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-success-500 to-success-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Video</CardTitle>
+            <CardTitle className="text-sm font-medium">Videos</CardTitle>
             <Video className="h-4 w-4 text-white/80" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">456</div>
             <p className="text-xs text-white/80">
-              <span className="text-white font-medium">+5</span> video mới
+              <span className="text-white font-medium">+5</span> new videos
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hình ảnh</CardTitle>
+            <CardTitle className="text-sm font-medium">Images</CardTitle>
             <ImageIcon className="h-4 w-4 text-white/80" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2,345</div>
             <p className="text-xs text-white/80">
-              <span className="text-white font-medium">+23</span> ảnh mới
+              <span className="text-white font-medium">+23</span> new images
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">18</div>
-            <p className="text-xs text-white/80">Cần xem xét</p>
+            <p className="text-xs text-white/80">Need review</p>
           </CardContent>
         </Card>
       </div>
@@ -73,32 +73,32 @@ export function ContentPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="shadow-md">
           <CardHeader className="bg-gradient-to-r from-study-50 to-white">
-            <CardTitle>Nội dung gần đây</CardTitle>
-            <CardDescription>Nội dung được tạo và cập nhật gần đây</CardDescription>
+            <CardTitle>Recent Content</CardTitle>
+            <CardDescription>Content created and updated recently</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
                 {
-                  title: "Giới thiệu về React Hooks",
+                  title: "Introduction to React Hooks",
                   type: "lesson",
-                  author: "Nguyễn Văn A",
+                  author: "John Smith",
                   status: "published",
                   views: 1234,
                   createdAt: "2024-01-20",
                 },
                 {
-                  title: "Video: Xây dựng API với Node.js",
+                  title: "Video: Building API with Node.js",
                   type: "video",
-                  author: "Trần Thị B",
+                  author: "Jane Doe",
                   status: "draft",
                   views: 0,
                   createdAt: "2024-01-19",
                 },
                 {
-                  title: "Thiết kế UI/UX hiện đại",
+                  title: "Modern UI/UX Design",
                   type: "lesson",
-                  author: "Lê Văn C",
+                  author: "Mike Johnson",
                   status: "review",
                   views: 567,
                   createdAt: "2024-01-18",
@@ -117,7 +117,7 @@ export function ContentPage() {
                         <Clock className="h-3 w-3" />
                         <span>{content.createdAt}</span>
                         <Eye className="h-3 w-3" />
-                        <span>{content.views} lượt xem</span>
+                        <span>{content.views} views</span>
                       </div>
                     </div>
                   </div>
@@ -139,10 +139,10 @@ export function ContentPage() {
                       }
                     >
                       {content.status === "published"
-                        ? "Đã xuất bản"
+                        ? "Published"
                         : content.status === "draft"
-                          ? "Nháp"
-                          : "Đang duyệt"}
+                          ? "Draft"
+                          : "Under Review"}
                     </Badge>
                     <Button variant="ghost" size="sm" className="text-study-600 hover:text-study-700 hover:bg-study-50">
                       <Edit className="h-4 w-4" />
@@ -156,8 +156,8 @@ export function ContentPage() {
 
         <Card className="shadow-md">
           <CardHeader className="bg-gradient-to-r from-study-50 to-white">
-            <CardTitle>Nội dung phổ biến</CardTitle>
-            <CardDescription>Nội dung có lượt xem cao nhất</CardDescription>
+            <CardTitle>Popular Content</CardTitle>
+            <CardDescription>Content with highest views</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

@@ -33,22 +33,22 @@ const menuItems = [
     id: "dashboard",
   },
   {
-    title: "Khóa học",
+    title: "Courses",
     icon: GraduationCap,
     id: "courses",
   },
   {
-    title: "Người dùng",
+    title: "Users",
     icon: Users,
     id: "users",
   },
   {
-    title: "Nội dung",
+    title: "Content",
     icon: FileText,
     id: "content",
   },
   {
-    title: "Thống kê",
+    title: "Analytics",
     icon: BarChart3,
     id: "analytics",
   },
@@ -66,22 +66,22 @@ const menuItems = [
 
 const contentItems = [
   {
-    title: "Bài giảng",
+    title: "Lessons",
     icon: BookOpen,
     id: "lessons",
   },
   {
-    title: "Video",
+    title: "Videos",
     icon: Video,
     id: "videos",
   },
   {
-    title: "Bình luận",
+    title: "Comments",
     icon: MessageSquare,
     id: "comments",
   },
   {
-    title: "Thông báo",
+    title: "Notifications",
     icon: Bell,
     id: "notifications",
   },
@@ -109,7 +109,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
 
       <SidebarContent className="px-3">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Quản lý chính</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Main Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -138,7 +138,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Quản lý nội dung</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Content Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {contentItems.map((item) => (
@@ -167,7 +167,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Hệ thống</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -183,7 +183,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                   <Settings className={`h-4 w-4 transition-transform duration-200 ${
                     currentPage === "settings" ? "scale-110" : "group-hover:scale-110"
                   }`} />
-                  <span className="font-medium">Cài đặt</span>
+                  <span className="font-medium">Settings</span>
                   {currentPage === "settings" && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
                   )}

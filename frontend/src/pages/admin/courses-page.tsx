@@ -19,11 +19,11 @@ const courses = [
   {
     id: 1,
     title: "React Advanced Patterns",
-    instructor: "Nguyễn Văn A",
+    instructor: "John Smith",
     category: "Frontend",
     students: 234,
     rating: 4.8,
-    price: "₫1,200,000",
+    price: "$1,200",
     status: "active",
     createdAt: "2024-01-15",
     thumbnail: "/placeholder.svg?height=60&width=80",
@@ -31,11 +31,11 @@ const courses = [
   {
     id: 2,
     title: "Node.js Backend Development",
-    instructor: "Trần Thị B",
+    instructor: "Jane Doe",
     category: "Backend",
     students: 189,
     rating: 4.6,
-    price: "₫1,500,000",
+    price: "$1,500",
     status: "draft",
     createdAt: "2024-01-10",
     thumbnail: "/placeholder.svg?height=60&width=80",
@@ -43,11 +43,11 @@ const courses = [
   {
     id: 3,
     title: "UI/UX Design Fundamentals",
-    instructor: "Lê Văn C",
+    instructor: "Mike Johnson",
     category: "Design",
     students: 456,
     rating: 4.9,
-    price: "₫900,000",
+    price: "$900",
     status: "active",
     createdAt: "2024-01-08",
     thumbnail: "/placeholder.svg?height=60&width=80",
@@ -55,11 +55,11 @@ const courses = [
   {
     id: 4,
     title: "Python Data Science",
-    instructor: "Phạm Thị D",
+    instructor: "Sarah Wilson",
     category: "Data Science",
     students: 123,
     rating: 4.7,
-    price: "₫1,800,000",
+    price: "$1,800",
     status: "review",
     createdAt: "2024-01-05",
     thumbnail: "/placeholder.svg?height=60&width=80",
@@ -73,8 +73,8 @@ export function CoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý khóa học</h1>
-          <p className="text-black">Quản lý tất cả khóa học trên Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Course Management</h1>
+          <p className="text-black">Manage all courses on Toeic.com</p>
         </div>
       </div>
 
@@ -82,43 +82,43 @@ export function CoursesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="bg-gradient-to-br from-study-500 to-study-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng khóa học</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">156</div>
             <p className="text-xs text-white/80">
-              <span className="text-white font-medium">+3</span> khóa học mới
+              <span className="text-white font-medium">+3</span> new courses
             </p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-success-500 to-success-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang hoạt động</CardTitle>
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">124</div>
-            <p className="text-xs text-white/80">79% tổng số khóa học</p>
+            <p className="text-xs text-white/80">79% of total courses</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">18</div>
-            <p className="text-xs text-white/80">Cần xem xét</p>
+            <p className="text-xs text-white/80">Need review</p>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-info-500 to-info-600 text-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Nháp</CardTitle>
+            <CardTitle className="text-sm font-medium">Draft</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">14</div>
-            <p className="text-xs text-white/80">Chưa hoàn thành</p>
+            <p className="text-xs text-white/80">Not completed</p>
           </CardContent>
         </Card>
       </div>
@@ -127,12 +127,12 @@ export function CoursesPage() {
       <Card className="shadow-md">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Danh sách khóa học</CardTitle>
+            <CardTitle>Course List</CardTitle>
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm khóa học..."
+                  placeholder="Search courses..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-80 focus-visible:ring-study-500"
@@ -140,7 +140,7 @@ export function CoursesPage() {
               </div>
               <Button variant="outline" className="border-study-200 hover:bg-study-50 hover:text-study-600">
                 <Filter className="mr-2 h-4 w-4" />
-                Lọc
+                Filter
               </Button>
             </div>
           </div>
@@ -149,14 +149,14 @@ export function CoursesPage() {
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead>Khóa học</TableHead>
-                <TableHead>Giảng viên</TableHead>
-                <TableHead>Danh mục</TableHead>
-                <TableHead>Học viên</TableHead>
-                <TableHead>Đánh giá</TableHead>
-                <TableHead>Giá</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
+                <TableHead>Course</TableHead>
+                <TableHead>Instructor</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Students</TableHead>
+                <TableHead>Rating</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -173,7 +173,7 @@ export function CoursesPage() {
                       </div>
                       <div>
                         <div className="font-medium text-study-700">{course.title}</div>
-                        <div className="text-sm text-muted-foreground">Tạo: {course.createdAt}</div>
+                        <div className="text-sm text-muted-foreground">Created: {course.createdAt}</div>
                       </div>
                     </div>
                   </TableCell>
@@ -219,7 +219,7 @@ export function CoursesPage() {
                             : "border-info-500 text-info-500"
                       }
                     >
-                      {course.status === "active" ? "Hoạt động" : course.status === "draft" ? "Nháp" : "Đang duyệt"}
+                      {course.status === "active" ? "Active" : course.status === "draft" ? "Draft" : "Under Review"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -230,19 +230,19 @@ export function CoursesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem className="cursor-pointer">
                           <Eye className="mr-2 h-4 w-4 text-study-500" />
-                          Xem chi tiết
+                          View Details
                         </DropdownMenuItem>
                         <DropdownMenuItem className="cursor-pointer">
                           <Edit className="mr-2 h-4 w-4 text-warning-500" />
-                          Chỉnh sửa
+                          Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-danger-600 cursor-pointer focus:text-danger-600">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Xóa
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

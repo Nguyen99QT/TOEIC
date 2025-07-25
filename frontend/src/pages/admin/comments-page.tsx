@@ -49,13 +49,13 @@ const mockComments: Comment[] = [
   {
     id: "1",
     user: {
-      name: "Nguyễn Văn A",
-      email: "nguyenvana@email.com",
+      name: "John Smith",
+      email: "johnsmith@email.com",
       avatar: "/avatars/user1.jpg"
     },
-    content: "Bài giảng rất hay và dễ hiểu. Giảng viên giải thích rất rõ ràng!",
+    content: "Great lesson and easy to understand. The instructor explains very clearly!",
     course: "TOEIC Reading",
-    lesson: "Bài 1: Reading Comprehension",
+    lesson: "Lesson 1: Reading Comprehension",
     rating: 5,
     status: "approved",
     createdAt: "2024-01-15T10:30:00Z",
@@ -67,12 +67,12 @@ const mockComments: Comment[] = [
   {
     id: "2",
     user: {
-      name: "Trần Thị B",
-      email: "tranthib@email.com"
+      name: "Jane Doe",
+      email: "janedoe@email.com"
     },
-    content: "Có thể làm chậm hơn một chút được không? Mình thấy hơi nhanh.",
+    content: "Can you slow down a bit? I find it a bit fast.",
     course: "TOEIC Listening",
-    lesson: "Bài 3: Listening Practice",
+    lesson: "Lesson 3: Listening Practice",
     rating: 4,
     status: "pending",
     createdAt: "2024-01-14T15:45:00Z",
@@ -84,12 +84,12 @@ const mockComments: Comment[] = [
   {
     id: "3",
     user: {
-      name: "Lê Văn C",
-      email: "levanc@email.com"
+      name: "Mike Johnson",
+      email: "mikejohnson@email.com"
     },
     content: "Spam comment for testing purposes",
     course: "TOEIC Grammar",
-    lesson: "Bài 2: Grammar Review",
+    lesson: "Lesson 2: Grammar Review",
     rating: 1,
     status: "rejected",
     createdAt: "2024-01-13T09:20:00Z",
@@ -101,12 +101,12 @@ const mockComments: Comment[] = [
   {
     id: "4",
     user: {
-      name: "Phạm Thị D",
-      email: "phamthid@email.com"
+      name: "Sarah Wilson",
+      email: "sarahwilson@email.com"
     },
-    content: "Tài liệu rất hữu ích, cảm ơn thầy cô đã chia sẻ!",
+    content: "Very useful materials, thank you teachers for sharing!",
     course: "TOEIC Writing",
-    lesson: "Bài 4: Essay Writing",
+    lesson: "Lesson 4: Essay Writing",
     rating: 5,
     status: "approved",
     createdAt: "2024-01-12T14:15:00Z",
@@ -118,12 +118,12 @@ const mockComments: Comment[] = [
   {
     id: "5",
     user: {
-      name: "Hoàng Văn E",
-      email: "hoangvane@email.com"
+      name: "David Brown",
+      email: "davidbrown@email.com"
     },
-    content: "Bài tập khó quá, có thể giải thích thêm được không?",
+    content: "The exercises are too difficult, can you explain more?",
     course: "TOEIC Speaking",
-    lesson: "Bài 5: Speaking Practice",
+    lesson: "Lesson 5: Speaking Practice",
     rating: 3,
     status: "pending",
     createdAt: "2024-01-11T11:30:00Z",
@@ -152,11 +152,11 @@ export function CommentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Đã duyệt</Badge>
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Approved</Badge>
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Chờ duyệt</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
       case "rejected":
-        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Từ chối</Badge>
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>
       default:
         return null
     }
@@ -187,19 +187,19 @@ export function CommentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-black">Quản lý bình luận</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-black">Comment Management</h1>
           <p className="text-black">
-            Theo dõi và kiểm duyệt tất cả bình luận trên Toeic.com
+            Monitor and moderate all comments on Toeic.com
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
             <Flag className="h-4 w-4 mr-2" />
-            Báo cáo spam
+            Report Spam
           </Button>
           <Button size="sm">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Tất cả bình luận
+            All Comments
           </Button>
         </div>
       </div>
@@ -208,7 +208,7 @@ export function CommentsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng bình luận</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Comments</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -217,7 +217,7 @@ export function CommentsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
             <Badge className="bg-yellow-100 text-yellow-800">P</Badge>
           </CardHeader>
           <CardContent>
@@ -226,7 +226,7 @@ export function CommentsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
+            <CardTitle className="text-sm font-medium">Approved</CardTitle>
             <Badge className="bg-green-100 text-green-800">A</Badge>
           </CardHeader>
           <CardContent>
@@ -235,7 +235,7 @@ export function CommentsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Từ chối</CardTitle>
+            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
             <Badge className="bg-red-100 text-red-800">R</Badge>
           </CardHeader>
           <CardContent>
@@ -256,7 +256,7 @@ export function CommentsPage() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Bộ lọc và tìm kiếm</CardTitle>
+          <CardTitle>Filters and Search</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
@@ -264,7 +264,7 @@ export function CommentsPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Tìm kiếm bình luận..."
+                  placeholder="Search comments..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
@@ -277,28 +277,28 @@ export function CommentsPage() {
                 size="sm"
                 onClick={() => setStatusFilter("all")}
               >
-                Tất cả
+                All
               </Button>
               <Button
                 variant={statusFilter === "pending" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("pending")}
               >
-                Chờ duyệt
+                Pending
               </Button>
               <Button
                 variant={statusFilter === "approved" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("approved")}
               >
-                Đã duyệt
+                Approved
               </Button>
               <Button
                 variant={statusFilter === "rejected" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("rejected")}
               >
-                Từ chối
+                Rejected
               </Button>
             </div>
           </div>
@@ -330,8 +330,8 @@ export function CommentsPage() {
                     </div>
                     
                     <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Khóa học:</span> {comment.course} • 
-                      <span className="font-medium ml-1">Bài học:</span> {comment.lesson}
+                      <span className="font-medium">Course:</span> {comment.course} • 
+                      <span className="font-medium ml-1">Lesson:</span> {comment.lesson}
                     </p>
                     
                     <p className="text-sm leading-relaxed">{comment.content}</p>
@@ -339,7 +339,7 @@ export function CommentsPage() {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {new Date(comment.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(comment.createdAt).toLocaleDateString('en-US')}
                       </div>
                       <div className="flex items-center gap-1">
                         <ThumbsUp className="h-3 w-3" />
@@ -351,7 +351,7 @@ export function CommentsPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Reply className="h-3 w-3" />
-                        {comment.replies} trả lời
+                        {comment.replies} replies
                       </div>
                       <div className="flex items-center gap-1">
                         <span>★</span>
@@ -370,22 +370,22 @@ export function CommentsPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => handleStatusChange(comment.id, "approved")}>
                       <Eye className="h-4 w-4 mr-2" />
-                      Duyệt
+                      Approve
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleStatusChange(comment.id, "rejected")}>
                       <ThumbsDown className="h-4 w-4 mr-2" />
-                      Từ chối
+                      Reject
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Reply className="h-4 w-4 mr-2" />
-                      Trả lời
+                      Reply
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => handleDeleteComment(comment.id)}
                       className="text-red-600"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Xóa
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -398,9 +398,9 @@ export function CommentsPage() {
           <Card>
             <CardContent className="p-12 text-center">
               <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Không tìm thấy bình luận</h3>
+              <h3 className="text-lg font-semibold mb-2">No comments found</h3>
               <p className="text-muted-foreground">
-                Không có bình luận nào phù hợp với bộ lọc hiện tại.
+                No comments match the current filters.
               </p>
             </CardContent>
           </Card>

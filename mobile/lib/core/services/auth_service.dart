@@ -64,7 +64,7 @@ class AuthService {
     String? phoneNumber,
   }) async {
     try {
-      final response = await _apiService.post('/api/auth/register', {
+      final response = await _apiService.post('/auth/register', {
         'username': username,
         'email': email,
         'password': password,
@@ -91,7 +91,7 @@ class AuthService {
   Future<void> logout() async {
     try {
       if (_token != null) {
-        await _apiService.post('/api/auth/logout', {});
+        await _apiService.post('/auth/logout', {});
       }
     } catch (e) {
       print('Error during logout: $e');
@@ -108,7 +108,7 @@ class AuthService {
       final refreshToken = await _storageService.getString('refresh_token');
       if (refreshToken == null) return false;
 
-      final response = await _apiService.post('/api/auth/refresh', {
+      final response = await _apiService.post('/auth/refresh', {
         'refreshToken': refreshToken,
       });
 
@@ -129,7 +129,7 @@ class AuthService {
     try {
       if (_token == null) return false;
 
-      final response = await _apiService.get('/api/auth/validate');
+      final response = await _apiService.get('/auth/validate');
       return response.success;
     } catch (e) {
       print('Error validating token: $e');

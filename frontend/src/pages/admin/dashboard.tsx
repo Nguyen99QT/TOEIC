@@ -9,14 +9,14 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-black">Tổng quan về hoạt động của Toeic.com</p>
+        <p className="text-black">Overview of Toeic.com activities</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-study-500 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng người dùng</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             <div className="rounded-full bg-study-50 p-2 text-study-500">
               <Users className="h-4 w-4" />
             </div>
@@ -24,14 +24,14 @@ export function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">12,543</div>
             <p className="text-xs text-success-600">
-              <span className="font-medium">+12%</span> so với tháng trước
+              <span className="font-medium">+12%</span> from last month
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-success-500 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Khóa học</CardTitle>
+            <CardTitle className="text-sm font-medium">Courses</CardTitle>
             <div className="rounded-full bg-success-50 p-2 text-success-500">
               <BookOpen className="h-4 w-4" />
             </div>
@@ -39,29 +39,29 @@ export function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">156</div>
             <p className="text-xs text-success-600">
-              <span className="font-medium">+3</span> khóa học mới tuần này
+              <span className="font-medium">+3</span> new courses this week
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-warning-500 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Doanh thu</CardTitle>
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
             <div className="rounded-full bg-warning-50 p-2 text-warning-500">
               <DollarSign className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₫45,231,000</div>
+            <div className="text-2xl font-bold">$45,231</div>
             <p className="text-xs text-success-600">
-              <span className="font-medium">+8%</span> so với tháng trước
+              <span className="font-medium">+8%</span> from last month
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-info-500 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Lượt xem</CardTitle>
+            <CardTitle className="text-sm font-medium">Page Views</CardTitle>
             <div className="rounded-full bg-info-50 p-2 text-info-500">
               <Eye className="h-4 w-4" />
             </div>
@@ -69,7 +69,7 @@ export function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">89,432</div>
             <p className="text-xs text-success-600">
-              <span className="font-medium">+15%</span> so với tuần trước
+              <span className="font-medium">+15%</span> from last week
             </p>
           </CardContent>
         </Card>
@@ -79,15 +79,15 @@ export function Dashboard() {
         {/* Recent Courses */}
         <Card className="col-span-4 shadow-md">
           <CardHeader className="bg-gradient-to-r from-study-50 to-white">
-            <CardTitle>Khóa học gần đây</CardTitle>
-            <CardDescription>Các khóa học được tạo và cập nhật gần đây</CardDescription>
+            <CardTitle>Recent Courses</CardTitle>
+            <CardDescription>Courses created and updated recently</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {[
                 {
                   title: "React Advanced Patterns",
-                  instructor: "Nguyễn Văn A",
+                  instructor: "John Smith",
                   students: 234,
                   status: "active",
                   progress: 85,
@@ -95,7 +95,7 @@ export function Dashboard() {
                 },
                 {
                   title: "Node.js Backend Development",
-                  instructor: "Trần Thị B",
+                  instructor: "Jane Doe",
                   students: 189,
                   status: "draft",
                   progress: 60,
@@ -103,7 +103,7 @@ export function Dashboard() {
                 },
                 {
                   title: "UI/UX Design Fundamentals",
-                  instructor: "Lê Văn C",
+                  instructor: "Mike Johnson",
                   students: 456,
                   status: "active",
                   progress: 100,
@@ -111,7 +111,7 @@ export function Dashboard() {
                 },
                 {
                   title: "Python Data Science",
-                  instructor: "Phạm Thị D",
+                  instructor: "Sarah Wilson",
                   students: 123,
                   status: "review",
                   progress: 40,
@@ -134,11 +134,11 @@ export function Dashboard() {
                               : "border-info-500 text-info-500"
                         }
                       >
-                        {course.status === "active" ? "Hoạt động" : course.status === "draft" ? "Nháp" : "Đang duyệt"}
+                        {course.status === "active" ? "Active" : course.status === "draft" ? "Draft" : "Under Review"}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {course.instructor} • {course.students} học viên
+                      {course.instructor} • {course.students} students
                     </p>
                     <Progress
                       value={course.progress}
@@ -155,7 +155,7 @@ export function Dashboard() {
                     />
                   </div>
                   <Button variant="ghost" size="sm" className="text-study-600 hover:text-study-700 hover:bg-study-50">
-                    Xem chi tiết
+                    View Details
                   </Button>
                 </div>
               ))}
@@ -166,8 +166,8 @@ export function Dashboard() {
         {/* Quick Stats */}
         <Card className="col-span-3 shadow-md">
           <CardHeader className="bg-gradient-to-r from-study-50 to-white">
-            <CardTitle>Hoạt động hôm nay</CardTitle>
-            <CardDescription>Thống kê nhanh về hoạt động trong ngày</CardDescription>
+            <CardTitle>Today's Activity</CardTitle>
+            <CardDescription>Quick statistics about today's activity</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
@@ -175,7 +175,7 @@ export function Dashboard() {
                 <Users className="h-5 w-5 text-study-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Người dùng mới</p>
+                <p className="text-sm font-medium">New Users</p>
                 <p className="text-2xl font-bold text-study-700">23</p>
               </div>
             </div>
@@ -185,7 +185,7 @@ export function Dashboard() {
                 <BookOpen className="h-5 w-5 text-success-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Bài học hoàn thành</p>
+                <p className="text-sm font-medium">Completed Lessons</p>
                 <p className="text-2xl font-bold text-success-700">156</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ export function Dashboard() {
                 <MessageSquare className="h-5 w-5 text-warning-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Bình luận mới</p>
+                <p className="text-sm font-medium">New Comments</p>
                 <p className="text-2xl font-bold text-warning-700">34</p>
               </div>
             </div>
@@ -205,7 +205,7 @@ export function Dashboard() {
                 <Star className="h-5 w-5 text-info-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Đánh giá mới</p>
+                <p className="text-sm font-medium">New Ratings</p>
                 <p className="text-2xl font-bold text-info-700">12</p>
               </div>
             </div>

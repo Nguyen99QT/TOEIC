@@ -1,6 +1,9 @@
 package com.leenglish.toeic.blog;
 
 import com.leenglish.toeic.dto.BlogPostWithStatsDTO;
+import com.leenglish.toeic.dto.BlogPostDTO;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -179,16 +182,54 @@ public class BlogPostController {
         }
     }
 
-    // Lấy chi tiết blog
+    // Lấy chi tiết blog (trả về DTO với link tuyệt đối)
     @GetMapping("/{id}")
-    public BlogPost getBlogPost(@PathVariable Long id) {
-        return blogPostService.getBlogPostById(id).orElse(null);
+    public BlogPostDTO getBlogPost(@PathVariable Long id, HttpServletRequest request) {
+        BlogPost blog = blogPostService.getBlogPostById(id).orElse(null);
+        if (blog == null)
+            return null;
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
+                .replacePath(null)
+                .build()
+                .toUriString();
+        String img = blog.getImageUrl();
+        String vid = blog.getVideoUrl();
+        String pdf = blog.getPdfUrl();
+        String absoluteImg = (img != null && !img.isEmpty())
+                ? (img.startsWith("http") ? img : (img.startsWith("/") ? baseUrl + img : baseUrl + "/" + img))
+                : null;
+        String absoluteVid = (vid != null && !vid.isEmpty())
+                ? (vid.startsWith("http") ? vid : (vid.startsWith("/") ? baseUrl + vid : baseUrl + "/" + vid))
+                : null;
+        String absolutePdf = (pdf != null && !pdf.isEmpty())
+                ? (pdf.startsWith("http") ? pdf : (pdf.startsWith("/") ? baseUrl + pdf : baseUrl + "/" + pdf))
+                : null;
+        return new BlogPostDTO(blog, absoluteImg, absoluteVid, absolutePdf);
     }
 
-    // Lấy tất cả blog
+    // Lấy tất cả blog (trả về DTO với imageUrl tuyệt đối)
     @GetMapping
-    public List<BlogPost> getAllBlogPosts() {
-        return blogPostService.getAllBlogPosts();
+    public List<BlogPostDTO> getAllBlogPosts(HttpServletRequest request) {
+        List<BlogPost> blogs = blogPostService.getAllBlogPosts();
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
+                .replacePath(null)
+                .build()
+                .toUriString();
+        return blogs.stream().map(blog -> {
+            String img = blog.getImageUrl();
+            String vid = blog.getVideoUrl();
+            String pdf = blog.getPdfUrl();
+            String absoluteImg = (img != null && !img.isEmpty())
+                    ? (img.startsWith("http") ? img : (img.startsWith("/") ? baseUrl + img : baseUrl + "/" + img))
+                    : null;
+            String absoluteVid = (vid != null && !vid.isEmpty())
+                    ? (vid.startsWith("http") ? vid : (vid.startsWith("/") ? baseUrl + vid : baseUrl + "/" + vid))
+                    : null;
+            String absolutePdf = (pdf != null && !pdf.isEmpty())
+                    ? (pdf.startsWith("http") ? pdf : (pdf.startsWith("/") ? baseUrl + pdf : baseUrl + "/" + pdf))
+                    : null;
+            return new BlogPostDTO(blog, absoluteImg, absoluteVid, absolutePdf);
+        }).toList();
     }
 
     // Lấy tất cả blog với thống kê (cho admin)

@@ -1,0 +1,258 @@
+import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
+import 'package:toeic_mobile/core/services/auth_service.dart';
+import 'package:toeic_mobile/features/auth/pages/login_page.dart';
+import 'package:toeic_mobile/features/auth/pages/register_page.dart';
+import 'package:toeic_mobile/features/home/pages/home_page.dart';
+import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
+import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
+import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_list_screen.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_form_screen.dart';
+import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
+import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
+import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
+import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
+import 'package:toeic_mobile/features/settings/pages/settings_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_list_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_simple_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_result_detail_page.dart';
+import 'package:toeic_mobile/features/tests/pages/test_history_page.dart';
+import 'package:toeic_mobile/shared/widgets/layout/main_layout.dart';
+import 'package:toeic_mobile/shared/widgets/layout/auth_layout.dart' as auth;
+
+class AppRouter {
+  static final GoRouter router = GoRouter(
+    initialLocation: '/',
+    redirect: (context, state) {
+      final authService = AuthService.instance;
+      final isAuthenticated = authService.isAuthenticated;
+      final location = state.uri.toString();
+
+      // Public routes
+      final publicRoutes = [
+        '/',
+        '/login',
+        '/register',
+      ];
+
+      // If user is not authenticated and trying to access protected route
+      if (!isAuthenticated && !publicRoutes.contains(location)) {
+        return '/login';
+      }
+
+      // If user is authenticated and trying to access auth routes
+      if (isAuthenticated &&
+          (location == '/login' || location == '/register')) {
+        return '/dashboard';
+      }
+
+      return null;
+    },
+    routes: [
+      // Home route
+      GoRoute(
+        path: '/',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: HomePage(),
+          ),
+        ),
+      ),
+
+      // Auth routes
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: auth.AuthLayout(
+            child: LoginPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: auth.AuthLayout(
+            child: RegisterPage(),
+          ),
+        ),
+      ),
+
+      // Dashboard route
+      GoRoute(
+        path: '/dashboard',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: DashboardPage(),
+          ),
+        ),
+      ),
+
+      // Lessons routes
+      GoRoute(
+        path: '/lessons',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: LessonsPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/lessons/:id',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: LessonDetailPage(
+              lessonId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+
+      // Exercises routes
+      GoRoute(
+        path: '/exercises',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ExerciseListScreen(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/exercises/create',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ExerciseFormScreen(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/exercises/:id',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: ExerciseDetailPage(
+              exerciseId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/exercises/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: ExerciseFormScreen(
+              exerciseId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+
+      // Flashcards routes
+      GoRoute(
+        path: '/flashcards',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: FlashcardsPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/flashcards/:id/study',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: FlashcardStudyPage(
+              flashcardSetId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+
+      // Tests routes
+      GoRoute(
+        path: '/tests',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: TestListPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test/:id',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestPage(
+              testId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-result/:submissionId',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestResultPage(
+              submissionId: int.parse(state.pathParameters['submissionId']!),
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-result-simple',
+        pageBuilder: (context, state) {
+          final message = state.uri.queryParameters['message'];
+          final scoreStr = state.uri.queryParameters['score'];
+          final resultIdStr = state.uri.queryParameters['resultId'];
+          final score = scoreStr != null ? int.tryParse(scoreStr) : null;
+          final resultId = resultIdStr != null ? int.tryParse(resultIdStr) : null;
+          
+          return MaterialPage(
+            child: MainLayout(
+              child: TestResultSimplePage(
+                message: message,
+                score: score,
+                resultId: resultId,
+              ),
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/test-history',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: TestHistoryPage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/test-result-detail/:resultId',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: TestResultDetailPage(
+              resultId: int.parse(state.pathParameters['resultId']!),
+            ),
+          ),
+        ),
+      ),
+
+      // Profile routes
+      GoRoute(
+        path: '/profile',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ProfilePage(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: SettingsPage(),
+          ),
+        ),
+      ),
+    ],
+  );
+}

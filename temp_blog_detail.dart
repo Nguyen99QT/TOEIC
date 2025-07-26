@@ -181,7 +181,7 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _post!.author,
+                  _post!.author!,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -300,15 +300,11 @@ class _BlogDetailPageState extends State<BlogDetailPage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
+    @override
+    void dispose() {
+      _videoController?.dispose();
+      super.dispose();
+    }
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  }
-}

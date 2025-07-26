@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/services/blog_service.dart';
-import '../../../models/blog.dart';
 import 'blog_detail_page.dart';
 
 class BlogsPage extends StatefulWidget {

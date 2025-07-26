@@ -343,7 +343,8 @@ class TestService {
         throw Exception('User not authenticated - no token available');
       }
 
-      final response = await http.get(
+      // Try the new endpoint first
+      var response = await http.get(
         Uri.parse('$baseUrl/submit/result/$resultId'),
         headers: {
           'Content-Type': 'application/json',
@@ -352,12 +353,41 @@ class TestService {
       );
 
       print('Result response status: ${response.statusCode}');
+      print('Result response body: ${response.body}');
+      
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         print('Successfully fetched test result from backend');
         return TestResult.fromJson(data);
       } else {
-        throw Exception('Failed to load test result: HTTP ${response.statusCode}');
+        print('Primary endpoint failed, trying fallback endpoint...');
+        // Fallback to user-results endpoint
+        response = await http.get(
+          Uri.parse('$baseUrl/user-results/$resultId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $authToken',
+          },
+        );
+        
+        print('Fallback response status: ${response.statusCode}');
+        print('Fallback response body: ${response.body}');
+        
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          // Convert UserResultSummary to TestResult format
+          return TestResult(
+            resultId: data['resultId'] ?? resultId,
+            testTitle: 'TOEIC Test', // Default title
+            user: 'Test User',
+            scoreListen: data['scoreListen'] ?? 0,
+            scoreRead: data['scoreRead'] ?? 0,
+            totalScore: (data['scoreListen'] ?? 0) + (data['scoreRead'] ?? 0),
+            questions: [], // Empty for now
+          );
+        } else {
+          throw Exception('Failed to load test result from both endpoints: HTTP ${response.statusCode}');
+        }
       }
     } catch (e) {
       print('Error loading test result: $e');

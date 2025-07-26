@@ -37,8 +37,8 @@ class DashboardPage extends ConsumerWidget {
                         radius: 30,
                         backgroundColor: Colors.white,
                         child: Text(
-                          (user != null && user.fullName.isNotEmpty
-                              ? user.fullName.substring(0, 1).toUpperCase()
+                          (user != null && user.fullName?.isNotEmpty == true
+                              ? user.fullName!.substring(0, 1).toUpperCase()
                               : 'U'),
                           style: TextStyle(
                             fontSize: 24,

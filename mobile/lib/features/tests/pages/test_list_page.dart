@@ -61,7 +61,7 @@ class TestListPage extends ConsumerWidget {
     final user = AuthService.instance.currentUser;
     if (user == null) return false;
     
-    final membershipType = user.membershipType.toUpperCase();
+    final membershipType = user.membershipType?.toUpperCase() ?? 'FREE';
     return membershipType == 'PREMIUM' || membershipType == 'VIP';
   }
 
@@ -70,7 +70,7 @@ class TestListPage extends ConsumerWidget {
     final user = AuthService.instance.currentUser;
     if (user == null) return true; // Consider non-logged users as basic
     
-    final membershipType = user.membershipType.toUpperCase();
+    final membershipType = user.membershipType?.toUpperCase() ?? 'FREE';
     return membershipType == 'BASIC';
   }
 

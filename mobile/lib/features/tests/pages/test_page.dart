@@ -608,24 +608,14 @@ class TestPage extends ConsumerWidget {
               try {
                 await ref.read(testStateProvider(testId).notifier).submitTest(questions);
                 final result = ref.read(testStateProvider(testId)).submissionResult;
+                print('Submit button: got result: $result');
                 if (result != null && context.mounted) {
-                  // Navigate to result page with data compatible with TestResultScreen
-                  final totalScore = result.result?.totalScore ?? 0;
-                  final correctAnswers = result.result?.questions.where((q) => q.isCorrect).length ?? 0;
-                  final resultData = {
-                    'submissionId': result.submissionId,
-                    'message': result.message,
-                    'score': correctAnswers, // Use correct answers count as score
-                    'totalScore': totalScore,
-                    'scoreListen': result.result?.scoreListen ?? 0,
-                    'scoreRead': result.result?.scoreRead ?? 0,
-                    'totalQuestions': questions.length,
-                    'correctAnswers': correctAnswers,
-                    'wrongAnswers': questions.length - correctAnswers,
-                    'testTitle': result.result?.testTitle ?? 'Test',
-                    'timeTaken': 0, // We don't have this data yet
-                  };
-                  context.go('/test-result', extra: resultData);
+                  // Navigate to result page with submissionId
+                  print('Submit button: Navigating to /test-result/${result.submissionId}');
+                  context.go('/test-result/${result.submissionId}');
+                  print('Submit button: Navigation called');
+                } else {
+                  print('Submit button: No result or context not mounted');
                 }
               } catch (e) {
                 if (context.mounted) {

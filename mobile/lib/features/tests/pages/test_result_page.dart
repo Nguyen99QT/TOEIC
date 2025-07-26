@@ -6,7 +6,15 @@ import '../../../services/test_service.dart';
 
 // Provider cho test result
 final testResultProvider = FutureProvider.family<TestResult, int>((ref, resultId) async {
-  return await TestService.getTestResult(resultId);
+  print('testResultProvider: Fetching result for ID: $resultId');
+  try {
+    final result = await TestService.getTestResult(resultId);
+    print('testResultProvider: Successfully loaded result: ${result.testTitle}');
+    return result;
+  } catch (e) {
+    print('testResultProvider: Error loading result: $e');
+    rethrow;
+  }
 });
 
 class TestResultPage extends ConsumerStatefulWidget {
@@ -23,6 +31,7 @@ class _TestResultPageState extends ConsumerState<TestResultPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('TestResultPage: Building with submissionId: ${widget.submissionId}');
     final testResultAsync = ref.watch(testResultProvider(widget.submissionId));
 
     return Scaffold(

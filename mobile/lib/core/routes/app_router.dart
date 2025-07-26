@@ -7,7 +7,8 @@ import 'package:toeic_mobile/features/home/pages/home_page.dart';
 import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_list_screen.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_form_screen.dart';
 import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
@@ -114,7 +115,15 @@ class AppRouter {
         path: '/exercises',
         pageBuilder: (context, state) => const MaterialPage(
           child: MainLayout(
-            child: ExercisesPage(),
+            child: ExerciseListScreen(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/exercises/create',
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ExerciseFormScreen(),
           ),
         ),
       ),
@@ -123,6 +132,16 @@ class AppRouter {
         pageBuilder: (context, state) => MaterialPage(
           child: MainLayout(
             child: ExerciseDetailPage(
+              exerciseId: state.pathParameters['id']!,
+            ),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/exercises/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          child: MainLayout(
+            child: ExerciseFormScreen(
               exerciseId: state.pathParameters['id']!,
             ),
           ),

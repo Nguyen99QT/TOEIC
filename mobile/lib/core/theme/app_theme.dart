@@ -21,6 +21,56 @@ class AppTheme {
   static const Color darkTextSecondaryColor = Color(0xFFD1D5DB);
   static const Color darkBorderColor = Color(0xFF374151);
 
+  // Box Shadows
+  static const List<BoxShadow> lightShadow = [
+    BoxShadow(
+      color: Color(0x0D000000),
+      blurRadius: 4,
+      offset: Offset(0, 2),
+    ),
+  ];
+
+  static const List<BoxShadow> mediumShadow = [
+    BoxShadow(
+      color: Color(0x1A000000),
+      blurRadius: 8,
+      offset: Offset(0, 4),
+    ),
+  ];
+
+  static const List<BoxShadow> darkShadow = [
+    BoxShadow(
+      color: Color(0x26000000),
+      blurRadius: 16,
+      offset: Offset(0, 8),
+    ),
+  ];
+
+  // Helper methods to get colors based on theme
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkSurfaceColor
+        : surfaceColor;
+  }
+
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkTextPrimaryColor
+        : textPrimaryColor;
+  }
+
+  static Color getSecondaryTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkTextSecondaryColor
+        : textSecondaryColor;
+  }
+
+  static Color getBorderColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkBorderColor
+        : borderColor;
+  }
+
   // Light Theme
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,

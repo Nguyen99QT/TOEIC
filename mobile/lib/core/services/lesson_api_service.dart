@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:toeic_mobile/core/models/lesson_model.dart';
 import 'package:toeic_mobile/core/services/dio_service.dart';
 
 class LessonApiService {
-  static final Dio _dio = DioApiService.dio;
+  // Use getter để đảm bảo DioApiService đã được khởi tạo
+  static Dio get _dio => DioApiService.dio;
 
   // Get all lessons with pagination and filters
   Future<LessonResponse> getLessons({
@@ -72,46 +74,73 @@ class LessonApiService {
     required int estimatedTime,
     File? imageFile,
     File? audioFile,
+    String? imageUrl,
+    String? audioUrl,
     bool isPublic = true,
   }) async {
     try {
       print('Creating lesson: $title');
 
-      final formData = FormData();
+      // Use JSON data for web compatibility, FormData for mobile
+      if (kIsWeb) {
+        // Web version - use JSON data with URLs
+        final jsonData = {
+          'title': title,
+          'description': description,
+          'content': content,
+          'difficulty': difficulty,
+          'category': category,
+          'estimatedTime': estimatedTime,
+          'isPublic': isPublic,
+        };
 
-      // Add text fields
-      formData.fields.addAll([
-        MapEntry('title', title),
-        MapEntry('description', description),
-        MapEntry('content', content),
-        MapEntry('difficulty', difficulty),
-        MapEntry('category', category),
-        MapEntry('estimatedTime', estimatedTime.toString()),
-        MapEntry('isPublic', isPublic.toString()),
-      ]);
+        // Add image and audio URLs if provided
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          jsonData['imageUrl'] = imageUrl;
+        }
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          jsonData['audioUrl'] = audioUrl;
+        }
 
-      // Add image file if provided
-      if (imageFile != null) {
-        String fileName = imageFile.path.split('/').last;
-        formData.files.add(MapEntry(
-          'imageFile',
-          await MultipartFile.fromFile(imageFile.path, filename: fileName),
-        ));
+        print('Creating lesson with JSON data: $jsonData');
+        final response = await _dio.post('/api/lessons', data: jsonData);
+        print('Create lesson response: ${response.data}');
+
+        return Lesson.fromJson(response.data);
+      } else {
+        // Mobile version - use FormData for file uploads
+        final formData = FormData();
+        formData.fields.addAll([
+          MapEntry('title', title),
+          MapEntry('description', description),
+          MapEntry('content', content),
+          MapEntry('difficulty', difficulty),
+          MapEntry('category', category),
+          MapEntry('estimatedTime', estimatedTime.toString()),
+          MapEntry('isPublic', isPublic.toString()),
+        ]);
+
+        if (imageFile != null) {
+          String fileName = imageFile.path.split('/').last;
+          formData.files.add(MapEntry(
+            'imageFile',
+            await MultipartFile.fromFile(imageFile.path, filename: fileName),
+          ));
+        }
+
+        if (audioFile != null) {
+          String fileName = audioFile.path.split('/').last;
+          formData.files.add(MapEntry(
+            'audioFile',
+            await MultipartFile.fromFile(audioFile.path, filename: fileName),
+          ));
+        }
+
+        final response = await _dio.post('/api/lessons', data: formData);
+        print('Create lesson response: ${response.data}');
+
+        return Lesson.fromJson(response.data);
       }
-
-      // Add audio file if provided
-      if (audioFile != null) {
-        String fileName = audioFile.path.split('/').last;
-        formData.files.add(MapEntry(
-          'audioFile',
-          await MultipartFile.fromFile(audioFile.path, filename: fileName),
-        ));
-      }
-
-      final response = await _dio.post('/api/lessons', data: formData);
-      print('Create lesson response: ${response.data}');
-
-      return Lesson.fromJson(response.data);
     } catch (e) {
       print('Error creating lesson: $e');
       throw Exception('Failed to create lesson: $e');
@@ -129,46 +158,77 @@ class LessonApiService {
     required int estimatedTime,
     File? imageFile,
     File? audioFile,
+    String? imageUrl,
+    String? audioUrl,
     bool isPublic = true,
   }) async {
     try {
       print('Updating lesson: $id');
 
-      final formData = FormData();
+      // Use JSON data for web compatibility, FormData for mobile
+      if (kIsWeb) {
+        // Web version - use JSON data with URLs
+        final jsonData = {
+          'title': title,
+          'description': description,
+          'content': content,
+          'difficulty': difficulty,
+          'category': category,
+          'estimatedTime': estimatedTime,
+          'isPublic': isPublic,
+        };
 
-      // Add text fields
-      formData.fields.addAll([
-        MapEntry('title', title),
-        MapEntry('description', description),
-        MapEntry('content', content),
-        MapEntry('difficulty', difficulty),
-        MapEntry('category', category),
-        MapEntry('estimatedTime', estimatedTime.toString()),
-        MapEntry('isPublic', isPublic.toString()),
-      ]);
+        // Add image and audio URLs if provided
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          jsonData['imageUrl'] = imageUrl;
+        }
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          jsonData['audioUrl'] = audioUrl;
+        }
 
-      // Add image file if provided
-      if (imageFile != null) {
-        String fileName = imageFile.path.split('/').last;
-        formData.files.add(MapEntry(
-          'imageFile',
-          await MultipartFile.fromFile(imageFile.path, filename: fileName),
-        ));
+        print('Updating lesson with JSON data: $jsonData');
+        final response = await _dio.put('/api/lessons/$id', data: jsonData);
+        print('Update lesson response: ${response.data}');
+
+        return Lesson.fromJson(response.data);
+      } else {
+        // Mobile version - use FormData for file uploads
+        final formData = FormData();
+
+        // Add text fields
+        formData.fields.addAll([
+          MapEntry('title', title),
+          MapEntry('description', description),
+          MapEntry('content', content),
+          MapEntry('difficulty', difficulty),
+          MapEntry('category', category),
+          MapEntry('estimatedTime', estimatedTime.toString()),
+          MapEntry('isPublic', isPublic.toString()),
+        ]);
+
+        // Add image file if provided
+        if (imageFile != null) {
+          String fileName = imageFile.path.split('/').last;
+          formData.files.add(MapEntry(
+            'imageFile',
+            await MultipartFile.fromFile(imageFile.path, filename: fileName),
+          ));
+        }
+
+        // Add audio file if provided
+        if (audioFile != null) {
+          String fileName = audioFile.path.split('/').last;
+          formData.files.add(MapEntry(
+            'audioFile',
+            await MultipartFile.fromFile(audioFile.path, filename: fileName),
+          ));
+        }
+
+        final response = await _dio.put('/api/lessons/$id', data: formData);
+        print('Update lesson response: ${response.data}');
+
+        return Lesson.fromJson(response.data);
       }
-
-      // Add audio file if provided
-      if (audioFile != null) {
-        String fileName = audioFile.path.split('/').last;
-        formData.files.add(MapEntry(
-          'audioFile',
-          await MultipartFile.fromFile(audioFile.path, filename: fileName),
-        ));
-      }
-
-      final response = await _dio.put('/api/lessons/$id', data: formData);
-      print('Update lesson response: ${response.data}');
-
-      return Lesson.fromJson(response.data);
     } catch (e) {
       print('Error updating lesson: $e');
       throw Exception('Failed to update lesson: $e');

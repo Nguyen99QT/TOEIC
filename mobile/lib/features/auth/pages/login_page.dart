@@ -31,16 +31,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
+      print('🔄 Starting login process...');
       final result = await AuthService.instance.login(
         _usernameController.text.trim(),
         _passwordController.text,
       );
 
+      print(
+          '🔍 Login result: success=${result.success}, error=${result.error}');
+
       if (result.success) {
+        print('✅ Login successful, navigating to dashboard...');
         if (mounted) {
+          print('📱 Widget is mounted, calling navigation...');
           context.go('/dashboard');
+          print('🚀 Navigation called with context.go()');
+        } else {
+          print('❌ Widget not mounted, cannot navigate');
         }
       } else {
+        print('❌ Login failed: ${result.error}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

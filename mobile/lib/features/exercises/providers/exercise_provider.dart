@@ -33,17 +33,16 @@ class ExerciseListNotifier extends StateNotifier<AsyncValue<List<Exercise>>> {
     try {
       state = const AsyncValue.loading();
 
-      final response = await _exerciseService.getExercises(
-        page: 0,
-        size: 50, // Load more exercises for better UX
-        search: search,
+      final response = await _exerciseService.getExercisesWithFilter(
+        page: 1,
+        limit: 50, // Load more exercises for better UX
         difficulty: difficulty,
-        category: category,
+        type: category,
         sortBy: sortBy,
-        sortDir: sortDir,
+        sortOrder: sortDir,
       );
 
-      state = AsyncValue.data(response.exercises ?? []);
+      state = AsyncValue.data(response.exercises);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }

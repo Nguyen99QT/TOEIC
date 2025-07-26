@@ -35,9 +35,10 @@ class Lesson {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       content: json['content'] ?? '',
-      difficulty: json['difficulty'] ?? 'EASY',
-      category: json['category'] ?? 'GENERAL',
-      estimatedTime: json['estimatedTime'] ?? 30,
+      // Map backend fields to frontend model
+      difficulty: json['difficulty'] ?? json['level'] ?? 'EASY',
+      category: json['category'] ?? json['type'] ?? 'GENERAL', 
+      estimatedTime: json['estimatedTime'] ?? json['duration'] ?? 30,
       imageUrl: json['imageUrl'],
       audioUrl: json['audioUrl'],
       createdBy: json['createdBy'],
@@ -119,16 +120,53 @@ class LessonResponse {
     required this.hasPrevious,
   });
 
-  factory LessonResponse.fromJson(Map<String, dynamic> json) {
+  factory LessonResponse.fromJson(dynamic json) {
+    // Handle direct array response from backend
+    if (json is List) {
+      return LessonResponse(
+        lessons: json.map((e) => Lesson.fromJson(e)).toList(),
+        totalCount: json.length,
+        page: 0,
+        size: json.length,
+        hasNext: false,
+        hasPrevious: false,
+      );
+    }
+    
+    // Handle paginated response format
+    if (json is Map<String, dynamic>) {
+      return LessonResponse(
+        lessons: (json['content'] as List? ?? [])
+            .map((e) => Lesson.fromJson(e))
+            .toList(),
+        totalCount: json['totalElements'] ?? 0,
+        page: json['number'] ?? 0,
+        size: json['size'] ?? 10,
+        hasNext: !(json['last'] ?? true),
+        hasPrevious: !(json['first'] ?? true),
+      );
+    }
+    
+    // Fallback for unknown format
     return LessonResponse(
-      lessons: (json['content'] as List? ?? [])
-          .map((e) => Lesson.fromJson(e))
-          .toList(),
-      totalCount: json['totalElements'] ?? 0,
-      page: json['number'] ?? 0,
-      size: json['size'] ?? 10,
-      hasNext: !(json['last'] ?? true),
-      hasPrevious: !(json['first'] ?? true),
+      lessons: [],
+      totalCount: 0,
+      page: 0,
+      size: 10,
+      hasNext: false,
+      hasPrevious: false,
+    );
+  }
+
+  // Add factory for direct array response
+  factory LessonResponse.fromArray(List<dynamic> jsonArray) {
+    return LessonResponse(
+      lessons: jsonArray.map((e) => Lesson.fromJson(e)).toList(),
+      totalCount: jsonArray.length,
+      page: 0,
+      size: jsonArray.length,
+      hasNext: false,
+      hasPrevious: false,
     );
   }
 }

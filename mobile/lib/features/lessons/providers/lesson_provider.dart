@@ -151,6 +151,8 @@ class LessonsNotifier extends AsyncNotifier<LessonResponse> {
     required int estimatedTime,
     File? imageFile,
     File? audioFile,
+    String? imageUrl,
+    String? audioUrl,
     bool isPublic = true,
   }) async {
     try {
@@ -164,6 +166,8 @@ class LessonsNotifier extends AsyncNotifier<LessonResponse> {
         estimatedTime: estimatedTime,
         imageFile: imageFile,
         audioFile: audioFile,
+        imageUrl: imageUrl,
+        audioUrl: audioUrl,
         isPublic: isPublic,
       );
 
@@ -186,6 +190,8 @@ class LessonsNotifier extends AsyncNotifier<LessonResponse> {
     required int estimatedTime,
     File? imageFile,
     File? audioFile,
+    String? imageUrl,
+    String? audioUrl,
     bool isPublic = true,
   }) async {
     try {
@@ -200,6 +206,8 @@ class LessonsNotifier extends AsyncNotifier<LessonResponse> {
         estimatedTime: estimatedTime,
         imageFile: imageFile,
         audioFile: audioFile,
+        imageUrl: imageUrl,
+        audioUrl: audioUrl,
         isPublic: isPublic,
       );
 

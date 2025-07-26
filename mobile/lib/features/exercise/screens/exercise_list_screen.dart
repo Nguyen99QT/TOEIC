@@ -24,7 +24,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
 
     // Load initial data
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(exercisesProvider.notifier).loadExercises();
+      ref.read(exerciseListProvider.notifier).loadExercises();
     });
   }
 
@@ -43,35 +43,37 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
   }
 
   void _loadMore() {
-    ref.read(exercisesProvider.notifier).loadMore(
-          search:
-              _searchController.text.isEmpty ? null : _searchController.text,
+    ref.read(exerciseListProvider.notifier).loadMore(
           difficulty: _selectedDifficulty,
-          category: _selectedCategory,
+          type: _selectedCategory,
         );
   }
 
   void _onSearch() {
-    ref.read(exercisesProvider.notifier).refresh(
-          search:
-              _searchController.text.isEmpty ? null : _searchController.text,
-          difficulty: _selectedDifficulty,
-          category: _selectedCategory,
-        );
+    if (_searchController.text.isEmpty) {
+      ref.read(exerciseListProvider.notifier).loadExercises(
+            refresh: true,
+            difficulty: _selectedDifficulty,
+            type: _selectedCategory,
+          );
+    } else {
+      ref
+          .read(exerciseListProvider.notifier)
+          .searchExercises(_searchController.text);
+    }
   }
 
   void _onRefresh() async {
-    await ref.read(exercisesProvider.notifier).refresh(
-          search:
-              _searchController.text.isEmpty ? null : _searchController.text,
+    await ref.read(exerciseListProvider.notifier).loadExercises(
+          refresh: true,
           difficulty: _selectedDifficulty,
-          category: _selectedCategory,
+          type: _selectedCategory,
         );
   }
 
   @override
   Widget build(BuildContext context) {
-    final exercisesState = ref.watch(exercisesProvider);
+    final exercisesState = ref.watch(exerciseListProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -240,7 +242,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
                           controller: _scrollController,
                           padding: const EdgeInsets.all(16),
                           itemCount: exercisesState.exercises.length +
-                              (exercisesState.hasNextPage ? 1 : 0),
+                              (exercisesState.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == exercisesState.exercises.length) {
                               return const Center(
@@ -285,7 +287,7 @@ class _ExerciseListScreenState extends ConsumerState<ExerciseListScreen> {
               Navigator.pop(context);
               try {
                 await ref
-                    .read(exercisesProvider.notifier)
+                    .read(exerciseListProvider.notifier)
                     .deleteExercise(exercise.id!);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -400,7 +402,7 @@ class _ExerciseCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   _buildChip(
-                    exercise.category,
+                    exercise.type,
                     Colors.blue[100]!,
                   ),
                   const Spacer(),

@@ -1,336 +1,514 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/api_service.dart';
-import '../../../core/services/auth_service.dart';
+import 'package:go_router/go_router.dart';
+import 'package:toeic_mobile/core/models/exercise_model.dart';
+import 'package:toeic_mobile/features/exercise/providers/exercise_provider.dart';
 
 class ExerciseDetailPage extends ConsumerStatefulWidget {
   final String exerciseId;
 
-  const ExerciseDetailPage({super.key, required this.exerciseId});
+  const ExerciseDetailPage({
+    Key? key,
+    required this.exerciseId,
+  }) : super(key: key);
 
   @override
   ConsumerState<ExerciseDetailPage> createState() => _ExerciseDetailPageState();
 }
 
 class _ExerciseDetailPageState extends ConsumerState<ExerciseDetailPage> {
-  Map<String, dynamic>? exerciseData;
-  bool isLoading = true;
-  String? error;
-
   @override
   void initState() {
     super.initState();
-    _loadExerciseData();
-  }
-
-  Future<void> _loadExerciseData() async {
-    try {
-      setState(() {
-        isLoading = true;
-        error = null;
-      });
-
-      // Get token from AuthService
-      final token = AuthService.instance.token;
-
-      if (token == null) {
-        setState(() {
-          error = 'Please login to continue';
-          isLoading = false;
-        });
-        return;
-      }
-
-      final data = await ApiServiceStatic.getExercises(token);
-
-      // Filter to find the specific exercise by ID
-      final exercises = data['data'] as List?;
-      Map<String, dynamic>? targetExercise;
-
-      if (exercises != null) {
-        for (var exercise in exercises) {
-          if (exercise['id'].toString() == widget.exerciseId) {
-            targetExercise = exercise;
-            break;
-          }
-        }
-      }
-
-      // If exercise not found in list, try direct API call
-      targetExercise ??= {
-        'id': widget.exerciseId,
-        'title': 'TOEIC Exercise ${widget.exerciseId}',
-        'description':
-            'Practice your TOEIC skills with this comprehensive exercise',
-        'type': 'Listening Comprehension',
-        'difficulty': 'Intermediate',
-        'questionCount': 20,
-        'timeLimit': 25,
-        'bestScore': 0,
-        'attempts': 0,
-        'avgTime': 0,
-      };
-
-      setState(() {
-        exerciseData = targetExercise;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        error = _getErrorMessage(e);
-        isLoading = false;
-      });
-    }
-  }
-
-  String _getErrorMessage(dynamic error) {
-    if (error.toString().contains('SocketException')) {
-      return 'No internet connection. Please check your network.';
-    } else if (error.toString().contains('TimeoutException')) {
-      return 'Connection timeout. Please try again.';
-    } else if (error.toString().contains('FormatException')) {
-      return 'Invalid response format.';
-    } else {
-      return 'An error occurred: ${error.toString()}';
-    }
+    // Load exercise detail - provider family automatically loads exercise by ID
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Loading...'),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+    final exerciseState = ref.watch(exerciseDetailProvider(widget.exerciseId));
 
-    if (error != null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        body: Center(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Exercise Detail'),
+        actions: [
+          if (exerciseState.hasValue && exerciseState.value != null) ...[
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () =>
+                  context.push('/exercises/${widget.exerciseId}/edit'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.play_arrow),
+              onPressed: () => _startQuiz(exerciseState.value!),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                switch (value) {
+                  case 'delete':
+                    _showDeleteDialog(exerciseState.value!);
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'delete', child: Text('Delete')),
+              ],
+            ),
+          ],
+        ],
+      ),
+      body: exerciseState.when(
+        data: (exercise) {
+          if (exercise == null) {
+            return const Center(
+              child: Text(
+                'Exercise not found',
+                style: TextStyle(fontSize: 18),
+              ),
+            );
+          }
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ExerciseDetailContent(exercise: exercise),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.error, size: 64, color: Colors.red[300]),
               const SizedBox(height: 16),
               Text(
-                error!,
-                style: const TextStyle(fontSize: 16),
+                'Error: $error',
                 textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _loadExerciseData,
+                onPressed: () =>
+                    ref.refresh(exerciseDetailProvider(widget.exerciseId)),
                 child: const Text('Retry'),
               ),
             ],
           ),
         ),
-      );
-    }
-
-    // Use actual data from API
-    final exercise = exerciseData!;
-    final title = exercise['title'] ?? 'Exercise ${widget.exerciseId}';
-    final description = exercise['description'] ?? 'Test your skills';
-    final difficulty = exercise['difficulty'] ?? 'Intermediate';
-    final questionCount = exercise['questionCount'] ?? 20;
-    final timeLimit = exercise['timeLimit'] ?? 25;
-    final type = exercise['type'] ?? 'Listening Comprehension';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      floatingActionButton:
+          exerciseState.hasValue && exerciseState.value != null
+              ? FloatingActionButton.extended(
+                  onPressed: () => _startQuiz(exerciseState.value!),
+                  label: const Text('Start Quiz'),
+                  icon: const Icon(Icons.play_arrow),
+                )
+              : null,
+    );
+  }
+
+  void _startQuiz(Exercise exercise) {
+    ref.read(exerciseQuizProvider.notifier).initializeQuiz([exercise]);
+    context.push('/exercises/quiz');
+  }
+
+  void _showDeleteDialog(Exercise exercise) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Exercise'),
+        content: Text('Are you sure you want to delete "${exercise.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await ref
+                  .read(exerciseListProvider.notifier)
+                  .deleteExercise(exercise.id!);
+              if (success) {
+                context.pop(); // Go back to previous page
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Exercise deleted successfully')),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Failed to delete exercise'),
+                      backgroundColor: Colors.red),
+                );
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ExerciseDetailContent extends StatelessWidget {
+  final Exercise exercise;
+
+  const ExerciseDetailContent({
+    Key? key,
+    required this.exercise,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Card
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exercise.title,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  exercise.description,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Text(
-                      type,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    _buildInfoChip(Icons.category, 'Type', exercise.type),
+                    _buildInfoChip(
+                        Icons.speed, 'Difficulty', exercise.difficulty),
+                    _buildInfoChip(Icons.trending_up, 'Level', exercise.level),
+                    if (exercise.timeLimit != null && exercise.timeLimit! > 0)
+                      _buildInfoChip(
+                          Icons.timer, 'Time Limit', '${exercise.timeLimit}s'),
+                    if (exercise.points > 0)
+                      _buildInfoChip(
+                          Icons.stars, 'Points', '${exercise.points}'),
+                    if (exercise.isPremium == true)
+                      _buildInfoChip(Icons.workspace_premium, 'Premium', 'Yes'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Question Card
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Question',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  exercise.question,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Options Card (if applicable)
+        if (exercise.options.isNotEmpty) ...[
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Options',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
+                  ),
+                  const SizedBox(height: 12),
+                  ...exercise.options.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final option = entry.value;
+                    final isCorrect = option == exercise.correctAnswer;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isCorrect
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.grey.withOpacity(0.05),
+                        border: Border.all(
+                          color: isCorrect
+                              ? Colors.green
+                              : Colors.grey.withOpacity(0.3),
+                        ),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _getDifficultyColor(difficulty)
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color:
+                                  isCorrect ? Colors.green : Colors.grey[300],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                String.fromCharCode(65 + index), // A, B, C, D
+                                style: TextStyle(
+                                  color:
+                                      isCorrect ? Colors.white : Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isCorrect ? Colors.green[700] : null,
+                                fontWeight: isCorrect ? FontWeight.w500 : null,
+                              ),
+                            ),
+                          ),
+                          if (isCorrect)
+                            Icon(Icons.check_circle, color: Colors.green[700]),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Correct Answer Card (for non-multiple choice)
+        if (exercise.options.isEmpty && exercise.correctAnswer.isNotEmpty) ...[
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Correct Answer',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      border: Border.all(color: Colors.green),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green[700]),
+                        const SizedBox(width: 12),
+                        Expanded(
                           child: Text(
-                            difficulty,
+                            exercise.correctAnswer,
                             style: TextStyle(
-                              color: _getDifficultyColor(difficulty),
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.green[700],
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.quiz, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$questionCount questions',
-                          style: const TextStyle(color: Colors.grey),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Explanation Card
+        if (exercise.explanation != null &&
+            exercise.explanation!.isNotEmpty) ...[
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Explanation',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    exercise.explanation!,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Media Cards
+        if (exercise.imageUrl != null || exercise.audioUrl != null) ...[
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Media Files',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (exercise.imageUrl != null) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.image, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        const Text('Image: '),
+                        Expanded(
+                          child: Text(
+                            exercise.imageUrl!,
+                            style: const TextStyle(color: Colors.blue),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.access_time,
-                            size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$timeLimit min',
-                          style: const TextStyle(color: Colors.grey),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (exercise.audioUrl != null) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.audiotrack, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        const Text('Audio: '),
+                        Expanded(
+                          child: Text(
+                            exercise.audioUrl!,
+                            style: const TextStyle(color: Colors.orange),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
                   ],
-                ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Instructions',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildInstructionItem(
-                        'Listen carefully to each audio clip'),
-                    _buildInstructionItem(
-                        'Choose the best answer for each question'),
-                    _buildInstructionItem(
-                        'You can replay each audio clip up to 2 times'),
-                    _buildInstructionItem(
-                        'Complete all questions within the time limit'),
-                    _buildInstructionItem(
-                        'Your score will be calculated at the end'),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Your Performance',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildPerformanceItem(
-                      'Best Score',
-                      '${exercise['bestScore'] ?? 0}%',
-                    ),
-                    _buildPerformanceItem(
-                      'Attempts',
-                      '${exercise['attempts'] ?? 0}',
-                    ),
-                    _buildPerformanceItem(
-                      'Average Time',
-                      '${exercise['avgTime'] ?? 0} min',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate to exercise practice page
-                  _startExercise();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Start Exercise',
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Additional Info Card
+        Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Additional Information',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                _buildInfoRow('Exercise ID', exercise.id ?? 'N/A'),
+                if (exercise.lessonId != null)
+                  _buildInfoRow('Lesson ID', exercise.lessonId!),
+                _buildInfoRow('Type', exercise.type),
+                _buildInfoRow('Order Index', exercise.orderIndex.toString()),
+                _buildInfoRow(
+                    'Active', exercise.isActive == true ? 'Yes' : 'No'),
+                if (exercise.createdAt != null)
+                  _buildInfoRow('Created', _formatDate(exercise.createdAt!)),
+                if (exercise.updatedAt != null)
+                  _buildInfoRow('Updated', _formatDate(exercise.updatedAt!)),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+
+        const SizedBox(height: 80), // Space for FAB
+      ],
     );
   }
 
-  Widget _buildInstructionItem(String instruction) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+  Widget _buildInfoChip(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.check_circle_outline,
-            size: 16,
-            color: Theme.of(context).primaryColor,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              instruction,
-              style: const TextStyle(fontSize: 14),
+          Icon(icon, size: 16, color: Colors.blue[700]),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $value',
+            style: TextStyle(
+              color: Colors.blue[700],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -338,49 +516,34 @@ class _ExerciseDetailPageState extends ConsumerState<ExerciseDetailPage> {
     );
   }
 
-  Widget _buildPerformanceItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 16),
+            ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Color _getDifficultyColor(String difficulty) {
-    switch (difficulty.toLowerCase()) {
-      case 'beginner':
-        return Colors.green;
-      case 'intermediate':
-        return Colors.orange;
-      case 'advanced':
-        return Colors.red;
-      default:
-        return Colors.orange;
-    }
-  }
-
-  void _startExercise() {
-    // TODO: Navigate to exercise practice page
-    // For now, just show a placeholder message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Exercise practice page will be implemented soon!'),
+        ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

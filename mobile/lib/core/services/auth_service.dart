@@ -1,5 +1,5 @@
 import 'package:toeic_mobile/core/models/user_model.dart';
-import 'package:toeic_mobile/core/services/api_service.dart';
+import 'package:toeic_mobile/core/services/api_service.dart' as legacy_api;
 import 'package:toeic_mobile/core/services/storage_service.dart';
 
 class AuthService {
@@ -25,47 +25,81 @@ class AuthService {
     if (userData != null) {
       _currentUser = User.fromMap(userData);
     }
+
+    // Ensure token is also available for interceptor
+    if (_token != null) {
+      await _storageService.saveString('auth_token', _token!);
+      print('🔄 Token loaded and synced: ${_token!.substring(0, 20)}...');
+    }
   }
 
   Future<LoginResult> login(String username, String password) async {
     try {
       // Use the static login method from ApiService extension
-      final response = await ApiServiceStatic.login(
+      final response = await legacy_api.ApiServiceStatic.login(
         username: username,
         password: password,
       );
 
-      // Check if login was successful
-      if (response['success'] == true) {
-        final data = response['data'];
-        _token = data['accessToken'] ?? data['token'];
+      // Legacy ApiService wraps response in {success, data, message} format
+      // Extract the actual backend data
+      Map<String, dynamic> backendData;
+      if (response['success'] == true && response['data'] != null) {
+        backendData = response['data'];
+        print('✅ Using wrapped response data');
+      } else {
+        backendData = response;
+        print('✅ Using direct response data');
+      }
 
-        // Create user object from response data using fromMap to handle roles properly
-        _currentUser = User.fromMap({
-          'id': data['id'],
-          'username': data['username'] ?? username,
-          'email': data['email'] ?? '',
-          'fullName': data['fullName'] ?? data['username'] ?? username,
-          'roles': data['roles'], // This will handle the roles array properly
-          'membershipType': data['membershipType'] ?? 'free',
-        });
+      if (backendData['token'] != null || backendData['accessToken'] != null) {
+        _token = backendData['accessToken'] ?? backendData['token'];
 
-        // Save authentication data securely
+        try {
+          // Create user object from response data using fromMap to handle roles properly
+          _currentUser = User.fromMap({
+            'id': backendData['id'],
+            'username': backendData['username'] ?? username,
+            'email': backendData['email'] ?? '',
+            'fullName':
+                backendData['fullName'] ?? backendData['username'] ?? username,
+            'roles': backendData[
+                'roles'], // This will handle the roles array properly
+            'membershipType': backendData['membershipType'] ?? 'free',
+          });
+
+          print('✅ User created successfully: ${_currentUser!.username}');
+        } catch (userError) {
+          print('❌ Error creating user: $userError');
+          return LoginResult(
+              success: false, error: 'Failed to create user: $userError');
+        }
+
+        // Save authentication data securely - CRITICAL for interceptor
         await _storageService.saveAuthToken(_token!);
         await _storageService.saveUserData(_currentUser!.toMap());
 
+        // Also save with the key that interceptor expects
+        await _storageService.saveString('auth_token', _token!);
+
+        print('💾 Token saved to storage: ${_token!.substring(0, 20)}...');
+        print('✅ Login successful for user: ${_currentUser!.username}');
+
         // Save refresh token if available
-        if (data['refreshToken'] != null) {
-          await _storageService.saveRefreshToken(data['refreshToken']);
+        if (backendData['refreshToken'] != null) {
+          await _storageService.saveRefreshToken(backendData['refreshToken']);
         }
 
         return LoginResult(success: true, user: _currentUser);
       } else {
         return LoginResult(
             success: false,
-            error: response['message'] ?? 'Invalid login response');
+            error: response['message'] ??
+                backendData['message'] ??
+                'Invalid login response');
       }
     } catch (e) {
+      print('❌ Login error: $e');
       return LoginResult(success: false, error: e.toString());
     }
   }
@@ -82,7 +116,7 @@ class AuthService {
   }) async {
     try {
       // Use the static register method from ApiService extension
-      final response = await ApiServiceStatic.register(
+      final response = await legacy_api.ApiServiceStatic.register(
         username: username,
         email: email,
         password: password,
@@ -115,6 +149,9 @@ class AuthService {
       _token = null;
       _currentUser = null;
       await _storageService.clearAuthData();
+      // Also clear the token that interceptor uses
+      await _storageService.remove('auth_token');
+      print('✅ Logout successful - all tokens cleared');
     }
   }
 

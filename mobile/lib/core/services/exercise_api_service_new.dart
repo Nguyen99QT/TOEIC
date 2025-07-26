@@ -4,14 +4,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:toeic_mobile/core/models/exercise_model.dart';
-import 'package:toeic_mobile/core/services/dio_service.dart';
 
 /// Service xử lý API calls cho Exercise CRUD
 class ExerciseApiService {
   static const String _baseEndpoint = '/api/exercises-crud';
 
-  // Use the centralized Dio service
-  Dio get _dio => DioApiService.dio;
+  // Create Dio instance directly
+  static final Dio _dio = Dio();
 
   /// Provider cho ExerciseApiService
   static final exerciseApiServiceProvider = Provider<ExerciseApiService>((ref) {

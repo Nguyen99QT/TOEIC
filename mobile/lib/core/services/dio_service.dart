@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:toeic_mobile/core/services/storage_service.dart';
+import 'package:toeic_mobile/core/services/auth_service.dart';
 
 /// Service xử lý HTTP requests sử dụng Dio cho CRUD operations
 class DioApiService {
@@ -9,13 +10,18 @@ class DioApiService {
   static DioApiService get instance => _instance ??= DioApiService._();
   DioApiService._();
 
-  late final Dio _dio;
+  Dio? _dio;
 
   /// Getter để access Dio instance từ bên ngoài
-  static Dio get dio => instance._dio;
+  static Dio get dio => instance._dio!;
 
   /// Initialize Dio với cấu hình
   void init() {
+    if (_dio != null) {
+      print('🔄 DioApiService already initialized, skipping...');
+      return;
+    }
+
     _dio = Dio(BaseOptions(
       baseUrl: _getBaseUrl(),
       connectTimeout: const Duration(seconds: 30),
@@ -28,7 +34,7 @@ class DioApiService {
     ));
 
     // Add interceptors
-    _dio.interceptors.addAll([
+    _dio!.interceptors.addAll([
       _AuthInterceptor(),
       _ErrorInterceptor(),
       if (kDebugMode)
@@ -65,12 +71,23 @@ class _AuthInterceptor extends Interceptor {
       RequestOptions options, RequestInterceptorHandler handler) async {
     // Get token from storage
     try {
-      final token = await StorageService.instance.getString('auth_token');
+      final token = await StorageService.instance.getAuthToken();
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
+        print(
+            '🔑 Added Authorization header: Bearer ${token.substring(0, 20)}...');
+      } else {
+        print('⚠️ No token found in storage');
+        // Try to get from AuthService
+        final authToken = AuthService.instance.token;
+        if (authToken != null && authToken.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $authToken';
+          print(
+              '🔑 Added Authorization header from AuthService: Bearer ${authToken.substring(0, 20)}...');
+        }
       }
     } catch (e) {
-      debugPrint('Error getting auth token: $e');
+      print('❌ Error getting auth token: $e');
     }
 
     handler.next(options);
@@ -136,9 +153,4 @@ class ApiService {
 
   /// Static Dio getter for new CRUD operations
   static Dio get dio => DioApiService.dio;
-
-  /// Initialize both HTTP and Dio services
-  static void init() {
-    DioApiService.instance.init();
-  }
 }

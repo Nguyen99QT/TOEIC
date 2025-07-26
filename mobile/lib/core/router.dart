@@ -53,6 +53,14 @@ final GoRouter appRouter = GoRouter(
         return LessonDetailPage(lessonId: id);
       },
     ),
+    // Add route for /lessons/:id (with 's') to match the URL being accessed
+    GoRoute(
+      path: '/lessons/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return LessonDetailPage(lessonId: id);
+      },
+    ),
     GoRoute(
       path: '/exercises',
       builder: (context, state) => const ExercisesPage(),
@@ -135,24 +143,30 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const SettingsPage(),
     ),
   ],
-  redirect: (context, state) {
-    final isAuthenticated = AuthService.instance.isAuthenticated;
-    final currentPath = state.uri.path;
+  // Temporary disable redirect for debugging
+  // redirect: (context, state) {
+  //   final isAuthenticated = AuthService.instance.isAuthenticated;
+  //   final currentPath = state.uri.path;
 
-    // Public routes that don't require authentication
-    final publicRoutes = ['/', '/home', '/login', '/register'];
+  //   print('🔄 Router redirect check: path=$currentPath, authenticated=$isAuthenticated');
 
-    // If user is not authenticated and trying to access protected route
-    if (!isAuthenticated && !publicRoutes.contains(currentPath)) {
-      return '/login';
-    }
+  //   // Public routes that don't require authentication
+  //   final publicRoutes = ['/', '/home', '/login', '/register'];
 
-    // If user is authenticated and trying to access auth routes, redirect to dashboard
-    if (isAuthenticated &&
-        (currentPath == '/login' || currentPath == '/register')) {
-      return '/dashboard';
-    }
+  //   // If user is not authenticated and trying to access protected route
+  //   if (!isAuthenticated && !publicRoutes.contains(currentPath)) {
+  //     print('🚫 Redirecting to login: user not authenticated');
+  //     return '/login';
+  //   }
 
-    return null;
-  },
+  //   // If user is authenticated and trying to access auth routes, redirect to dashboard
+  //   if (isAuthenticated &&
+  //       (currentPath == '/login' || currentPath == '/register')) {
+  //     print('✅ Redirecting to dashboard: user already authenticated');
+  //     return '/dashboard';
+  //   }
+
+  //   print('✅ No redirect needed');
+  //   return null;
+  // },
 );

@@ -1,19 +1,19 @@
-// //
-// //  Generated file. Do not edit.
-// //
+//
+//  Generated file. Do not edit.
+//
 
-// // clang-format off
+// clang-format off
 
-// #ifndef GeneratedPluginRegistrant_h
-// #define GeneratedPluginRegistrant_h
+#ifndef GeneratedPluginRegistrant_h
+#define GeneratedPluginRegistrant_h
 
-// #import <Flutter/Flutter.h>
+#import <Flutter/Flutter.h>
 
-// NS_ASSUME_NONNULL_BEGIN
+NS_ASSUME_NONNULL_BEGIN
 
-// @interface GeneratedPluginRegistrant : NSObject
-// + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry;
-// @end
+@interface GeneratedPluginRegistrant : NSObject
++ (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry;
+@end
 
-// NS_ASSUME_NONNULL_END
-// #endif /* GeneratedPluginRegistrant_h */
+NS_ASSUME_NONNULL_END
+#endif /* GeneratedPluginRegistrant_h */

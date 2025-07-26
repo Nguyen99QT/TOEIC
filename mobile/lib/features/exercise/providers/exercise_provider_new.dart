@@ -75,7 +75,7 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
         lessonId: lessonId,
       );
 
-      final updatedExercises = refresh 
+      final updatedExercises = refresh
           ? response.exercises
           : [...state.exercises, ...response.exercises];
 
@@ -133,7 +133,7 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
     String? lessonId,
   }) async {
     if (!state.hasMore || state.isLoading) return;
-    
+
     await loadExercises(
       refresh: false,
       difficulty: difficulty,
@@ -192,7 +192,7 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
         );
         return newExercise;
       }
-      
+
       return null;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -253,7 +253,7 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
         state = state.copyWith(exercises: updatedExercises);
         return updatedExercise;
       }
-      
+
       return null;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -265,12 +265,11 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
   Future<bool> deleteExercise(String id) async {
     try {
       await _apiService.deleteExercise(id);
-      
+
       // Remove from state
-      final updatedExercises = state.exercises
-          .where((exercise) => exercise.id != id)
-          .toList();
-      
+      final updatedExercises =
+          state.exercises.where((exercise) => exercise.id != id).toList();
+
       state = state.copyWith(exercises: updatedExercises);
       return true;
     } catch (e) {
@@ -280,7 +279,8 @@ class ExerciseListNotifier extends StateNotifier<ExerciseListState> {
   }
 }
 
-final exerciseListProvider = StateNotifierProvider<ExerciseListNotifier, ExerciseListState>((ref) {
+final exerciseListProvider =
+    StateNotifierProvider<ExerciseListNotifier, ExerciseListState>((ref) {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return ExerciseListNotifier(apiService);
 });
@@ -312,7 +312,8 @@ class ExerciseDetailNotifier extends StateNotifier<AsyncValue<Exercise?>> {
   }
 }
 
-final exerciseDetailProvider = StateNotifierProvider.family<ExerciseDetailNotifier, AsyncValue<Exercise?>, String>((ref, id) {
+final exerciseDetailProvider = StateNotifierProvider.family<
+    ExerciseDetailNotifier, AsyncValue<Exercise?>, String>((ref, id) {
   final apiService = ref.watch(exerciseApiServiceProvider);
   final notifier = ExerciseDetailNotifier(apiService);
   notifier.loadExercise(id);
@@ -359,16 +360,17 @@ class ExerciseQuizState {
     );
   }
 
-  Exercise? get currentExercise => 
-      exercises.isNotEmpty && currentIndex < exercises.length 
-          ? exercises[currentIndex] 
+  Exercise? get currentExercise =>
+      exercises.isNotEmpty && currentIndex < exercises.length
+          ? exercises[currentIndex]
           : null;
 
   bool get hasNext => currentIndex < exercises.length - 1;
   bool get hasPrevious => currentIndex > 0;
-  
-  double get progress => exercises.isEmpty ? 0.0 : (currentIndex + 1) / exercises.length;
-  
+
+  double get progress =>
+      exercises.isEmpty ? 0.0 : (currentIndex + 1) / exercises.length;
+
   int get totalQuestions => exercises.length;
   int get answeredQuestions => userAnswers.length;
 }
@@ -450,7 +452,9 @@ class ExerciseQuizNotifier extends StateNotifier<ExerciseQuizState> {
   /// Get user answer for current exercise
   String? getCurrentAnswer() {
     final currentExercise = state.currentExercise;
-    return currentExercise != null ? state.userAnswers[currentExercise.id] : null;
+    return currentExercise != null
+        ? state.userAnswers[currentExercise.id]
+        : null;
   }
 
   /// Check if current exercise is answered
@@ -473,7 +477,9 @@ class ExerciseQuizNotifier extends StateNotifier<ExerciseQuizState> {
       }
     }
 
-    final percentage = state.exercises.isEmpty ? 0.0 : (correctAnswers / state.exercises.length) * 100;
+    final percentage = state.exercises.isEmpty
+        ? 0.0
+        : (correctAnswers / state.exercises.length) * 100;
 
     return {
       'totalQuestions': state.exercises.length,
@@ -495,28 +501,33 @@ class ExerciseQuizNotifier extends StateNotifier<ExerciseQuizState> {
   }
 }
 
-final exerciseQuizProvider = StateNotifierProvider<ExerciseQuizNotifier, ExerciseQuizState>((ref) {
+final exerciseQuizProvider =
+    StateNotifierProvider<ExerciseQuizNotifier, ExerciseQuizState>((ref) {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return ExerciseQuizNotifier(apiService);
 });
 
 /// Convenience providers
-final exercisesByTypeProvider = FutureProvider.family<List<Exercise>, String>((ref, type) async {
+final exercisesByTypeProvider =
+    FutureProvider.family<List<Exercise>, String>((ref, type) async {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return await apiService.getExercisesByType(type);
 });
 
-final exercisesByDifficultyProvider = FutureProvider.family<List<Exercise>, String>((ref, difficulty) async {
+final exercisesByDifficultyProvider =
+    FutureProvider.family<List<Exercise>, String>((ref, difficulty) async {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return await apiService.getExercisesByDifficulty(difficulty);
 });
 
-final exercisesByLevelProvider = FutureProvider.family<List<Exercise>, String>((ref, level) async {
+final exercisesByLevelProvider =
+    FutureProvider.family<List<Exercise>, String>((ref, level) async {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return await apiService.getExercisesByLevel(level);
 });
 
-final exercisesByLessonProvider = FutureProvider.family<List<Exercise>, String>((ref, lessonId) async {
+final exercisesByLessonProvider =
+    FutureProvider.family<List<Exercise>, String>((ref, lessonId) async {
   final apiService = ref.watch(exerciseApiServiceProvider);
   return await apiService.getExercisesByLesson(lessonId);
 });

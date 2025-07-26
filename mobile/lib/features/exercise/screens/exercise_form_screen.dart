@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -64,7 +65,7 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
             _descriptionController.text = _existingExercise!.description;
             _timeLimitController.text = _existingExercise!.timeLimit.toString();
             _selectedDifficulty = _existingExercise!.difficulty;
-            _selectedCategory = _existingExercise!.category;
+            _selectedCategory = _existingExercise!.type;
           }
         },
         loading: () => {},
@@ -167,23 +168,33 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
 
       if (widget.exerciseId != null) {
         // Update existing exercise
-        result = await ref.read(exercisesProvider.notifier).updateExercise(
+        result = await ref.read(exerciseListProvider.notifier).updateExercise(
               id: widget.exerciseId!,
               title: title,
               description: description,
+              question: description, // Use description as question for now
+              type: _selectedCategory,
               difficulty: _selectedDifficulty,
-              category: _selectedCategory,
+              level: 'Beginner', // Default level
+              options: [], // Default empty options
+              correctAnswer: '', // Default empty correct answer
+              points: 10, // Default points
               timeLimit: timeLimit,
               imageFile: _selectedImage,
               audioFile: _selectedAudio,
             );
       } else {
         // Create new exercise
-        result = await ref.read(exercisesProvider.notifier).createExercise(
+        result = await ref.read(exerciseListProvider.notifier).createExercise(
               title: title,
               description: description,
+              question: description, // Use description as question for now
+              type: _selectedCategory,
               difficulty: _selectedDifficulty,
-              category: _selectedCategory,
+              level: 'Beginner', // Default level
+              options: [], // Default empty options
+              correctAnswer: '', // Default empty correct answer
+              points: 10, // Default points
               timeLimit: timeLimit,
               imageFile: _selectedImage,
               audioFile: _selectedAudio,
@@ -397,12 +408,29 @@ class _ExerciseFormScreenState extends ConsumerState<ExerciseFormScreen> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      _selectedImage!,
-                                      height: 150,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: kIsWeb
+                                        ? Image.network(
+                                            _selectedImage!.path,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                height: 150,
+                                                width: double.infinity,
+                                                color: Colors.grey[300],
+                                                child: const Icon(Icons.image,
+                                                    size: 50),
+                                              );
+                                            },
+                                          )
+                                        : Image.file(
+                                            _selectedImage!,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   Positioned(
                                     top: 8,

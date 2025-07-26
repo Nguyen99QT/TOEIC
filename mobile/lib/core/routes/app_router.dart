@@ -8,8 +8,8 @@ import 'package:toeic_mobile/features/dashboard/pages/dashboard_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lessons_page.dart';
 import 'package:toeic_mobile/features/lessons/pages/lesson_detail_page.dart';
 import 'package:toeic_mobile/features/lessons/screens/lesson_manage_screen.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercises_page.dart';
-import 'package:toeic_mobile/features/exercises/pages/exercise_detail_page.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_list_screen.dart';
+import 'package:toeic_mobile/features/exercise/screens/exercise_form_screen.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcards_page.dart';
 import 'package:toeic_mobile/features/flashcards/pages/flashcard_study_page.dart';
 import 'package:toeic_mobile/features/profile/pages/profile_page.dart';
@@ -126,24 +126,31 @@ class AppRouter {
         path: '/exercises',
         pageBuilder: (context, state) => const MaterialPage(
           child: MainLayout(
-            child: ExercisesPage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: '/exercises/:id',
-        pageBuilder: (context, state) => MaterialPage(
-          child: MainLayout(
-            child: ExerciseDetailPage(
-              exerciseId: state.pathParameters['id']!,
-            ),
+            child: ExerciseListScreen(),
           ),
         ),
       ),
 
-      // Exercise Management route for collaborators
+      // Exercise Form route for creating new exercises
       GoRoute(
-        path: '/exercises-crud',
+        path: '/exercises/new',
+        redirect: (context, state) {
+          final user = AuthService.instance.currentUser;
+          if (user == null || !user.canCreateContent) {
+            return '/dashboard';
+          }
+          return null;
+        },
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ExerciseFormScreen(),
+          ),
+        ),
+      ),
+
+      // Exercise Form route for editing exercises
+      GoRoute(
+        path: '/exercises/:id/edit',
         redirect: (context, state) {
           final user = AuthService.instance.currentUser;
           if (user == null || !user.canCreateContent) {
@@ -153,20 +160,26 @@ class AppRouter {
         },
         pageBuilder: (context, state) => MaterialPage(
           child: MainLayout(
-            child: Scaffold(
-              appBar: AppBar(title: const Text('Manage Exercises')),
-              body: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.construction, size: 64, color: Colors.orange),
-                    SizedBox(height: 16),
-                    Text('Exercise Management'),
-                    Text('Coming Soon!', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
+            child: ExerciseFormScreen(
+              exerciseId: state.pathParameters['id']!,
             ),
+          ),
+        ),
+      ),
+
+      // Exercise Management route for collaborators
+      GoRoute(
+        path: '/exercises-manage',
+        redirect: (context, state) {
+          final user = AuthService.instance.currentUser;
+          if (user == null || !user.canCreateContent) {
+            return '/dashboard';
+          }
+          return null;
+        },
+        pageBuilder: (context, state) => const MaterialPage(
+          child: MainLayout(
+            child: ExerciseListScreen(),
           ),
         ),
       ),

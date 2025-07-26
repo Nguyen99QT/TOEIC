@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,8 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
   final _descriptionController = TextEditingController();
   final _contentController = TextEditingController();
   final _estimatedTimeController = TextEditingController();
+  final _imageUrlController = TextEditingController();
+  final _audioUrlController = TextEditingController();
 
   String _selectedDifficulty = 'EASY';
   String _selectedCategory = 'GENERAL';
@@ -50,6 +53,8 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
     _descriptionController.dispose();
     _contentController.dispose();
     _estimatedTimeController.dispose();
+    _imageUrlController.dispose();
+    _audioUrlController.dispose();
     super.dispose();
   }
 
@@ -93,6 +98,28 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
 
   Future<void> _pickImage() async {
     try {
+      if (kIsWeb) {
+        // On web, show URL input dialog
+        String? imageUrl = await _showUrlInputDialog(
+          context: context,
+          title: 'Add Image URL',
+          hintText: 'Enter image URL (e.g., https://example.com/image.jpg)',
+        );
+
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          _imageUrlController.text = imageUrl;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Image URL added successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
@@ -120,6 +147,28 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
 
   Future<void> _pickAudio() async {
     try {
+      if (kIsWeb) {
+        // On web, show URL input dialog
+        String? audioUrl = await _showUrlInputDialog(
+          context: context,
+          title: 'Add Audio URL',
+          hintText: 'Enter audio URL (e.g., https://example.com/audio.mp3)',
+        );
+
+        if (audioUrl != null && audioUrl.isNotEmpty) {
+          _audioUrlController.text = audioUrl;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Audio URL added successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.audio,
         allowMultiple: false,
@@ -158,6 +207,49 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
     }
   }
 
+  Future<String?> _showUrlInputDialog({
+    required BuildContext context,
+    required String title,
+    required String hintText,
+  }) async {
+    final TextEditingController urlController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: urlController,
+            decoration: InputDecoration(
+              hintText: hintText,
+              border: const OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.url,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final url = urlController.text.trim();
+                if (url.isNotEmpty) {
+                  Navigator.of(context).pop(url);
+                } else {
+                  Navigator.of(context).pop(null);
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -168,6 +260,10 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
       final description = _descriptionController.text.trim();
       final content = _contentController.text.trim();
       final estimatedTime = int.parse(_estimatedTimeController.text);
+
+      // Get URL values for web platform
+      final imageUrl = _imageUrlController.text.trim();
+      final audioUrl = _audioUrlController.text.trim();
 
       Lesson? result;
 
@@ -183,6 +279,8 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
               estimatedTime: estimatedTime,
               imageFile: _selectedImage,
               audioFile: _selectedAudio,
+              imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
+              audioUrl: audioUrl.isNotEmpty ? audioUrl : null,
               isPublic: _isPublic,
             );
       } else {
@@ -196,6 +294,8 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
               estimatedTime: estimatedTime,
               imageFile: _selectedImage,
               audioFile: _selectedAudio,
+              imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
+              audioUrl: audioUrl.isNotEmpty ? audioUrl : null,
               isPublic: _isPublic,
             );
       }
@@ -443,22 +543,53 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
                                 TextButton.icon(
                                   onPressed: _pickImage,
                                   icon: const Icon(Icons.add_photo_alternate),
-                                  label: const Text('Pick Image'),
+                                  label:
+                                      Text(kIsWeb ? 'Add URL' : 'Pick Image'),
                                 ),
                               ],
                             ),
+                            if (kIsWeb) ...[
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _imageUrlController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Image URL',
+                                  hintText: 'https://example.com/image.jpg',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.link),
+                                ),
+                                keyboardType: TextInputType.url,
+                              ),
+                            ],
                             if (_selectedImage != null) ...[
                               const SizedBox(height: 12),
                               Stack(
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.file(
-                                      _selectedImage!,
-                                      height: 150,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    child: kIsWeb
+                                        ? Image.network(
+                                            _selectedImage!.path,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Container(
+                                                height: 150,
+                                                width: double.infinity,
+                                                color: Colors.grey[300],
+                                                child: const Icon(Icons.image,
+                                                    size: 50),
+                                              );
+                                            },
+                                          )
+                                        : Image.file(
+                                            _selectedImage!,
+                                            height: 150,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                          ),
                                   ),
                                   Positioned(
                                     top: 8,
@@ -536,10 +667,24 @@ class _LessonFormScreenState extends ConsumerState<LessonFormScreen> {
                                 TextButton.icon(
                                   onPressed: _pickAudio,
                                   icon: const Icon(Icons.audio_file),
-                                  label: const Text('Pick Audio'),
+                                  label:
+                                      Text(kIsWeb ? 'Add URL' : 'Pick Audio'),
                                 ),
                               ],
                             ),
+                            if (kIsWeb) ...[
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _audioUrlController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Audio URL',
+                                  hintText: 'https://example.com/audio.mp3',
+                                  border: OutlineInputBorder(),
+                                  prefixIcon: Icon(Icons.link),
+                                ),
+                                keyboardType: TextInputType.url,
+                              ),
+                            ],
                             if (_selectedAudio != null) ...[
                               const SizedBox(height: 12),
                               Container(

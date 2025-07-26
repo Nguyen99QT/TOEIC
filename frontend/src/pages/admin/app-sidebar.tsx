@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Bell,
   MessageCircle,
-  Edit3,
 } from "lucide-react"
 
 import {
@@ -34,27 +33,22 @@ const menuItems = [
     id: "dashboard",
   },
   {
-    title: "Khóa học",
+    title: "Courses",
     icon: GraduationCap,
     id: "courses",
   },
   {
-    title: "Người dùng",
+    title: "Users",
     icon: Users,
     id: "users",
   },
   {
-    title: "Nội dung",
+    title: "Content",
     icon: FileText,
     id: "content",
   },
   {
-    title: "Blog",
-    icon: Edit3,
-    id: "blog",
-  },
-  {
-    title: "Thống kê",
+    title: "Analytics",
     icon: BarChart3,
     id: "analytics",
   },
@@ -72,22 +66,22 @@ const menuItems = [
 
 const contentItems = [
   {
-    title: "Bài giảng",
+    title: "Lessons",
     icon: BookOpen,
     id: "lessons",
   },
   {
-    title: "Video",
+    title: "Videos",
     icon: Video,
     id: "videos",
   },
   {
-    title: "Bình luận",
+    title: "Comments",
     icon: MessageSquare,
     id: "comments",
   },
   {
-    title: "Thông báo",
+    title: "Notifications",
     icon: Bell,
     id: "notifications",
   },
@@ -115,7 +109,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
 
       <SidebarContent className="px-3">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Quản lý chính</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Main Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -123,13 +117,15 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                   <SidebarMenuButton
                     isActive={currentPage === item.id}
                     onClick={() => setCurrentPage(item.id)}
-                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === item.id
+                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
+                      currentPage === item.id
                         ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                         : "text-sky-100 hover:bg-white/15 hover:text-white"
-                      }`}
+                    }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${currentPage === item.id ? "scale-110" : "group-hover:scale-110"
-                      }`} />
+                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${
+                      currentPage === item.id ? "scale-110" : "group-hover:scale-110"
+                    }`} />
                     <span className="font-medium">{item.title}</span>
                     {currentPage === item.id && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
@@ -142,7 +138,7 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Quản lý nội dung</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Content Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {contentItems.map((item) => (
@@ -150,13 +146,15 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
                   <SidebarMenuButton
                     isActive={currentPage === item.id}
                     onClick={() => setCurrentPage(item.id)}
-                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === item.id
+                    className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
+                      currentPage === item.id
                         ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                         : "text-sky-100 hover:bg-white/15 hover:text-white"
-                      }`}
+                    }`}
                   >
-                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${currentPage === item.id ? "scale-110" : "group-hover:scale-110"
-                      }`} />
+                    <item.icon className={`h-4 w-4 transition-transform duration-200 ${
+                      currentPage === item.id ? "scale-110" : "group-hover:scale-110"
+                    }`} />
                     <span className="font-medium">{item.title}</span>
                     {currentPage === item.id && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
@@ -169,21 +167,23 @@ export function AppSidebar({ currentPage, setCurrentPage }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">Hệ thống</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sky-200 font-semibold text-xs uppercase tracking-wider">System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={currentPage === "settings"}
                   onClick={() => setCurrentPage("settings")}
-                  className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${currentPage === "settings"
+                  className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
+                    currentPage === "settings"
                       ? "bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/25"
                       : "text-sky-100 hover:bg-white/15 hover:text-white"
-                    }`}
+                  }`}
                 >
-                  <Settings className={`h-4 w-4 transition-transform duration-200 ${currentPage === "settings" ? "scale-110" : "group-hover:scale-110"
-                    }`} />
-                  <span className="font-medium">Cài đặt</span>
+                  <Settings className={`h-4 w-4 transition-transform duration-200 ${
+                    currentPage === "settings" ? "scale-110" : "group-hover:scale-110"
+                  }`} />
+                  <span className="font-medium">Settings</span>
                   {currentPage === "settings" && (
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
                   )}

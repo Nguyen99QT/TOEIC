@@ -176,22 +176,16 @@ const Navigation: React.FC = () => {
                                                 <span>🔒</span>
                                                 <span>Change Password</span>
                                             </Link>
+                                            {currentUser.role === 'USER' && (
                                             <Link
                                                 to="/contact"
                                                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
                                                 <span>📞</span>
-                                                <span>Liên hệ</span>
+                                                <span>Contact Admin</span>
                                             </Link>
-                                            <Link
-                                                to="/settings"
-                                                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                <span>⚙️</span>
-                                                <span>Settings</span>
-                                            </Link>
+                                            )}
                                             {currentUser.role === 'ADMIN' && (
                                                 <Link
                                                     to="/admin/dashboard"

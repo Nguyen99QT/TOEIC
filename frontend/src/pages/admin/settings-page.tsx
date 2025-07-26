@@ -12,8 +12,8 @@ export function SettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-black">Cài đặt hệ thống</h1>
-          <p className="text-black">Quản lý cấu hình và thiết lập cho Toeic.com</p>
+          <h1 className="text-3xl font-bold tracking-tight text-black">System Settings</h1>
+          <p className="text-black">Manage configuration and settings for Toeic.com</p>
         </div>
       </div>
 
@@ -23,26 +23,26 @@ export function SettingsPage() {
           <CardHeader className="bg-gradient-to-r from-study-50 to-white">
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5 text-study-600" />
-              Cài đặt chung
+              General Settings
             </CardTitle>
-            <CardDescription>Cấu hình cơ bản cho website</CardDescription>
+            <CardDescription>Basic configuration for the website</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="site-name">Tên website</Label>
+              <Label htmlFor="site-name">Website Name</Label>
               <Input id="site-name" defaultValue="Study4.com" className="focus-visible:ring-study-500" />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="site-description">Mô tả website</Label>
+              <Label htmlFor="site-description">Website Description</Label>
               <Textarea
                 id="site-description"
-                defaultValue="Nền tảng học trực tuyến hàng đầu Việt Nam"
+                defaultValue="Leading online learning platform"
                 rows={3}
                 className="focus-visible:ring-study-500"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="contact-email">Email liên hệ</Label>
+              <Label htmlFor="contact-email">Contact Email</Label>
               <Input
                 id="contact-email"
                 type="email"
@@ -50,7 +50,7 @@ export function SettingsPage() {
                 className="focus-visible:ring-study-500"
               />
             </div>
-            <Button className="bg-study-600 hover:bg-study-700">Lưu thay đổi</Button>
+            <Button className="bg-study-600 hover:bg-study-700">Save Changes</Button>
           </CardContent>
         </Card>
 
@@ -59,35 +59,35 @@ export function SettingsPage() {
           <CardHeader className="bg-gradient-to-r from-success-50 to-white">
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-success-600" />
-              Cài đặt thông báo
+              Notification Settings
             </CardTitle>
-            <CardDescription>Quản lý các loại thông báo gửi đến người dùng</CardDescription>
+            <CardDescription>Manage notification types sent to users</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Thông báo khóa học mới</Label>
-                <p className="text-sm text-muted-foreground">Gửi email khi có khóa học mới được xuất bản</p>
+                <Label>New Course Notifications</Label>
+                <p className="text-sm text-muted-foreground">Send email when new courses are published</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Thông báo bình luận</Label>
-                <p className="text-sm text-muted-foreground">Thông báo khi có bình luận mới trên khóa học</p>
+                <Label>Comment Notifications</Label>
+                <p className="text-sm text-muted-foreground">Notify when there are new comments on courses</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Báo cáo hàng tuần</Label>
-                <p className="text-sm text-muted-foreground">Gửi báo cáo thống kê hàng tuần cho admin</p>
+                <Label>Weekly Reports</Label>
+                <p className="text-sm text-muted-foreground">Send weekly statistics reports to admin</p>
               </div>
               <Switch />
             </div>
-            <Button className="bg-success-600 hover:bg-success-700">Lưu cài đặt</Button>
+            <Button className="bg-success-600 hover:bg-success-700">Save Settings</Button>
           </CardContent>
         </Card>
 
@@ -96,32 +96,32 @@ export function SettingsPage() {
           <CardHeader className="bg-gradient-to-r from-warning-50 to-white">
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-warning-600" />
-              Bảo mật
+              Security
             </CardTitle>
-            <CardDescription>Cài đặt bảo mật và quyền truy cập</CardDescription>
+            <CardDescription>Security and access control settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Xác thực 2 bước</Label>
-                <p className="text-sm text-muted-foreground">Bắt buộc xác thực 2 bước cho tài khoản admin</p>
+                <Label>Two-Factor Authentication</Label>
+                <p className="text-sm text-muted-foreground">Require 2FA for admin accounts</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Đăng nhập tự động</Label>
-                <p className="text-sm text-muted-foreground">Cho phép người dùng duy trì đăng nhập</p>
+                <Label>Auto Login</Label>
+                <p className="text-sm text-muted-foreground">Allow users to stay logged in</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="grid gap-2">
-              <Label htmlFor="session-timeout">Thời gian hết phiên (phút)</Label>
+              <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
               <Input id="session-timeout" type="number" defaultValue="60" className="focus-visible:ring-warning-500" />
             </div>
-            <Button className="bg-warning-600 hover:bg-warning-700">Cập nhật bảo mật</Button>
+            <Button className="bg-warning-600 hover:bg-warning-700">Update Security</Button>
           </CardContent>
         </Card>
 
@@ -130,32 +130,32 @@ export function SettingsPage() {
           <CardHeader className="bg-gradient-to-r from-info-50 to-white">
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-info-600" />
-              Cài đặt thanh toán
+              Payment Settings
             </CardTitle>
-            <CardDescription>Cấu hình các phương thức thanh toán</CardDescription>
+            <CardDescription>Configure payment methods</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Thanh toán qua VNPay</Label>
-                <p className="text-sm text-muted-foreground">Kích hoạt thanh toán qua VNPay</p>
+                <Label>VNPay Payment</Label>
+                <p className="text-sm text-muted-foreground">Enable VNPay payment</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Thanh toán qua MoMo</Label>
-                <p className="text-sm text-muted-foreground">Kích hoạt thanh toán qua ví MoMo</p>
+                <Label>MoMo Payment</Label>
+                <p className="text-sm text-muted-foreground">Enable MoMo wallet payment</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="grid gap-2">
-              <Label htmlFor="commission-rate">Tỷ lệ hoa hồng (%)</Label>
+              <Label htmlFor="commission-rate">Commission Rate (%)</Label>
               <Input id="commission-rate" type="number" defaultValue="15" className="focus-visible:ring-info-500" />
             </div>
-            <Button className="bg-info-600 hover:bg-info-700">Lưu cài đặt</Button>
+            <Button className="bg-info-600 hover:bg-info-700">Save Settings</Button>
           </CardContent>
         </Card>
       </div>

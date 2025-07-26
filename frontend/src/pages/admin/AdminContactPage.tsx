@@ -17,7 +17,7 @@ const AdminContactPage: React.FC = () => {
       const stats = await contactService.getContactStatistics();
       setStatistics(stats);
     } catch (error) {
-      toast.error('Không thể tải thống kê contact');
+      toast.error('Failed to load contact statistics');
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ const AdminContactPage: React.FC = () => {
     return (
       <div className="flex justify-center items-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span className="ml-2 text-gray-600">Đang tải...</span>
+        <span className="ml-2 text-gray-600">Loading...</span>
       </div>
     );
   }
@@ -79,19 +79,19 @@ const AdminContactPage: React.FC = () => {
             icon="📧"
           />
           <StatCard
-            title="Đang chờ xử lý"
+            title="Pending"
             value={statistics.pending || 0}
             color="yellow"
             icon="⏳"
           />
           <StatCard
-            title="Đang xử lý"
+            title="In Progress"
             value={statistics.inProgress || 0}
             color="orange"
             icon="🔄"
           />
           <StatCard
-            title="Đã giải quyết"
+            title="Resolved"
             value={statistics.resolved || 0}
             color="green"
             icon="✅"
@@ -109,7 +109,7 @@ const AdminContactPage: React.FC = () => {
             icon="🚨"
           />
           <StatCard
-            title="Cần phản hồi"
+            title="Needing Response"
             value={statistics.needingResponse || 0}
             color="purple"
             icon="💬"
@@ -122,22 +122,22 @@ const AdminContactPage: React.FC = () => {
         <div className="flex flex-wrap gap-2 mb-6">
           <TabButton
             id="all"
-            label="Tất cả"
+            label="All"
             count={statistics?.totalActive}
           />
           <TabButton
             id="pending"
-            label="Đang chờ"
+            label="Pending"
             count={statistics?.pending}
           />
           <TabButton
             id="urgent"
-            label="Khẩn cấp"
+            label="Urgent"
             count={statistics?.urgent}
           />
           <TabButton
             id="needing-response"
-            label="Cần phản hồi"
+            label="Needing Response"
             count={statistics?.needingResponse}
           />
         </div>
@@ -148,14 +148,14 @@ const AdminContactPage: React.FC = () => {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Hành động nhanh</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => setActiveTab('urgent')}
             className="p-4 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
           >
             <div className="text-red-600 text-2xl mb-2">🚨</div>
-            <h3 className="font-semibold text-red-800">Xử lý khẩn cấp</h3>
+            <h3 className="font-semibold text-red-800">Handle Urgent</h3>
             <p className="text-sm text-red-600">View high priority contacts</p>
           </button>
 
@@ -164,7 +164,7 @@ const AdminContactPage: React.FC = () => {
             className="p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
           >
             <div className="text-purple-600 text-2xl mb-2">💬</div>
-            <h3 className="font-semibold text-purple-800">Cần phản hồi</h3>
+            <h3 className="font-semibold text-purple-800">Needing Response</h3>
             <p className="text-sm text-purple-600">View contacts needing response</p>
           </button>
 
@@ -173,8 +173,8 @@ const AdminContactPage: React.FC = () => {
             className="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <div className="text-gray-600 text-2xl mb-2">🔄</div>
-            <h3 className="font-semibold text-gray-800">Làm mới</h3>
-            <p className="text-sm text-gray-600">Cập nhật dữ liệu mới nhất</p>
+            <h3 className="font-semibold text-gray-800">Refresh</h3>
+            <p className="text-sm text-gray-600">Update latest data</p>
           </button>
         </div>
       </div>

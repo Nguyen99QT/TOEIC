@@ -63,8 +63,8 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
     print('🔍 Dashboard Debug:');
     print('   User: ${user?.username}');
     print('   Role: ${user?.role}');
-    print('   isCollaborator: ${user?.isCollaborator}');
-    print('   canCreateContent: ${user?.canCreateContent}');
+    print('   isCollaborator: ${user?.role == 'COLLABORATOR' || user?.role == 'ADMIN'}');
+    print('   canCreateContent: ${user?.role == 'COLLABORATOR' || user?.role == 'ADMIN'}');
 
     return MainLayout(
       child: RefreshIndicator(
@@ -84,7 +84,7 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
               pinned: true,
               backgroundColor: Colors.transparent,
               elevation: 0,
-              actions: user?.isCollaborator == true
+              actions: (user?.role == 'COLLABORATOR' || user?.role == 'ADMIN')
                   ? [
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.admin_panel_settings,
@@ -183,8 +183,8 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
                                   backgroundColor: Colors.white,
                                   child: Text(
                                     (user?.fullName != null &&
-                                            user!.fullName!.isNotEmpty
-                                        ? user.fullName!
+                                            user!.fullName.isNotEmpty
+                                        ? user.fullName
                                             .substring(0, 1)
                                             .toUpperCase()
                                         : 'U'),
@@ -513,7 +513,7 @@ class _ModernDashboardPageState extends ConsumerState<ModernDashboardPage>
     ];
 
     // Add collaborator actions if user is collaborator
-    if (user?.isCollaborator == true) {
+    if (user?.role == 'COLLABORATOR' || user?.role == 'ADMIN') {
       actions.addAll([
         {
           'title': 'Manage Lessons',

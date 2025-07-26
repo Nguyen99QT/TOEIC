@@ -24,7 +24,7 @@ export function AdminDashboard() {
           margin: 0,
           lineHeight: 1.6
         }}>
-          Tổng quan về hoạt động của Toeic.com
+          Overview of Toeic.com activities
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export function AdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="group relative overflow-hidden border border-slate-200 bg-white dark:from-blue-950/50 dark:to-indigo-950/50 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-blue-200">Tổng người dùng</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-blue-200">Total Users</CardTitle>
             <div className="rounded-xl bg-blue-500 p-3 text-white shadow-sm">
               <Users className="h-5 w-5" />
             </div>
@@ -42,7 +42,7 @@ export function AdminDashboard() {
             <div className="flex items-center gap-2 mt-2">
               <TrendingUp className="h-4 w-4 text-green-600" />
               <p className="text-sm text-slate-700 font-medium">
-                +12% so với tháng trước
+                +12% from last month
               </p>
             </div>
           </CardContent>
@@ -50,7 +50,7 @@ export function AdminDashboard() {
 
         <Card className="group relative overflow-hidden border border-slate-200 bg-white dark:from-emerald-950/50 dark:to-green-950/50 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-emerald-200">Khóa học</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-emerald-200">Courses</CardTitle>
             <div className="rounded-xl bg-emerald-500 p-3 text-white shadow-sm">
               <BookOpen className="h-5 w-5" />
             </div>
@@ -60,7 +60,7 @@ export function AdminDashboard() {
             <div className="flex items-center gap-2 mt-2">
               <Activity className="h-4 w-4 text-green-600" />
               <p className="text-sm text-slate-700 font-medium">
-                +3 khóa học mới tuần này
+                +3 new courses this week
               </p>
             </div>
           </CardContent>
@@ -68,17 +68,17 @@ export function AdminDashboard() {
 
         <Card className="group relative overflow-hidden border border-slate-200 bg-white dark:from-amber-950/50 dark:to-orange-950/50 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-amber-200">Doanh thu</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-amber-200">Revenue</CardTitle>
             <div className="rounded-xl bg-amber-500 p-3 text-white shadow-sm">
               <DollarSign className="h-5 w-5" />
             </div>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-3xl font-bold text-slate-900 dark:text-amber-100">₫45,231,000</div>
+            <div className="text-3xl font-bold text-slate-900 dark:text-amber-100">$45,231</div>
             <div className="flex items-center gap-2 mt-2">
               <TrendingUp className="h-4 w-4 text-green-600" />
               <p className="text-sm text-slate-700 font-medium">
-                +8% so với tháng trước
+                +8% from last month
               </p>
             </div>
           </CardContent>
@@ -86,7 +86,7 @@ export function AdminDashboard() {
 
         <Card className="group relative overflow-hidden border border-slate-200 bg-white dark:from-purple-950/50 dark:to-pink-950/50 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-purple-200">Lượt xem</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-800 dark:text-purple-200">Page Views</CardTitle>
             <div className="rounded-xl bg-purple-500 p-3 text-white shadow-sm">
               <Eye className="h-5 w-5" />
             </div>
@@ -96,7 +96,7 @@ export function AdminDashboard() {
             <div className="flex items-center gap-2 mt-2">
               <TrendingUp className="h-4 w-4 text-green-600" />
               <p className="text-sm text-slate-700 font-medium">
-                +15% so với tuần trước
+                +15% from last week
               </p>
             </div>
           </CardContent>
@@ -109,13 +109,13 @@ export function AdminDashboard() {
           <CardHeader className="bg-slate-100/50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-700/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Nội dung gần đây</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Recent Content</CardTitle>
                 <CardDescription className="text-slate-700 dark:text-slate-400">
-                  Nội dung được tạo và cập nhật gần đây
+                  Content created and updated recently
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" className="border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-600">
-                Xem tất cả
+                View All
               </Button>
             </div>
           </CardHeader>
@@ -123,26 +123,26 @@ export function AdminDashboard() {
             <div className="space-y-4">
               {[
                 {
-                  title: "Giới thiệu về React Hooks",
-                  instructor: "Nguyễn Văn A",
+                  title: "Introduction to React Hooks",
+                  instructor: "John Smith",
                   date: "2024-01-20",
-                  views: "1234 lượt xem",
+                  views: "1234 views",
                   status: "published",
                   type: "article",
                 },
                 {
-                  title: "Video: Xây dựng API với Node.js",
-                  instructor: "Trần Thị B", 
+                  title: "Video: Building API with Node.js",
+                  instructor: "Jane Doe", 
                   date: "2024-01-19",
-                  views: "0 lượt xem",
+                  views: "0 views",
                   status: "draft",
                   type: "video",
                 },
                 {
-                  title: "Thiết kế UI/UX hiện đại",
-                  instructor: "Lê Văn C",
+                  title: "Modern UI/UX Design",
+                  instructor: "Mike Johnson",
                   date: "2024-01-18", 
-                  views: "567 lượt xem",
+                  views: "567 views",
                   status: "review",
                   type: "article",
                 },
@@ -180,7 +180,7 @@ export function AdminDashboard() {
                             : "border-purple-500 text-purple-700 bg-purple-50"
                       }`}
                     >
-                      {content.status === "published" ? "Đã xuất bản" : content.status === "draft" ? "Nháp" : "Đang duyệt"}
+                      {content.status === "published" ? "Published" : content.status === "draft" ? "Draft" : "Under Review"}
                     </Badge>
                     <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-800">
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,9 +199,9 @@ export function AdminDashboard() {
           <CardHeader className="bg-slate-100/50 dark:from-slate-800 dark:to-slate-700 border-b border-slate-200 dark:border-slate-700/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Nội dung phổ biến</CardTitle>
+                <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">Popular Content</CardTitle>
                 <CardDescription className="text-slate-700 dark:text-slate-400">
-                  Nội dung có lượt xem cao nhất
+                  Content with highest views
                 </CardDescription>
               </div>
               <Button variant="ghost" size="sm">

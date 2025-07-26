@@ -6,6 +6,7 @@ import 'package:toeic_mobile/core/theme/app_theme.dart';
 import 'package:toeic_mobile/core/routes/app_router.dart';
 import 'package:toeic_mobile/core/services/storage_service.dart';
 import 'package:toeic_mobile/core/services/api_service.dart';
+import 'package:toeic_mobile/core/services/auth_service.dart';
 import 'core/services/blog_service.dart';
 
 void main() async {
@@ -19,6 +20,9 @@ void main() async {
 
   // Initialize API Service (including Dio)
   ApiService.init();
+
+  // Initialize Auth Service
+  await AuthService.instance.init();
 
   runApp(
     provider.MultiProvider(

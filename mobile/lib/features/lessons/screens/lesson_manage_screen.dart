@@ -170,7 +170,7 @@ class _LessonManageScreenState extends ConsumerState<LessonManageScreen> {
               );
             },
           ),
-          if (user?.canCreateContent == true)
+          if (user?.role == 'COLLABORATOR' || user?.role == 'ADMIN')
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Create Lesson',
@@ -278,13 +278,12 @@ class _LessonManageScreenState extends ConsumerState<LessonManageScreen> {
                           final lesson = response.lessons[index];
                           return _LessonManageCard(
                             lesson: lesson,
-                            onEdit: user?.canCreateContent == true
-                                ? () =>
-                                    context.push('/lessons/${lesson.id}/edit')
-                                : null,
-                            onDelete: user?.canCreateContent == true
-                                ? () => _showDeleteConfirmation(lesson)
-                                : null,
+                          onEdit: (user?.role == 'COLLABORATOR' || user?.role == 'ADMIN')
+                              ? () => context.push('/lessons/${lesson.id}/edit')
+                              : null,
+                          onDelete: (user?.role == 'COLLABORATOR' || user?.role == 'ADMIN')
+                              ? () => _showDeleteConfirmation(lesson)
+                              : null,
                             onTap: () => context.push('/lessons/${lesson.id}'),
                           );
                         },

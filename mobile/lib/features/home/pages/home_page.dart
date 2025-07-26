@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../../core/models/user_model.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -16,21 +15,21 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
-          children: [
-            _buildHeroSection(context, isAuthenticated, user),
-            _buildStatisticsSection(),
-            _buildWhyChooseSection(),
-            _buildFeaturedFlashcardsSection(),
-            _buildFeaturedLessonsSection(),
-            _buildFooter(),
-          ],
+                      children: [
+              _buildHeroSection(context, isAuthenticated, user, ref),
+              _buildStatisticsSection(),
+              _buildWhyChooseSection(),
+              _buildFeaturedFlashcardsSection(),
+              _buildFeaturedLessonsSection(),
+              _buildFooter(),
+            ],
         ),
       ),
     );
   }
 
   Widget _buildHeroSection(
-      BuildContext context, bool isAuthenticated, dynamic user) {
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85, // Responsive height
       decoration: const BoxDecoration(
@@ -49,7 +48,7 @@ class HomePage extends ConsumerWidget {
           child: Column(
             children: [
               // Navigation Bar - giống frontend
-              _buildNavigationBar(context, isAuthenticated, user),
+              _buildNavigationBar(context, isAuthenticated, user, ref),
 
               // Hero Content - responsive
               Expanded(
@@ -125,7 +124,7 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _buildNavigationBar(
-      BuildContext context, bool isAuthenticated, dynamic user) {
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -168,15 +167,13 @@ class HomePage extends ConsumerWidget {
           ],
         ),
         // Navigation menu - giống frontend
-        _buildNavMenu(context, isAuthenticated, user),
+        _buildNavMenu(context, isAuthenticated, user, ref),
       ],
     );
   }
 
   Widget _buildNavMenu(
-      BuildContext context, bool isAuthenticated, dynamic user) {
-    final currentUser = user as User?;
-
+      BuildContext context, bool isAuthenticated, dynamic user, WidgetRef ref) {
     return Row(
       children: [
         // Navigation items
@@ -186,47 +183,102 @@ class HomePage extends ConsumerWidget {
           _buildNavItem(context, '📝 Exercises', '/exercises'),
           _buildNavItem(context, '🔖 Flashcards', '/flashcards'),
           _buildNavItem(context, '📈 Progress', '/progress'),
-          // Collaborator menu
-          if (currentUser?.isCollaborator == true) ...[
-            _buildCollaboratorMenu(context),
-          ],
         ],
         const SizedBox(width: 16),
         // User section
         if (isAuthenticated) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
+          PopupMenuButton<String>(
+            offset: const Offset(0, 40),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    (user?.fullName?.isNotEmpty == true
-                        ? user!.fullName!.substring(0, 1).toUpperCase()
-                        : 'U'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      (user?.fullName?.isNotEmpty == true
+                          ? user!.fullName.substring(0, 1).toUpperCase()
+                          : 'U'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF667eea),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  user?.fullName ?? 'User',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(width: 8),
+                  Text(
+                    user?.fullName ?? 'User',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ],
+              ),
             ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    const Icon(Icons.person, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Profile'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Settings'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout, size: 18, color: Colors.red),
+                    const SizedBox(width: 8),
+                    const Text('Logout', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) {
+              switch (value) {
+                case 'profile':
+                  context.go('/profile');
+                  break;
+                case 'settings':
+                  context.go('/settings');
+                  break;
+                case 'logout':
+                  ref.read(authProvider.notifier).logout();
+                  context.go('/');
+                  break;
+              }
+            },
           ),
         ] else ...[
           ElevatedButton(
@@ -690,87 +742,6 @@ class HomePage extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCollaboratorMenu(BuildContext context) {
-    return PopupMenuButton<String>(
-      offset: const Offset(0, 40),
-      icon: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.orange.withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.admin_panel_settings,
-              color: Colors.orange,
-              size: 16,
-            ),
-            SizedBox(width: 4),
-            Text(
-              'Manage',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'lessons',
-          child: Row(
-            children: [
-              Icon(Icons.book, color: Colors.blue),
-              SizedBox(width: 12),
-              Text('Manage Lessons'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'exercises',
-          child: Row(
-            children: [
-              Icon(Icons.assignment, color: Colors.green),
-              SizedBox(width: 12),
-              Text('Manage Exercises'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'flashcards',
-          child: Row(
-            children: [
-              Icon(Icons.style, color: Colors.purple),
-              SizedBox(width: 12),
-              Text('Manage Flashcards'),
-            ],
-          ),
-        ),
-      ],
-      onSelected: (String value) {
-        switch (value) {
-          case 'lessons':
-            context.go('/lessons-manage');
-            break;
-          case 'exercises':
-            context.go('/exercises-crud');
-            break;
-          case 'flashcards':
-            context.go('/flashcards-crud');
-            break;
-        }
-      },
     );
   }
 }

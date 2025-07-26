@@ -138,20 +138,39 @@ export const removeToken = (): void => {
 // ================================================================
 
 export const setCurrentUser = (user: User): void => {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-  localStorage.setItem("currentUser", JSON.stringify(user)); // For backward compatibility
+  // Store user data with multiple keys for maximum compatibility
+  const userJson = JSON.stringify(user);
+  localStorage.setItem(USER_KEY, userJson); // Primary key: toeic_current_user
+  localStorage.setItem("currentUser", userJson); // For backward compatibility
+  localStorage.setItem("user", userJson); // Additional compatibility key
+  
+  console.log("✅ User data stored with multiple keys:", {
+    username: user.username,
+    id: user.id,
+    keys: [USER_KEY, "currentUser", "user"]
+  });
 };
 
 export const getCurrentUser = (): User | null => {
   try {
+    // Try all possible keys for user data
     const userStr =
       localStorage.getItem(USER_KEY) ||
       localStorage.getItem("currentUser") ||
+      localStorage.getItem("user") ||
       null;
-    if (!userStr) return null;
+      
+    if (!userStr) {
+      console.log("⚠️ No user data found in localStorage with keys:", [USER_KEY, "currentUser", "user"]);
+      return null;
+    }
 
     const user = JSON.parse(userStr);
-    console.log("📱 Retrieved user from localStorage:", user);
+    console.log("📱 Retrieved user from localStorage:", {
+      username: user.username,
+      id: user.id,
+      role: user.role
+    });
 
     // Add computed isPremium property
     return {
@@ -167,8 +186,10 @@ export const getCurrentUser = (): User | null => {
 };
 
 export const removeCurrentUser = (): void => {
+  console.log("🗑️ Removing user data from localStorage...");
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("currentUser"); // For backward compatibility
+  localStorage.removeItem("user"); // For additional compatibility
 };
 
 // ================================================================

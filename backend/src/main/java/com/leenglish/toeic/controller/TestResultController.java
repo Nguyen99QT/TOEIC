@@ -571,6 +571,14 @@ public class TestResultController {
                         answerDetail.put("audioUrl", audioUrl);
                         answerDetail.put("imageUrl", imageUrl);
                         answerDetail.put("partNumber", answer.getPartNumber() != null ? answer.getPartNumber() : question.getPartNumber());
+                        
+                        // Add content from QuestionGroup for reading comprehension parts (6 & 7)
+                        String content = null;
+                        if (question.getGroup() != null && question.getGroup().getContent() != null) {
+                            content = question.getGroup().getContent();
+                        }
+                        answerDetail.put("content", content);
+                        
                         answerDetail.put("correctAnswer", answer.getCorrectOption());
                         answerDetail.put("userAnswer", answer.getSelectedOption());
                         answerDetail.put("isCorrect", answer.getIsCorrect());

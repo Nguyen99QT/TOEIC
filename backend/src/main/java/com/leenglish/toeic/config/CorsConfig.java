@@ -28,14 +28,16 @@ public class CorsConfig {
         @Value("${cors.allow-credentials}")
         private boolean allowCredentials;
 
+        @Value("${cors.max-age}")
+        private long maxAge;
+
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                // Set allowed origins using allowedOriginPatterns for compatibility with
-                // allowCredentials
+                // Set allowed origins using allowedOrigins since allowCredentials is false
                 List<String> origins = Arrays.asList(allowedOrigins.split(","));
-                configuration.setAllowedOriginPatterns(origins);
+                configuration.setAllowedOrigins(origins);
                 configuration.setAllowCredentials(allowCredentials);
 
                 // Set allowed methods
@@ -49,6 +51,12 @@ public class CorsConfig {
                 // Set exposed headers
                 List<String> exposed = Arrays.asList(exposedHeaders.split(","));
                 configuration.setExposedHeaders(exposed);
+
+                // Set max age for preflight cache
+                configuration.setMaxAge(maxAge);
+
+                // Allow all headers for preflight
+                configuration.setAllowedHeaders(Arrays.asList("*"));
 
                 // Register the configuration for all paths
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

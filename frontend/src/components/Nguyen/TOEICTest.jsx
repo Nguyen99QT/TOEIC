@@ -23,6 +23,8 @@ const TOEICTest = () => {
   // Audio management
   const audioRef = useRef(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
+  const [audioQueue, setAudioQueue] = useState([]);
   
   // Test structure - TOEIC has 7 parts
   // Parts 1-4: Listening (audio required)
@@ -59,6 +61,27 @@ const TOEICTest = () => {
     loadTestData();
   }, [loadTestData]);
 
+  const handleTestSubmit = useCallback(async () => {
+    try {
+      const submissionData = {
+        testId: parseInt(testId),
+        answers: Object.entries(userAnswers).map(([questionId, answer]) => ({
+          questionId: parseInt(questionId),
+          selectedAnswer: answer
+        }))
+      };
+
+      await axios.post(`http://localhost:8080/api/tests/${testId}/submit`, submissionData, {
+        headers: getAuthHeaders()
+      });
+      setIsTestCompleted(true);
+      alert('Bài test đã được nộp thành công!');
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      alert('Có lỗi khi nộp bài test');
+    }
+  }, [testId, userAnswers, getAuthHeaders]);
+
   // Timer effect
   useEffect(() => {
     let timer;
@@ -74,7 +97,7 @@ const TOEICTest = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isTestStarted, isTestCompleted, timeRemaining]);
+  }, [isTestStarted, isTestCompleted, timeRemaining, handleTestSubmit]);
 
   const loadQuestionsForCurrentPart = async () => {
     if (!testParts[currentPartIndex]) {
@@ -118,9 +141,20 @@ const TOEICTest = () => {
       
       // Auto-play audio for listening parts
       if (isListeningPart(partNumber) && response.data.length > 0) {
-        setTimeout(() => {
-          playPartAudio();
-        }, 1000); // Small delay to ensure audio element is ready
+        // Create audio queue from all questions with audio
+        const audioUrls = response.data
+          .filter(q => q.audioUrl)
+          .map(q => q.audioUrl);
+        
+        if (audioUrls.length > 0) {
+          console.log('🎵 Setting up audio queue:', audioUrls);
+          setAudioQueue(audioUrls);
+          setCurrentAudioIndex(0);
+          
+          setTimeout(() => {
+            playNextAudio(audioUrls, 0);
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error('❌ Error loading questions:', error);
@@ -146,14 +180,32 @@ const TOEICTest = () => {
     console.log('🔥 currentQuestions content:', currentQuestions);
   }, [currentQuestions]);
 
-  const playPartAudio = () => {
-    if (audioRef.current && currentQuestions.length > 0) {
-      const firstQuestion = currentQuestions[0];
-      if (firstQuestion.audioUrl) {
-        audioRef.current.src = `http://localhost:8080${firstQuestion.audioUrl}`;
-        audioRef.current.play();
+  const playNextAudio = (audioUrls, index) => {
+    if (audioRef.current && index < audioUrls.length) {
+      const audioUrl = audioUrls[index];
+      console.log(`🎵 Playing audio ${index + 1}/${audioUrls.length}:`, audioUrl);
+      
+      audioRef.current.src = `http://localhost:8080${audioUrl}`;
+      audioRef.current.onended = () => {
+        console.log(`🎵 Finished audio ${index + 1}, playing next...`);
+        setCurrentAudioIndex(index + 1);
+        
+        // Play next audio after a 2-second pause
+        setTimeout(() => {
+          if (index + 1 < audioUrls.length) {
+            playNextAudio(audioUrls, index + 1);
+          } else {
+            console.log('🎵 All audio files completed');
+            setIsAudioPlaying(false);
+          }
+        }, 2000);
+      };
+      
+      audioRef.current.play().then(() => {
         setIsAudioPlaying(true);
-      }
+      }).catch(err => {
+        console.error('Audio play error:', err);
+      });
     }
   };
 
@@ -175,34 +227,19 @@ const TOEICTest = () => {
   const handleNextPart = () => {
     if (currentPartIndex < testParts.length - 1) {
       setCurrentPartIndex(prev => prev + 1);
+      
+      // Reset audio state
       setIsAudioPlaying(false);
+      setCurrentAudioIndex(0);
+      setAudioQueue([]);
+      
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
+        audioRef.current.onended = null;
       }
     } else {
       handleTestSubmit();
-    }
-  };
-
-  const handleTestSubmit = async () => {
-    try {
-      const submissionData = {
-        testId: parseInt(testId),
-        answers: Object.entries(userAnswers).map(([questionId, answer]) => ({
-          questionId: parseInt(questionId),
-          selectedAnswer: answer
-        }))
-      };
-
-      await axios.post(`http://localhost:8080/api/tests/${testId}/submit`, submissionData, {
-        headers: getAuthHeaders()
-      });
-      setIsTestCompleted(true);
-      alert('Bài test đã được nộp thành công!');
-    } catch (error) {
-      console.error('Error submitting test:', error);
-      alert('Có lỗi khi nộp bài test');
     }
   };
 
@@ -379,9 +416,14 @@ const TOEICTest = () => {
                     <div className="flex items-center">
                       <span className="text-blue-600 mr-2">🎧</span>
                       <span className="text-blue-800 font-medium">
-                        {isAudioPlaying ? 'Đang phát audio...' : 'Chuẩn bị phát audio'}
+                        {isAudioPlaying ? `Đang phát audio... (${currentAudioIndex + 1}/${audioQueue.length})` : 'Chuẩn bị phát audio'}
                       </span>
                     </div>
+                    {audioQueue.length > 0 && (
+                      <div className="mt-2 text-sm text-blue-600">
+                        Tổng số audio: {audioQueue.length} file(s)
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

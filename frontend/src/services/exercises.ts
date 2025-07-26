@@ -23,6 +23,30 @@ export interface ExerciseSubmissionData {
 
 export const exerciseService = {
   /**
+   * Lấy tất cả exercises (public access)
+   */
+  getAllExercises: async (): Promise<Exercise[]> => {
+    console.log('🔄 Fetching all exercises...');
+
+    try {
+      // Try public endpoint first
+      let response;
+      try {
+        response = await api.get('/api/exercises/public/all');
+      } catch (publicError) {
+        console.log('🔄 Public endpoint failed, trying authenticated endpoint...');
+        response = await api.get('/api/exercises');
+      }
+      
+      console.log(`✅ All exercises loaded: ${response.data?.length || 0} exercises`);
+      return response.data || [];
+    } catch (error) {
+      console.error('❌ Error fetching all exercises:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Lấy danh sách exercises của một lesson
    */
   getExercisesByLessonId: async (lessonId: number): Promise<Exercise[]> => {
@@ -51,7 +75,15 @@ export const exerciseService = {
     console.log(`🔍 Fetching exercise ${exerciseId}...`);
 
     try {
-      const response = await api.get(`/exercises/${exerciseId}`);
+      // Try public endpoint first
+      let response;
+      try {
+        response = await api.get(`/api/exercises/public/${exerciseId}`);
+      } catch (publicError) {
+        console.log('🔄 Public endpoint failed, trying authenticated endpoint...');
+        response = await api.get(`/api/exercises/${exerciseId}`);
+      }
+      
       console.log("✅ Exercise loaded:", response.data);
       return response.data;
     } catch (error) {

@@ -81,7 +81,7 @@ public class FlashcardController {
             FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+                    .body(ApiResponse.successWithData(createdSet, "Flashcard set created successfully"));
         } catch (Exception e) {
             log.error("❌ Error creating flashcard set", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -104,7 +104,7 @@ public class FlashcardController {
             Long userId = getUserId(auth);
             FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(setId, flashcardSetDto, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set updated successfully", updatedSet));
+            return ResponseEntity.ok(ApiResponse.successWithData(updatedSet, "Flashcard set updated successfully"));
         } catch (Exception e) {
             log.error("❌ Error updating flashcard set {}", setId, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -126,7 +126,7 @@ public class FlashcardController {
             Long userId = getUserId(auth);
             flashcardService.deleteFlashcardSet(setId, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set deleted successfully", null));
+            return ResponseEntity.ok(ApiResponse.successWithData(null, "Flashcard set deleted successfully"));
         } catch (Exception e) {
             log.error("❌ Error deleting flashcard set {}", setId, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -147,7 +147,7 @@ public class FlashcardController {
 
             FlashcardSetDto set = flashcardService.getFlashcardSetById(setId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", set));
+            return ResponseEntity.ok(ApiResponse.successWithData(set, "Flashcard set retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard set {} for editing", setId, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -170,7 +170,7 @@ public class FlashcardController {
 
             List<FlashcardDto> flashcards = flashcardService.getFlashcardsBySet(setId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcards retrieved successfully", flashcards));
+            return ResponseEntity.ok(ApiResponse.successWithData(flashcards, "Flashcards retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching flashcards in set {}", setId, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -194,7 +194,7 @@ public class FlashcardController {
             FlashcardDto createdFlashcard = flashcardService.createFlashcard(flashcardDto, setId, userId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Flashcard added successfully", createdFlashcard));
+                    .body(ApiResponse.successWithData(createdFlashcard, "Flashcard added successfully"));
         } catch (Exception e) {
             log.error("❌ Error adding flashcard to set {}", setId, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -218,7 +218,7 @@ public class FlashcardController {
             Long userId = getUserId(auth);
             FlashcardDto updatedFlashcard = flashcardService.updateFlashcard(flashcardId, flashcardDto, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard updated successfully", updatedFlashcard));
+            return ResponseEntity.ok(ApiResponse.successWithData(updatedFlashcard, "Flashcard updated successfully"));
         } catch (Exception e) {
             log.error("❌ Error updating flashcard {} in set {}", flashcardId, setId, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -241,7 +241,7 @@ public class FlashcardController {
             Long userId = getUserId(auth);
             flashcardService.deleteFlashcard(flashcardId, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard deleted successfully", null));
+            return ResponseEntity.ok(ApiResponse.successWithData(null, "Flashcard deleted successfully"));
         } catch (Exception e) {
             log.error("❌ Error deleting flashcard {} from set {}", flashcardId, setId, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -257,7 +257,7 @@ public class FlashcardController {
             log.info("🔍 Fetching public flashcard sets");
             List<FlashcardSetDto> publicSets = flashcardService.getPopularFlashcardSets(50); // Get top 50 popular
                                                                                              // public sets
-            return ResponseEntity.ok(ApiResponse.success("Public flashcard sets retrieved successfully", publicSets));
+            return ResponseEntity.ok(ApiResponse.successWithData(publicSets, "Public flashcard sets retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching public flashcard sets", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -271,7 +271,7 @@ public class FlashcardController {
         try {
             List<FlashcardSetDto> featuredSets = flashcardService.getPopularFlashcardSets(limit); // Use popular instead
             return ResponseEntity
-                    .ok(ApiResponse.success("Featured flashcard sets retrieved successfully", featuredSets));
+                    .ok(ApiResponse.successWithData(featuredSets, "Featured flashcard sets retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching featured flashcard sets", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -283,7 +283,7 @@ public class FlashcardController {
     public ResponseEntity<ApiResponse<FlashcardSetDto>> getFlashcardSetById(@PathVariable Long id) {
         try {
             FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
+            return ResponseEntity.ok(ApiResponse.successWithData(flashcardSet, "Flashcard set retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard set with id: {}", id, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -323,7 +323,7 @@ public class FlashcardController {
         try {
             log.info("🔍 Fetching all flashcard sets");
             List<FlashcardSetDto> sets = flashcardService.getAllFlashcardSets(0, 100); // First 100 sets
-            return ResponseEntity.ok(ApiResponse.success("Flashcard sets retrieved successfully", sets));
+            return ResponseEntity.ok(ApiResponse.successWithData(sets, "Flashcard sets retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching all flashcard sets", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -370,7 +370,7 @@ class FlashcardAltController {
         try {
             log.info("🔍 Fetching flashcard set {} (alternative endpoint)", id);
             FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
+            return ResponseEntity.ok(ApiResponse.successWithData(flashcardSet, "Flashcard set retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard set with id: {}", id, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -386,7 +386,7 @@ class FlashcardAltController {
         try {
             log.info("🔍 Fetching public flashcard sets (alternative endpoint)");
             List<FlashcardSetDto> publicSets = flashcardService.getPopularFlashcardSets(50);
-            return ResponseEntity.ok(ApiResponse.success("Public flashcard sets retrieved successfully", publicSets));
+            return ResponseEntity.ok(ApiResponse.successWithData(publicSets, "Public flashcard sets retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching public flashcard sets", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -409,7 +409,7 @@ class FlashcardAltController {
             FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+                    .body(ApiResponse.successWithData(createdSet, "Flashcard set created successfully"));
         } catch (Exception e) {
             log.error("❌ Error creating flashcard set", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -432,7 +432,7 @@ class FlashcardAltController {
             Long userId = getUserId(auth);
             FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(id, flashcardSetDto, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set updated successfully", updatedSet));
+            return ResponseEntity.ok(ApiResponse.successWithData(updatedSet, "Flashcard set updated successfully"));
         } catch (Exception e) {
             log.error("❌ Error updating flashcard set {}", id, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -454,7 +454,7 @@ class FlashcardAltController {
             Long userId = getUserId(auth);
             flashcardService.deleteFlashcardSet(id, userId);
 
-            return ResponseEntity.ok(ApiResponse.success("Flashcard set deleted successfully", null));
+            return ResponseEntity.ok(ApiResponse.successWithData(null, "Flashcard set deleted successfully"));
         } catch (Exception e) {
             log.error("❌ Error deleting flashcard set {}", id, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

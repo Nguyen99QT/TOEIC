@@ -64,6 +64,11 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, data);
     }
 
+    // Backward compatibility method - data first, then message (used by many controllers)
+    public static <T> ApiResponse<T> successWithData(T data, String message) {
+        return new ApiResponse<>(true, message, data);
+    }
+
     // Success method for operations without data (like deletions)
     public static ApiResponse<Void> successMessage(String message) {
         return new ApiResponse<>(true, message, null);

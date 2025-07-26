@@ -206,6 +206,19 @@ const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* Exercises Routes */}
+        <Route
+          path="/exercises"
+          element={
+            <ProtectedRoute
+              promptTitle="Đăng nhập để xem bài tập"
+              promptMessage="Bạn cần phải đăng nhập để xem danh sách bài tập và bắt đầu làm bài"
+            >
+              <ExercisesPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Blog Routes */}
         <Route
           path="/blogs"

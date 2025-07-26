@@ -12,23 +12,32 @@ const apiClient = axios.create({
  * Get current user ID for header
  */
 const getCurrentUserId = (): number | null => {
+  console.log("🔍 [apiClient] Getting current user ID...");
+  
   // Try multiple possible keys for user data
   const keys = ["toeic_current_user", "currentUser", "user"];
   
   for (const key of keys) {
     const userData = localStorage.getItem(key);
+    console.log(`   📋 [apiClient] Checking key '${key}': ${userData ? "✓ Found data" : "✗ No data"}`);
+    
     if (!userData) continue;
 
     try {
       const user = JSON.parse(userData);
+      console.log(`   📝 [apiClient] Parsed user data for '${key}':`, { id: user?.id, username: user?.username });
+      
       if (user && user.id) {
+        console.log(`✅ [apiClient] Found user ID: ${user.id} from key '${key}'`);
         return user.id;
       }
-    } catch {
+    } catch (error) {
+      console.warn(`   ⚠️ [apiClient] Failed to parse user data from key '${key}':`, error);
       continue;
     }
   }
 
+  console.warn("❌ [apiClient] Could not find user ID in any localStorage key");
   return null;
 };
 

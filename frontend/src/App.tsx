@@ -89,6 +89,9 @@ import EditIndividualQuestionPage from './pages/questions/EditIndividualQuestion
 // Test Components
 import TestIndividualQuestions from './components/test/TestIndividualQuestions';
 
+// Debug Components (for development)
+import APIDebugComponent from './components/debug/APIDebugComponent';
+
 // ========== MAIN APP COMPONENT ==========
 
 /**
@@ -282,6 +285,14 @@ const AppContent: React.FC = () => {
                 <PricingPage />
               </Layout>
             } />
+            
+            {/* Debug Route (for development) */}
+            <Route path="/debug-api" element={
+              <Layout>
+                <APIDebugComponent />
+              </Layout>
+            } />
+            
             <Route path="/membership" element={
               <Layout>
                 <MembershipPlans />
@@ -361,6 +372,34 @@ const AppContent: React.FC = () => {
                 >
                   <Layout>
                     <LessonDetailPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Exercises Routes */}
+            <Route
+              path="/exercises"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để xem bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem danh sách bài tập và bắt đầu làm bài"
+                >
+                  <Layout>
+                    <ExercisesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exercises/:exerciseId"
+              element={
+                <ProtectedRoute
+                  promptTitle="Đăng nhập để làm bài tập"
+                  promptMessage="Bạn cần phải đăng nhập để xem chi tiết bài tập và bắt đầu làm bài"
+                >
+                  <Layout>
+                    <ExerciseDetailPage />
                   </Layout>
                 </ProtectedRoute>
               }

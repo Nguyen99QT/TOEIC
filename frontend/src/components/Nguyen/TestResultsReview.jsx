@@ -460,6 +460,37 @@ const TestResultsReview = ({ reviewResult, onReturnToTests }) => {
                   {question.questionText}
                 </p>
                 
+                {/* Hiển thị reading passage cho Parts 6 & 7 */}
+                {question.content && (question.partNumber === 6 || question.partNumber === 7) && (
+                  <div style={{
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    marginBottom: '20px',
+                    lineHeight: '1.6'
+                  }}>
+                    <h4 style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      marginBottom: '15px',
+                      color: '#495057',
+                      borderBottom: '2px solid #007bff',
+                      paddingBottom: '8px'
+                    }}>
+                      📖 Reading Passage:
+                    </h4>
+                    <div style={{
+                      fontSize: '15px',
+                      color: '#333',
+                      whiteSpace: 'pre-line',
+                      fontFamily: 'Georgia, serif'
+                    }}>
+                      {question.content}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Hiển thị image nếu có */}
                 {question.imageUrl && (
                   <div style={{marginBottom: '15px', textAlign: 'center'}}>

@@ -165,7 +165,7 @@ public class UserController {
                 .collect(java.util.stream.Collectors.toList())
             );
 
-            return ResponseEntity.ok(ApiResponse.success(debugInfo, "User count retrieved"));
+            return ResponseEntity.ok(ApiResponse.successWithData(debugInfo, "User count retrieved"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
@@ -215,7 +215,7 @@ public class UserController {
             Page<User> users = userService.findUsersWithFilters(
                     searchTerm, email, role, gender, country, isActive, pageable);
 
-            return ResponseEntity.ok(ApiResponse.success(users, "Users retrieved successfully"));
+            return ResponseEntity.ok(ApiResponse.successWithData(users, "Users retrieved successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -299,7 +299,7 @@ public class UserController {
                 return ResponseEntity.notFound().build();
             }
 
-            return ResponseEntity.ok(ApiResponse.success(targetUser.get(), "User profile retrieved successfully"));
+            return ResponseEntity.ok(ApiResponse.successWithData(targetUser.get(), "User profile retrieved successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -319,7 +319,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("User not found or not authenticated");
             }
-            return ResponseEntity.ok(ApiResponse.success(currentUser.get(), "Current user profile retrieved successfully"));
+            return ResponseEntity.ok(ApiResponse.successWithData(currentUser.get(), "Current user profile retrieved successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error retrieving profile: " + e.getMessage());
@@ -441,7 +441,7 @@ public class UserController {
             // BƯỚC 3: Update profile
             User updatedUser = userService.updateUserProfile(currentUserId, request);
 
-            return ResponseEntity.ok(ApiResponse.success(updatedUser, "Profile updated successfully"));
+            return ResponseEntity.ok(ApiResponse.successWithData(updatedUser, "Profile updated successfully"));
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

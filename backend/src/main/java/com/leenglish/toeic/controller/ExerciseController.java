@@ -74,8 +74,30 @@ public class ExerciseController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Lấy tất cả exercise
+    // Lấy tất cả exercise (public access)
+    @GetMapping("/public/all")
+    public ResponseEntity<?> getAllPublicExercises() {
+        return ResponseEntity.ok(
+                exerciseService.getAllExercises()
+                        .stream()
+                        .map(this::convertToDto)
+                        .toList());
+    }
+
+    // Lấy exercise theo ID (public access)
+    @GetMapping("/public/{id}")
+    public ResponseEntity<?> getPublicExerciseById(@PathVariable Long id) {
+        Optional<Exercise> exercise = exerciseService.getExerciseById(id);
+        if (exercise.isPresent()) {
+            return ResponseEntity.ok(convertToDto(exercise.get()));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Lấy tất cả exercise (requires authentication)
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getAllExercises() {
         return ResponseEntity.ok(
                 exerciseService.getAllExercises()

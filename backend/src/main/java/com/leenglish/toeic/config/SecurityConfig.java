@@ -69,6 +69,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
+                        // Allow all OPTIONS requests for CORS preflight - MUST BE FIRST!
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Basic public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
@@ -97,6 +99,9 @@ public class SecurityConfig {
                         .requestMatchers("/audio/**").permitAll()
                         .requestMatchers("/images/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/static/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
                         .requestMatchers(HttpMethod.HEAD, "/files/**").permitAll()
@@ -137,6 +142,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/lessons/{lessonId}/exercises/{exerciseId}/questions/{questionId}").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/lessons/{lessonId}/exercises/{exerciseId}/questions/submit").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/lessons/{lessonId}/exercises/{exerciseId}/submit").authenticated()
+                        
+                        // Exercise endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/exercises/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/exercises").authenticated()
                         
                         // Flashcard public endpoints
                         .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/public/**").permitAll()

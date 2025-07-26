@@ -102,7 +102,7 @@ public class FlashcardCrudController {
             }
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard sets retrieved successfully", flashcardSets));
+                    ApiResponse.successWithData(flashcardSets, "Flashcard sets retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard sets", e);
@@ -124,7 +124,7 @@ public class FlashcardCrudController {
 
             FlashcardSetDto flashcardSet = flashcardService.getFlashcardSetById(id);
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard set retrieved successfully", flashcardSet));
+                    ApiResponse.successWithData(flashcardSet, "Flashcard set retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard set {}", id, e);
@@ -177,7 +177,7 @@ public class FlashcardCrudController {
             FlashcardSetDto createdSet = flashcardService.createFlashcardSet(flashcardSetDto, userId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Flashcard set created successfully", createdSet));
+                    .body(ApiResponse.successWithData(createdSet, "Flashcard set created successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error creating flashcard set", e);
@@ -250,7 +250,7 @@ public class FlashcardCrudController {
             FlashcardSetDto updatedSet = flashcardService.updateFlashcardSet(id, flashcardSetDto, userId);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard set updated successfully", updatedSet));
+                    ApiResponse.successWithData(updatedSet, "Flashcard set updated successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error updating flashcard set {}", id, e);
@@ -322,7 +322,7 @@ public class FlashcardCrudController {
             List<FlashcardDto> flashcards = flashcardService.getFlashcardsBySet(setId);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcards retrieved successfully", flashcards));
+                    ApiResponse.successWithData(flashcards, "Flashcards retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching flashcards in set {}", setId, e);
@@ -344,7 +344,7 @@ public class FlashcardCrudController {
 
             FlashcardDto flashcard = flashcardService.getFlashcardById(id);
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard retrieved successfully", flashcard));
+                    ApiResponse.successWithData(flashcard, "Flashcard retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching flashcard {}", id, e);
@@ -398,7 +398,7 @@ public class FlashcardCrudController {
             FlashcardDto createdFlashcard = flashcardService.createFlashcard(flashcardDto, setId, userId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Flashcard created successfully", createdFlashcard));
+                    .body(ApiResponse.successWithData(createdFlashcard, "Flashcard created successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error creating flashcard in set {}", setId, e);
@@ -471,7 +471,7 @@ public class FlashcardCrudController {
             FlashcardDto updatedFlashcard = flashcardService.updateFlashcard(id, flashcardDto, userId);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard updated successfully", updatedFlashcard));
+                    ApiResponse.successWithData(updatedFlashcard, "Flashcard updated successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error updating flashcard {}", id, e);
@@ -518,7 +518,7 @@ public class FlashcardCrudController {
             flashcardService.deleteFlashcard(id, userId);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Flashcard deleted successfully", null));
+                    ApiResponse.successWithData(null, "Flashcard deleted successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error deleting flashcard {}", id, e);
@@ -544,8 +544,7 @@ public class FlashcardCrudController {
             String imageUrl = fileUploadService.uploadImage(image);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Image uploaded successfully",
-                            Map.of("imageUrl", imageUrl)));
+                    ApiResponse.successWithData(Map.of("imageUrl", imageUrl), "Image uploaded successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error uploading image for flashcard set {}", setId, e);
@@ -569,8 +568,7 @@ public class FlashcardCrudController {
             String audioUrl = fileUploadService.uploadAudio(audio);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Audio uploaded successfully",
-                            Map.of("audioUrl", audioUrl)));
+                    ApiResponse.successWithData(Map.of("audioUrl", audioUrl), "Audio uploaded successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error uploading audio for flashcard set {}", setId, e);
@@ -594,8 +592,7 @@ public class FlashcardCrudController {
             String imageUrl = fileUploadService.uploadImage(image);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Image uploaded successfully",
-                            Map.of("imageUrl", imageUrl)));
+                    ApiResponse.successWithData(Map.of("imageUrl", imageUrl), "Image uploaded successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error uploading image for flashcard {}", id, e);
@@ -619,8 +616,7 @@ public class FlashcardCrudController {
             String audioUrl = fileUploadService.uploadAudio(audio);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Audio uploaded successfully",
-                            Map.of("audioUrl", audioUrl)));
+                    ApiResponse.successWithData(Map.of("audioUrl", audioUrl), "Audio uploaded successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error uploading audio for flashcard {}", id, e);
@@ -643,7 +639,7 @@ public class FlashcardCrudController {
             List<FlashcardSetDto> popularSets = flashcardService.getPopularFlashcardSets(limit);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Popular flashcard sets retrieved successfully", popularSets));
+                    ApiResponse.successWithData(popularSets, "Popular flashcard sets retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching popular flashcard sets", e);
@@ -664,7 +660,7 @@ public class FlashcardCrudController {
             List<FlashcardSetDto> recentSets = flashcardService.getRecentFlashcardSets(limit);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Recent flashcard sets retrieved successfully", recentSets));
+                    ApiResponse.successWithData(recentSets, "Recent flashcard sets retrieved successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error fetching recent flashcard sets", e);
@@ -689,7 +685,7 @@ public class FlashcardCrudController {
             List<FlashcardSetDto> searchResults = flashcardService.searchFlashcardSets(query, page, size);
 
             return ResponseEntity.ok(
-                    ApiResponse.success("Search completed successfully", searchResults));
+                    ApiResponse.successWithData(searchResults, "Search completed successfully"));
 
         } catch (Exception e) {
             log.error("❌ Error searching flashcard sets", e);

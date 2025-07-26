@@ -51,7 +51,7 @@ public class LessonCommentController {
         LessonCommentDto comment = lessonCommentService.createComment(user.getId(), lessonId, request);
         
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(comment, "Comment created successfully"));
+                .body(ApiResponse.successWithData(comment, "Comment created successfully"));
     }
 
     @PutMapping("/{commentId}")
@@ -63,7 +63,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         LessonCommentDto comment = lessonCommentService.updateComment(user.getId(), commentId, request);
         
-        return ResponseEntity.ok(ApiResponse.success(comment, "Comment updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comment, "Comment updated successfully"));
     }
 
     @DeleteMapping("/{commentId}")
@@ -74,7 +74,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.deleteComment(user.getId(), commentId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Comment deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.successMessage("Comment deleted successfully"));
     }
 
     @GetMapping("/{commentId}")
@@ -85,7 +85,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         LessonCommentDto comment = lessonCommentService.getCommentById(commentId, user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(comment, "Comment retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comment, "Comment retrieved successfully"));
     }
 
     @GetMapping("/lessons/{lessonId}")
@@ -103,7 +103,7 @@ public class LessonCommentController {
         
         Page<LessonCommentDto> comments = lessonCommentService.getCommentsByLesson(lessonId, user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(comments, "Comments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comments, "Comments retrieved successfully"));
     }
 
     @GetMapping("/users/{userId}")
@@ -118,7 +118,7 @@ public class LessonCommentController {
         
         Page<LessonCommentDto> comments = lessonCommentService.getCommentsByUser(userId, currentUser.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(comments, "User comments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comments, "User comments retrieved successfully"));
     }
 
     @GetMapping("/recent")
@@ -132,7 +132,7 @@ public class LessonCommentController {
         
         Page<LessonCommentDto> comments = lessonCommentService.getRecentComments(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(comments, "Recent comments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comments, "Recent comments retrieved successfully"));
     }
 
     @GetMapping("/popular")
@@ -146,13 +146,13 @@ public class LessonCommentController {
         
         Page<LessonCommentDto> comments = lessonCommentService.getPopularComments(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(comments, "Popular comments retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(comments, "Popular comments retrieved successfully"));
     }
 
     @GetMapping("/lessons/{lessonId}/count")
     public ResponseEntity<ApiResponse<Long>> getCommentCountByLesson(@PathVariable Long lessonId) {
         Long count = lessonCommentService.getCommentCountByLesson(lessonId);
-        return ResponseEntity.ok(ApiResponse.success(count, "Comment count retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Comment count retrieved successfully"));
     }
 
     // Reply operations
@@ -166,7 +166,7 @@ public class LessonCommentController {
         CommentReplyDto reply = lessonCommentService.createReply(user.getId(), commentId, content);
         
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(reply, "Reply created successfully"));
+                .body(ApiResponse.successWithData(reply, "Reply created successfully"));
     }
 
     @PutMapping("/replies/{replyId}")
@@ -178,7 +178,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         CommentReplyDto reply = lessonCommentService.updateReply(user.getId(), replyId, content);
         
-        return ResponseEntity.ok(ApiResponse.success(reply, "Reply updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(reply, "Reply updated successfully"));
     }
 
     @DeleteMapping("/replies/{replyId}")
@@ -189,7 +189,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.deleteReply(user.getId(), replyId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Reply deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Reply deleted successfully"));
     }
 
     @GetMapping("/replies/{replyId}")
@@ -200,7 +200,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         CommentReplyDto reply = lessonCommentService.getReplyById(replyId, user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(reply, "Reply retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(reply, "Reply retrieved successfully"));
     }
 
     @GetMapping("/{commentId}/replies")
@@ -211,7 +211,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         List<CommentReplyDto> replies = lessonCommentService.getRepliesByComment(commentId, user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(replies, "Replies retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(replies, "Replies retrieved successfully"));
     }
 
     @GetMapping("/users/{userId}/replies")
@@ -226,7 +226,7 @@ public class LessonCommentController {
         
         Page<CommentReplyDto> replies = lessonCommentService.getRepliesByUser(userId, currentUser.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(replies, "User replies retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(replies, "User replies retrieved successfully"));
     }
 
     // Like operations
@@ -238,7 +238,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.likeComment(user.getId(), commentId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Comment liked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Comment liked successfully"));
     }
 
     @PostMapping("/{commentId}/dislike")
@@ -249,7 +249,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.dislikeComment(user.getId(), commentId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Comment disliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Comment disliked successfully"));
     }
 
     @DeleteMapping("/{commentId}/like")
@@ -260,7 +260,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.unlikeComment(user.getId(), commentId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Comment unliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Comment unliked successfully"));
     }
 
     @DeleteMapping("/{commentId}/dislike")
@@ -271,7 +271,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.undislikeComment(user.getId(), commentId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Comment undisliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Comment undisliked successfully"));
     }
 
     @PostMapping("/replies/{replyId}/like")
@@ -282,7 +282,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.likeReply(user.getId(), replyId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Reply liked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Reply liked successfully"));
     }
 
     @PostMapping("/replies/{replyId}/dislike")
@@ -293,7 +293,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.dislikeReply(user.getId(), replyId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Reply disliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Reply disliked successfully"));
     }
 
     @DeleteMapping("/replies/{replyId}/like")
@@ -304,7 +304,7 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.unlikeReply(user.getId(), replyId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Reply unliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Reply unliked successfully"));
     }
 
     @DeleteMapping("/replies/{replyId}/dislike")
@@ -315,6 +315,6 @@ public class LessonCommentController {
         User user = userService.getCurrentUser(authentication);
         lessonCommentService.undislikeReply(user.getId(), replyId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Reply undisliked successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Reply undisliked successfully"));
     }
 } 

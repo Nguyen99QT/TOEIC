@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Auth Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .section h3 { margin-top: 0; color: #333; }
+        button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .status { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status.online { background: #d4edda; color: #155724; }
+        .status.offline { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Enhanced Auth Debug Tool</h1>
+        
+        <!-- Backend Status -->
+        <div class="section">
+            <h3>🖥️ Backend Status</h3>
+            <button class="btn-primary" onclick="checkBackendStatus()">Check Backend Status</button>
+            <div id="backendStatus"></div>
+        </div>
+
+        <!-- Authentication -->
+        <div class="section">
+            <h3>🔐 Authentication</h3>
+            <button class="btn-success" onclick="loginTeacher()">Login as Teacher</button>
+            <button class="btn-warning" onclick="showAuthStatus()">Show Auth Status</button>
+            <button class="btn-danger" onclick="logout()">Logout</button>
+            <div id="authResults"></div>
+        </div>
+
+        <!-- LocalStorage Debug -->
+        <div class="section">
+            <h3>💾 LocalStorage Debug</h3>
+            <button class="btn-primary" onclick="showLocalStorage()">Show All Keys</button>
+            <button class="btn-warning" onclick="simulateUserData()">Simulate User Data</button>
+            <button class="btn-danger" onclick="clearAllAuthData()">Clear All Auth Data</button>
+            <div id="storageResults"></div>
+        </div>
+
+        <!-- API Tests -->
+        <div class="section">
+            <h3>🌐 API Tests</h3>
+            <button class="btn-success" onclick="testLessonsAPI()">Test Lessons API</button>
+            <button class="btn-success" onclick="testExercisesAPI()">Test Exercises API</button>
+            <button class="btn-success" onclick="testFlashcardsAPI()">Test Flashcards API</button>
+            <div id="apiResults"></div>
+        </div>
+
+        <!-- User Data Debug -->
+        <div class="section">
+            <h3>👤 User Data Debug</h3>
+            <button class="btn-primary" onclick="debugUserData()">Debug User Functions</button>
+            <div id="userResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // Utility functions
+        function log(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function showResult(elementId, content, type = 'result') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${content}</div>`;
+        }
+        
+        function appendResult(elementId, content, type = 'result') {
+            const element = document.getElementById(elementId);
+            element.innerHTML += `<div class="${type}">${content}</div>`;
+        }
+
+        // Backend Status
+        async function checkBackendStatus() {
+            showResult('backendStatus', '⏳ Checking backend status...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/lessons/public/all`);
+                if (response.ok) {
+                    const lessons = await response.json();
+                    showResult('backendStatus', 
+                        `<span class="status online">ONLINE</span> Backend is running<br>` +
+                        `📚 Found ${lessons.length} lessons available`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showResult('backendStatus', 
+                    `<span class="status offline">OFFLINE</span> Backend error: ${error.message}`, 'error');
+            }
+        }
+
+        // Authentication functions
+        async function loginTeacher() {
+            showResult('authResults', '⏳ Logging in as teacher...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'teacher1',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens and user data using multiple keys for compatibility
+                    localStorage.setItem('toeic_access_token', data.token || data.accessToken);
+                    localStorage.setItem('authToken', data.token || data.accessToken);
+                    localStorage.setItem('accessToken', data.token || data.accessToken);
+                    
+                    const userData = data.user || data;
+                    localStorage.setItem('toeic_current_user', JSON.stringify(userData));
+                    localStorage.setItem('currentUser', JSON.stringify(userData));
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    
+                    showResult('authResults', 
+                        `✅ Login successful!<br>` +
+                        `👤 User: ${userData.username}<br>` +
+                        `📧 Email: ${userData.email}<br>` +
+                        `🔑 Token stored with multiple keys`, 'success');
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                showResult('authResults', `❌ Login failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showAuthStatus() {
+            const tokens = [
+                { key: 'toeic_access_token', value: localStorage.getItem('toeic_access_token') },
+                { key: 'authToken', value: localStorage.getItem('authToken') },
+                { key: 'accessToken', value: localStorage.getItem('accessToken') }
+            ];
+            
+            const users = [
+                { key: 'toeic_current_user', value: localStorage.getItem('toeic_current_user') },
+                { key: 'currentUser', value: localStorage.getItem('currentUser') },
+                { key: 'user', value: localStorage.getItem('user') }
+            ];
+            
+            let status = '<h4>🔑 Tokens:</h4>';
+            tokens.forEach(token => {
+                status += `<div>${token.key}: ${token.value ? '✅ Present' : '❌ Missing'}</div>`;
+            });
+            
+            status += '<h4>👤 User Data:</h4>';
+            users.forEach(user => {
+                if (user.value) {
+                    try {
+                        const userData = JSON.parse(user.value);
+                        status += `<div>${user.key}: ✅ ID: ${userData.id}, Username: ${userData.username}</div>`;
+                    } catch {
+                        status += `<div>${user.key}: ⚠️ Invalid JSON</div>`;
+                    }
+                } else {
+                    status += `<div>${user.key}: ❌ Missing</div>`;
+                }
+            });
+            
+            showResult('authResults', status);
+        }
+
+        function logout() {
+            const keys = [
+                'toeic_access_token', 'authToken', 'accessToken',
+                'toeic_current_user', 'currentUser', 'user'
+            ];
+            
+            keys.forEach(key => localStorage.removeItem(key));
+            showResult('authResults', '✅ Logged out successfully - All auth data cleared', 'success');
+        }
+
+        // LocalStorage functions
+        function showLocalStorage() {
+            let content = '<h4>📋 All LocalStorage Keys:</h4>';
+            const keys = Object.keys(localStorage).sort();
+            
+            if (keys.length === 0) {
+                content += '<div>📭 LocalStorage is empty</div>';
+            } else {
+                keys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    if (key.includes('token') || key.includes('user') || key.includes('User')) {
+                        content += `<div><strong>${key}:</strong> ${value ? '✅ Has data' : '❌ Empty'}</div>`;
+                    }
+                });
+            }
+            
+            showResult('storageResults', content);
+        }
+
+        function simulateUserData() {
+            const mockUser = {
+                id: 1,
+                username: 'teacher1',
+                email: 'teacher1@example.com',
+                role: 'TEACHER',
+                membershipType: 'PREMIUM'
+            };
+            
+            localStorage.setItem('toeic_current_user', JSON.stringify(mockUser));
+            localStorage.setItem('currentUser', JSON.stringify(mockUser));
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('toeic_access_token', 'mock-token-123');
+            
+            showResult('storageResults', '✅ Mock user data and token stored with all compatibility keys', 'success');
+        }
+
+        function clearAllAuthData() {
+            const authKeys = [
+                'toeic_access_token', 'authToken', 'accessToken', 'token',
+                'toeic_current_user', 'currentUser', 'user', 'userData'
+            ];
+            
+            authKeys.forEach(key => localStorage.removeItem(key));
+            showResult('storageResults', '🗑️ All authentication data cleared', 'warning');
+        }
+
+        // API Test functions
+        async function testLessonsAPI() {
+            showResult('apiResults', '⏳ Testing Lessons API...');
+            await testAPI('/lessons/public/all', 'Lessons');
+        }
+
+        async function testExercisesAPI() {
+            appendResult('apiResults', '⏳ Testing Exercises API...');
+            await testAPI('/exercises', 'Exercises');
+        }
+
+        async function testFlashcardsAPI() {
+            appendResult('apiResults', '⏳ Testing Flashcards API...');
+            await testAPI('/flashcard-sets/public', 'Flashcards');
+        }
+
+        async function testAPI(endpoint, name) {
+            try {
+                const token = localStorage.getItem('toeic_access_token') || 
+                             localStorage.getItem('authToken') || 
+                             localStorage.getItem('accessToken');
+                
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, { headers });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    appendResult('apiResults', 
+                        `✅ ${name} API: Success - ${Array.isArray(data) ? data.length : 'Data'} items`, 'success');
+                } else {
+                    appendResult('apiResults', 
+                        `❌ ${name} API: HTTP ${response.status}`, 'error');
+                }
+            } catch (error) {
+                appendResult('apiResults', 
+                    `❌ ${name} API: ${error.message}`, 'error');
+            }
+        }
+
+        // User Data Debug
+        function debugUserData() {
+            showResult('userResults', '🔍 Debugging user data functions...');
+            
+            // Test getCurrentUserId equivalent
+            const keys = ["toeic_current_user", "currentUser", "user"];
+            let userIdFound = null;
+            let results = '<h4>🔍 getCurrentUserId() Simulation:</h4>';
+            
+            for (const key of keys) {
+                const userData = localStorage.getItem(key);
+                results += `<div>📋 Checking key '${key}': ${userData ? "✓ Found data" : "✗ No data"}</div>`;
+                
+                if (userData) {
+                    try {
+                        const user = JSON.parse(userData);
+                        results += `<div>   📝 Parsed user: ID=${user.id}, Username=${user.username}</div>`;
+                        
+                        if (user && user.id && !userIdFound) {
+                            userIdFound = user.id;
+                            results += `<div>   ✅ Found user ID: ${user.id}</div>`;
+                        }
+                    } catch (error) {
+                        results += `<div>   ⚠️ Parse error: ${error.message}</div>`;
+                    }
+                }
+            }
+            
+            if (userIdFound) {
+                results += `<div class="success"><strong>✅ Final Result: User ID = ${userIdFound}</strong></div>`;
+            } else {
+                results += `<div class="error"><strong>❌ Final Result: No user ID found</strong></div>`;
+            }
+            
+            showResult('userResults', results);
+        }
+
+        // Auto-check backend on load
+        window.onload = function() {
+            checkBackendStatus();
+        };
+    </script>
+</body>
+</html>

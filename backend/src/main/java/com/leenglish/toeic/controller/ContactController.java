@@ -50,7 +50,7 @@ public class ContactController {
         ContactDto contact = contactService.createContact(user.getId(), request);
         
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(contact, "Contact submitted successfully"));
+                .body(ApiResponse.successWithData(contact, "Contact submitted successfully"));
     }
 
     @PutMapping("/{contactId}")
@@ -62,7 +62,7 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         ContactDto contact = contactService.updateContact(user.getId(), contactId, request);
         
-        return ResponseEntity.ok(ApiResponse.success(contact, "Contact updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contact, "Contact updated successfully"));
     }
 
     @DeleteMapping("/{contactId}")
@@ -73,7 +73,7 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         contactService.deleteContact(user.getId(), contactId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Contact deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.successMessage("Contact deleted successfully"));
     }
 
     @GetMapping("/{contactId}")
@@ -84,7 +84,7 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         ContactDto contact = contactService.getContactById(contactId, user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(contact, "Contact retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contact, "Contact retrieved successfully"));
     }
 
     @GetMapping("/my")
@@ -102,7 +102,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactByUser(user.getId(), user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "User contacts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "User contacts retrieved successfully"));
     }
 
     // Admin operations
@@ -121,7 +121,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getAllContact(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "All contacts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "All contacts retrieved successfully"));
     }
 
     @GetMapping("/admin/status/{status}")
@@ -136,7 +136,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactByStatus(user.getId(), status, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Contacts filtered by status retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Contacts filtered by status retrieved successfully"));
     }
 
     @GetMapping("/admin/priority/{priority}")
@@ -151,7 +151,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactByPriority(user.getId(), priority, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Contacts filtered by priority retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Contacts filtered by priority retrieved successfully"));
     }
 
     @GetMapping("/admin/type/{contactType}")
@@ -166,7 +166,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactByType(user.getId(), contactType, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Contacts filtered by type retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Contacts filtered by type retrieved successfully"));
     }
 
     @GetMapping("/admin/pending")
@@ -180,7 +180,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getPendingContact(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Pending contacts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Pending contacts retrieved successfully"));
     }
 
     @GetMapping("/admin/urgent")
@@ -194,7 +194,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getUrgentContact(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Urgent contacts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Urgent contacts retrieved successfully"));
     }
 
     @GetMapping("/admin/needing-response")
@@ -208,7 +208,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactNeedingResponse(user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Contacts needing response retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Contacts needing response retrieved successfully"));
     }
 
     @PostMapping("/admin/{contactId}/respond")
@@ -220,7 +220,7 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         ContactDto contact = contactService.respondToContact(user.getId(), contactId, request);
         
-        return ResponseEntity.ok(ApiResponse.success(contact, "Response submitted successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contact, "Response submitted successfully"));
     }
 
     @PutMapping("/admin/{contactId}/status")
@@ -232,7 +232,7 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         ContactDto contact = contactService.updateContactStatus(user.getId(), contactId, status);
         
-        return ResponseEntity.ok(ApiResponse.success(contact, "Contact status updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contact, "Contact status updated successfully"));
     }
 
     @GetMapping("/admin/search")
@@ -247,7 +247,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.searchContact(user.getId(), searchTerm, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Contact search completed successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Contact search completed successfully"));
     }
 
     @GetMapping("/admin/filter")
@@ -264,7 +264,7 @@ public class ContactController {
         
         Page<ContactDto> contacts = contactService.getContactByCriteria(user.getId(), status, priority, contactType, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(contacts, "Filtered contacts retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(contacts, "Filtered contacts retrieved successfully"));
     }
 
     @GetMapping("/admin/statistics")
@@ -274,6 +274,6 @@ public class ContactController {
         User user = userService.getCurrentUser(authentication);
         Map<String, Object> statistics = contactService.getContactStatistics(user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(statistics, "Contact statistics retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(statistics, "Contact statistics retrieved successfully"));
     }
 } 

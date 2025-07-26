@@ -184,15 +184,24 @@ export interface Exercise {
   id: number;
   title: string;
   description: string;
-  type: "READING" | "LISTENING" | "VOCABULARY" | "GRAMMAR";
-  difficulty: "EASY" | "MEDIUM" | "HARD";
-  orderIndex: number;
-  totalQuestions?: number;
-  timeLimit?: number;
-  isActive: boolean;
-  lessonId: number;
+  type: string; // Backend returns: multiple_choice, matching, fill_in_the_blank, etc.
+  difficulty?: string | null; // Backend can return null
+  orderIndex?: number;
+  totalQuestions?: number | null;
+  timeLimit?: number | null;
+  isActive?: boolean | null;
+  lessonId?: number;
   createdAt: string;
   updatedAt: string;
+  // Additional fields from backend
+  questions?: any;
+  duration?: number | null;
+  questionsCount?: number | null;
+  isCompleted?: boolean | null;
+  isLocked?: boolean | null;
+  points?: number | null;
+  imageUrl?: string | null;
+  audioUrl?: string | null;
 }
 
 export interface UserAnswer {

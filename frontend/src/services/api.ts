@@ -378,23 +378,32 @@ export const canEditContent = (): boolean => {
  * Get current user ID
  */
 export const getCurrentUserId = (): number | null => {
+  console.log("🔍 Getting current user ID...");
+  
   // Try multiple possible keys for user data
   const keys = ["toeic_current_user", "currentUser", "user"];
   
   for (const key of keys) {
     const userData = localStorage.getItem(key);
+    console.log(`   📋 Checking key '${key}': ${userData ? "✓ Found data" : "✗ No data"}`);
+    
     if (!userData) continue;
 
     try {
       const user = JSON.parse(userData);
+      console.log(`   📝 Parsed user data for '${key}':`, { id: user?.id, username: user?.username });
+      
       if (user && user.id) {
+        console.log(`✅ Found user ID: ${user.id} from key '${key}'`);
         return user.id;
       }
-    } catch {
+    } catch (error) {
+      console.warn(`   ⚠️ Failed to parse user data from key '${key}':`, error);
       continue;
     }
   }
 
+  console.warn("❌ Could not find user ID in any localStorage key");
   return null;
 };
 

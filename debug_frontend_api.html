@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Frontend API Calls</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Debug Frontend API Calls</h1>
+    
+    <div>
+        <h2>Step 1: Login</h2>
+        <button onclick="doLogin()">Login as Teacher</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div>
+        <h2>Step 2: Test APIs</h2>
+        <button onclick="testLessons()">Test Lessons API</button>
+        <button onclick="testExercises()">Test Exercises API</button>
+        <button onclick="testFlashcards()">Test Flashcards API</button>
+        <div id="apiResults"></div>
+    </div>
+    
+    <div>
+        <h2>Debug Info</h2>
+        <button onclick="showTokens()">Show LocalStorage Tokens</button>
+        <div id="debugInfo"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        
+        async function doLogin() {
+            const loginResult = document.getElementById('loginResult');
+            loginResult.innerHTML = '🔄 Logging in...';
+            
+            try {
+                const response = await axios.post('http://localhost:8080/api/auth/login', {
+                    username: 'teacher',
+                    password: 'password'
+                });
+                
+                authToken = response.data.token;
+                localStorage.setItem('toeic_access_token', authToken);
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('accessToken', authToken);
+                
+                loginResult.innerHTML = `
+                    ✅ Login successful!<br>
+                    Username: ${response.data.username}<br>
+                    Role: ${response.data.roles}<br>
+                    Token: ${authToken.substring(0, 50)}...
+                `;
+                
+                console.log('✅ Login response:', response.data);
+            } catch (error) {
+                loginResult.innerHTML = `❌ Login failed: ${error.message}`;
+                console.error('❌ Login error:', error);
+            }
+        }
+        
+        async function testLessons() {
+            await testAPI('Lessons', 'http://localhost:8080/api/lessons/public/all');
+        }
+        
+        async function testExercises() {
+            await testAPI('Exercises', 'http://localhost:8080/api/exercises', true);
+        }
+        
+        async function testFlashcards() {
+            await testAPI('Flashcards', 'http://localhost:8080/api/flashcard-sets/public');
+        }
+        
+        async function testAPI(name, url, needsAuth = false) {
+            const apiResults = document.getElementById('apiResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.innerHTML = `🔄 Testing ${name} API...`;
+            apiResults.appendChild(resultDiv);
+            
+            try {
+                const config = {};
+                if (needsAuth && authToken) {
+                    config.headers = {
+                        'Authorization': `Bearer ${authToken}`
+                    };
+                }
+                
+                const response = await axios.get(url, config);
+                
+                let resultText = `✅ ${name} API working!<br>`;
+                if (Array.isArray(response.data)) {
+                    resultText += `Found ${response.data.length} items<br>`;
+                    if (response.data.length > 0) {
+                        resultText += `First item: ${response.data[0].title || response.data[0].name || 'No title'}<br>`;
+                    }
+                } else {
+                    resultText += `Response type: ${typeof response.data}<br>`;
+                }
+                
+                resultDiv.innerHTML = resultText;
+                console.log(`✅ ${name} API response:`, response.data);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `❌ ${name} API failed: ${error.response?.status} ${error.message}`;
+                console.error(`❌ ${name} API error:`, error);
+                
+                if (error.response?.status === 401) {
+                    resultDiv.innerHTML += '<br>🔐 Authentication required!';
+                }
+            }
+        }
+        
+        function showTokens() {
+            const debugInfo = document.getElementById('debugInfo');
+            const tokens = {
+                'toeic_access_token': localStorage.getItem('toeic_access_token'),
+                'authToken': localStorage.getItem('authToken'),
+                'accessToken': localStorage.getItem('accessToken'),
+                'currentAuthToken': authToken
+            };
+            
+            let html = '<h3>LocalStorage Tokens:</h3>';
+            for (const [key, value] of Object.entries(tokens)) {
+                html += `<p><strong>${key}:</strong> ${value ? value.substring(0, 50) + '...' : 'null'}</p>`;
+            }
+            
+            debugInfo.innerHTML = html;
+            console.log('🔍 All tokens:', tokens);
+        }
+    </script>
+</body>
+</html>

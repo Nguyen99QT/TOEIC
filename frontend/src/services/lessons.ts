@@ -95,7 +95,15 @@ export const lessonService = {
    */
   getAllLessons: async (): Promise<Lesson[]> => {
     try {
-      const response = await api.get("/lessons");
+      // Use public endpoint first, then try authenticated endpoint
+      let response;
+      try {
+        response = await api.get("/lessons/public/all");
+      } catch (publicError) {
+        console.log("🔄 Public endpoint failed, trying authenticated endpoint...");
+        response = await api.get("/lessons");
+      }
+      
       // Only log important events in development
       if (process.env.NODE_ENV === "development") {
         console.log(

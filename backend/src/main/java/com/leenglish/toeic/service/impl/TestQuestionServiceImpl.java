@@ -59,6 +59,11 @@ public class TestQuestionServiceImpl implements TestQuestionService {
         dto.setAudioUrl(question.getAudioUrl());
         dto.setImageUrl(question.getImageUrl());
         
+        // Include content from QuestionGroup for Parts 6 & 7 (reading passages)
+        if (question.getGroup() != null && question.getGroup().getContent() != null) {
+            dto.setContent(question.getGroup().getContent());
+        }
+        
         List<QuestionWithOptions.OptionDTO> optionDTOs = question.getOptions().stream()
             .map(this::convertToOptionDTO)
             .collect(Collectors.toList());

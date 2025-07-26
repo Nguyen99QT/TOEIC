@@ -291,14 +291,18 @@ const SimpleTOEICTest = () => {
         
         // Load questions for current part
         const response = await axios.get(
-          `http://localhost:8080/api/tests/${testId}/part/${currentPartNumber}/questions`,
+          `http://localhost:8080/api/tests/${testId}/questions`,
           { headers }
         );
         
-        console.log('Questions loaded for part', currentPartNumber, ':', response.data);
+        console.log('All questions loaded:', response.data);
+        
+        // Filter questions for current part
+        const partQuestions = response.data.filter(q => q.partNumber === currentPartNumber);
+        console.log('Questions filtered for part', currentPartNumber, ':', partQuestions);
         
         // Transform questions to expected format
-        const transformedQuestions = response.data.map(q => {
+        const transformedQuestions = partQuestions.map(q => {
           // Log original options order
           console.log(`Question ${q.questionId} original options:`, q.options?.map(opt => `${opt.label}: ${opt.content}`));
           
@@ -789,6 +793,28 @@ const SimpleTOEICTest = () => {
                 <div style={{flex: 1}}>
                   <div style={{marginBottom: '15px'}}>
                     <p style={{fontSize: '16px', marginBottom: '15px'}}>{question.questionText}</p>
+                    
+                    {/* Reading Passage Content for Part 6 & 7 */}
+                    {question.content && (
+                      <div style={{
+                        backgroundColor: '#f9fafb',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        padding: '20px',
+                        marginBottom: '20px',
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        whiteSpace: 'pre-wrap'
+                      }}>
+                        <h4 style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          marginBottom: '15px',
+                          color: '#374151'
+                        }}>📖 Reading Passage:</h4>
+                        {question.content}
+                      </div>
+                    )}
                     
                     {/* Image display */}
                     {question.imageUrl && (

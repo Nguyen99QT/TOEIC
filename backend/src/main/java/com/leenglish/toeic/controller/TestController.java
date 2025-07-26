@@ -6,6 +6,7 @@ import com.leenglish.toeic.dto.TestDetailsResponse;
 import com.leenglish.toeic.dto.TestPartResponse;
 import com.leenglish.toeic.dto.TestQuestionResponse;
 import com.leenglish.toeic.dto.TestOptionResponse;
+import com.leenglish.toeic.dto.QuestionWithOptions;
 import com.leenglish.toeic.service.TestGenerationService;
 import com.leenglish.toeic.repository.TestRepository;
 import com.leenglish.toeic.repository.TestQuestionRepository;
@@ -387,7 +388,7 @@ public class TestController {
     }
 
     @GetMapping("/{testId}/part/{partNumber}/questions")
-    public ResponseEntity<List<TestQuestionResponse>> getQuestionsForPart(
+    public ResponseEntity<List<QuestionWithOptions>> getQuestionsForPart(
             @PathVariable Long testId, 
             @PathVariable Integer partNumber) {
         try {
@@ -408,76 +409,24 @@ public class TestController {
                 return ResponseEntity.notFound().build();
             }
             
-            List<TestQuestionResponse> response = partQuestions.stream().map(tq -> {
-                TestQuestionResponse question = new TestQuestionResponse();
+            List<QuestionWithOptions> response = partQuestions.stream().map(tq -> {
+                QuestionWithOptions question = new QuestionWithOptions();
                 question.setQuestionId(tq.getQuestion().getQuestionId());
-                question.setPartNumber(tq.getPartNumber());
-                question.setQuestionOrder(tq.getQuestionOrder());
                 question.setQuestionText(tq.getQuestion().getQuestionText());
-                
-                String audioUrl = tq.getQuestion().getAudioUrl();
-                String imageUrl = tq.getQuestion().getImageUrl();
-                
-                question.setAudioUrl(audioUrl);
-                question.setImageUrl(imageUrl);
+                question.setAudioUrl(tq.getQuestion().getAudioUrl());
+                question.setImageUrl(tq.getQuestion().getImageUrl());
                 
                 // Add content from QuestionGroup for reading comprehension parts (6 & 7)
                 if ((partNumber == 6 || partNumber == 7) && tq.getQuestion().getGroup() != null) {
                     question.setContent(tq.getQuestion().getGroup().getContent());
-                } else if (partNumber == 6) {
-                    // Fallback content for Part 6 if no group content
-                    question.setContent("""
-                        Subject: Regarding Our New Branch Office
-
-                        Dear Team,
-
-                        I am pleased to announce that our company will be expanding its operations this year. ------- (131) new employees for our upcoming Windsor location has been a priority for the management team. The human resources department has been working diligently to find qualified candidates who meet our high standards.
-
-                        Our technical support team has been ------- (132) the new office systems will integrate seamlessly with our existing infrastructure. We believe ------- (133) this expansion will allow us to better serve our clients in the region.
-
-                        The new branch will focus on providing ------- (134) customer service to our growing client base. All staff members will undergo comprehensive training to ensure they are fully prepared for their new roles.
-
-                        We are confident that this expansion will strengthen our position in the market and contribute to the company's continued success.
-
-                        Best regards,
-                        Regional Manager
-                        """);
-                } else if (partNumber == 7) {
-                    // Fallback content for Part 7 if no group content  
-                    question.setContent("""
-                        MEMO
-
-                        TO: All Staff Members
-                        FROM: Human Resources Department  
-                        DATE: July 15, 2024
-                        RE: Holiday Schedule Policy Update
-
-                        We would like to inform all employees about an important update to our holiday request policy that will take effect immediately.
-
-                        Due to the upcoming July 4th holiday weekend and the high volume of vacation requests we have received, we need to implement temporary scheduling adjustments. We have discovered that 35% of our planned staff have requested time off on July 5th, which exceeds our maximum allowable absence rate of 25%.
-
-                        To ensure adequate coverage during this busy period, we are implementing the following temporary measures:
-
-                        1. All time-off requests for July 5th and July 6th must be approved by department supervisors
-                        2. Priority will be given to requests submitted before June 22nd
-                        3. Emergency staffing procedures will be in effect for the entire holiday weekend
-
-                        Please note that this is a temporary measure and our regular policies will resume on July 8th. We appreciate your understanding and cooperation during this transition period.
-
-                        If you have any questions about these temporary changes, please contact your immediate supervisor or the HR department at extension 2847.
-
-                        Thank you for your continued dedication to maintaining our high standards of customer service.
-
-                        Human Resources Department
-                        """);
                 }
                 
                 // Set options from the question
-                List<TestOptionResponse> options = new ArrayList<>();
+                List<QuestionWithOptions.OptionDTO> options = new ArrayList<>();
                 if (tq.getQuestion().getOptions() != null && !tq.getQuestion().getOptions().isEmpty()) {
                     for (var option : tq.getQuestion().getOptions()) {
                         if (option.getLabel() != null && option.getContent() != null) {
-                            TestOptionResponse optionResponse = new TestOptionResponse();
+                            QuestionWithOptions.OptionDTO optionResponse = new QuestionWithOptions.OptionDTO();
                             optionResponse.setOptionId(option.getOptionId());
                             optionResponse.setLabel(option.getLabel());
                             optionResponse.setContent(option.getContent());

@@ -51,7 +51,7 @@ public class FeedbackController {
         FeedbackDto feedback = feedbackService.createFeedback(user.getId(), request);
         
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(feedback, "Feedback submitted successfully"));
+                .body(ApiResponse.successWithData(feedback, "Feedback submitted successfully"));
     }
 
     @PutMapping("/{feedbackId}")
@@ -63,7 +63,7 @@ public class FeedbackController {
         User user = userService.getCurrentUser(authentication);
         FeedbackDto feedback = feedbackService.updateFeedback(user.getId(), feedbackId, request);
         
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedback, "Feedback updated successfully"));
     }
 
     @DeleteMapping("/{feedbackId}")
@@ -74,7 +74,7 @@ public class FeedbackController {
         User user = userService.getCurrentUser(authentication);
         feedbackService.deleteFeedback(user.getId(), feedbackId);
         
-        return ResponseEntity.ok(ApiResponse.success(null, "Feedback deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(null, "Feedback deleted successfully"));
     }
 
     @GetMapping("/{feedbackId}")
@@ -85,7 +85,7 @@ public class FeedbackController {
         User user = userService.getCurrentUser(authentication);
         FeedbackDto feedback = feedbackService.getFeedbackById(feedbackId, user.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedback, "Feedback retrieved successfully"));
     }
 
     @GetMapping("/my")
@@ -99,7 +99,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackByUser(user.getId(), user.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Your feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Your feedback retrieved successfully"));
     }
 
     // Admin operations
@@ -117,7 +117,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getAllFeedback(admin.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "All feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "All feedback retrieved successfully"));
     }
 
     @GetMapping("/admin/status/{status}")
@@ -132,7 +132,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackByStatus(admin.getId(), status, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Feedback by status retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Feedback by status retrieved successfully"));
     }
 
     @GetMapping("/admin/priority/{priority}")
@@ -147,7 +147,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackByPriority(admin.getId(), priority, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Feedback by priority retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Feedback by priority retrieved successfully"));
     }
 
     @GetMapping("/admin/type/{feedbackType}")
@@ -162,7 +162,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackByType(admin.getId(), feedbackType, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Feedback by type retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Feedback by type retrieved successfully"));
     }
 
     @GetMapping("/admin/pending")
@@ -176,7 +176,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getPendingFeedback(admin.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Pending feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Pending feedback retrieved successfully"));
     }
 
     @GetMapping("/admin/urgent")
@@ -190,7 +190,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getUrgentFeedback(admin.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Urgent feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Urgent feedback retrieved successfully"));
     }
 
     @GetMapping("/admin/needing-response")
@@ -204,7 +204,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackNeedingResponse(admin.getId(), pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Feedback needing response retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Feedback needing response retrieved successfully"));
     }
 
     @PutMapping("/admin/{feedbackId}/respond")
@@ -216,7 +216,7 @@ public class FeedbackController {
         User admin = userService.getCurrentUser(authentication);
         FeedbackDto feedback = feedbackService.respondToFeedback(admin.getId(), feedbackId, request);
         
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Response sent successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedback, "Response sent successfully"));
     }
 
     @PutMapping("/admin/{feedbackId}/status")
@@ -228,7 +228,7 @@ public class FeedbackController {
         User admin = userService.getCurrentUser(authentication);
         FeedbackDto feedback = feedbackService.updateFeedbackStatus(admin.getId(), feedbackId, status);
         
-        return ResponseEntity.ok(ApiResponse.success(feedback, "Feedback status updated successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedback, "Feedback status updated successfully"));
     }
 
     @GetMapping("/admin/search")
@@ -243,7 +243,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.searchFeedback(admin.getId(), searchTerm, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Search results retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Search results retrieved successfully"));
     }
 
     @GetMapping("/admin/filter")
@@ -260,7 +260,7 @@ public class FeedbackController {
         
         Page<FeedbackDto> feedbacks = feedbackService.getFeedbackByCriteria(admin.getId(), status, priority, feedbackType, pageable);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Filtered feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Filtered feedback retrieved successfully"));
     }
 
     // Statistics
@@ -269,7 +269,7 @@ public class FeedbackController {
         User admin = userService.getCurrentUser(authentication);
         Map<String, Object> stats = feedbackService.getFeedbackStatistics(admin.getId());
         
-        return ResponseEntity.ok(ApiResponse.success(stats, "Feedback statistics retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(stats, "Feedback statistics retrieved successfully"));
     }
 
     @GetMapping("/admin/recent")
@@ -280,36 +280,36 @@ public class FeedbackController {
         User admin = userService.getCurrentUser(authentication);
         List<FeedbackDto> feedbacks = feedbackService.getRecentFeedback(admin.getId(), limit);
         
-        return ResponseEntity.ok(ApiResponse.success(feedbacks, "Recent feedback retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(feedbacks, "Recent feedback retrieved successfully"));
     }
 
     @GetMapping("/admin/count/status/{status}")
     public ResponseEntity<ApiResponse<Long>> getFeedbackCountByStatus(@PathVariable String status) {
         Long count = feedbackService.getFeedbackCountByStatus(status);
-        return ResponseEntity.ok(ApiResponse.success(count, "Feedback count by status retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Feedback count by status retrieved successfully"));
     }
 
     @GetMapping("/admin/count/priority/{priority}")
     public ResponseEntity<ApiResponse<Long>> getFeedbackCountByPriority(@PathVariable String priority) {
         Long count = feedbackService.getFeedbackCountByPriority(priority);
-        return ResponseEntity.ok(ApiResponse.success(count, "Feedback count by priority retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Feedback count by priority retrieved successfully"));
     }
 
     @GetMapping("/admin/count/type/{feedbackType}")
     public ResponseEntity<ApiResponse<Long>> getFeedbackCountByType(@PathVariable String feedbackType) {
         Long count = feedbackService.getFeedbackCountByType(feedbackType);
-        return ResponseEntity.ok(ApiResponse.success(count, "Feedback count by type retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Feedback count by type retrieved successfully"));
     }
 
     @GetMapping("/admin/count/urgent")
     public ResponseEntity<ApiResponse<Long>> getUrgentFeedbackCount() {
         Long count = feedbackService.getUrgentFeedbackCount();
-        return ResponseEntity.ok(ApiResponse.success(count, "Urgent feedback count retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Urgent feedback count retrieved successfully"));
     }
 
     @GetMapping("/admin/count/pending")
     public ResponseEntity<ApiResponse<Long>> getPendingFeedbackCount() {
         Long count = feedbackService.getPendingFeedbackCount();
-        return ResponseEntity.ok(ApiResponse.success(count, "Pending feedback count retrieved successfully"));
+        return ResponseEntity.ok(ApiResponse.successWithData(count, "Pending feedback count retrieved successfully"));
     }
 } 

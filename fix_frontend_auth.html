@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Frontend Authentication</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Fix Frontend Authentication</h1>
+    
+    <div>
+        <h2>Step 1: Login and Fix Auth Data</h2>
+        <button onclick="loginAndFix()">Login + Fix Auth Data</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div>
+        <h2>Step 2: Verify Fixed Data</h2>
+        <button onclick="verifyAuth()">Verify Auth Data</button>
+        <div id="verifyResult"></div>
+    </div>
+    
+    <div>
+        <h2>Step 3: Test APIs</h2>
+        <button onclick="testAPIs()">Test All APIs</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <script>
+        async function loginAndFix() {
+            const loginResult = document.getElementById('loginResult');
+            loginResult.innerHTML = '🔄 Logging in and fixing auth data...';
+            
+            try {
+                // Step 1: Login
+                const response = await axios.post('http://localhost:8080/api/auth/login', {
+                    username: 'teacher',
+                    password: 'password'
+                });
+                
+                const token = response.data.token;
+                const userData = {
+                    id: response.data.id,
+                    username: response.data.username,
+                    email: response.data.email,
+                    role: response.data.roles[0].replace('ROLE_', ''),
+                    fullName: response.data.username,
+                    membershipType: response.data.membershipType || 'FREE'
+                };
+                
+                // Step 2: Store with ALL possible keys
+                localStorage.setItem('toeic_access_token', token);
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('accessToken', token);
+                localStorage.setItem('token', token);
+                
+                localStorage.setItem('toeic_current_user', JSON.stringify(userData));
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                localStorage.setItem('user', JSON.stringify(userData));
+                
+                // Step 3: Set auth flags
+                localStorage.setItem('auth_just_logged_in', 'true');
+                localStorage.setItem('toeic_login_success', 'true');
+                localStorage.setItem('auth_login_timestamp', Date.now().toString());
+                
+                loginResult.innerHTML = `
+                    ✅ Login and fix completed!<br>
+                    Token: ${token.substring(0, 50)}...<br>
+                    User: ${userData.username} (${userData.role})<br>
+                    Data stored with multiple keys for compatibility
+                `;
+                
+                console.log('✅ Login response:', response.data);
+                console.log('✅ User data:', userData);
+                
+            } catch (error) {
+                loginResult.innerHTML = `❌ Login failed: ${error.message}`;
+                console.error('❌ Login error:', error);
+            }
+        }
+        
+        function verifyAuth() {
+            const verifyResult = document.getElementById('verifyResult');
+            
+            // Check tokens
+            const tokens = {
+                'toeic_access_token': localStorage.getItem('toeic_access_token'),
+                'authToken': localStorage.getItem('authToken'),
+                'accessToken': localStorage.getItem('accessToken'),
+                'token': localStorage.getItem('token')
+            };
+            
+            // Check users
+            const users = {
+                'toeic_current_user': localStorage.getItem('toeic_current_user'),
+                'currentUser': localStorage.getItem('currentUser'),
+                'user': localStorage.getItem('user')
+            };
+            
+            // Test getCurrentUserId logic
+            function testGetCurrentUserId() {
+                const keys = ["toeic_current_user", "currentUser", "user"];
+                
+                for (const key of keys) {
+                    const userData = localStorage.getItem(key);
+                    if (!userData) continue;
+
+                    try {
+                        const user = JSON.parse(userData);
+                        if (user && user.id) {
+                            return user.id;
+                        }
+                    } catch {
+                        continue;
+                    }
+                }
+                return null;
+            }
+            
+            const currentUserId = testGetCurrentUserId();
+            
+            let html = '<h3>Auth Verification:</h3>';
+            html += '<h4>Tokens:</h4>';
+            for (const [key, value] of Object.entries(tokens)) {
+                html += `<p><strong>${key}:</strong> ${value ? '✅ EXISTS' : '❌ MISSING'}</p>`;
+            }
+            
+            html += '<h4>Users:</h4>';
+            for (const [key, value] of Object.entries(users)) {
+                if (value) {
+                    try {
+                        const parsed = JSON.parse(value);
+                        html += `<p><strong>${key}:</strong> ✅ ${parsed.username} (ID: ${parsed.id})</p>`;
+                    } catch {
+                        html += `<p><strong>${key}:</strong> ❌ INVALID JSON</p>`;
+                    }
+                } else {
+                    html += `<p><strong>${key}:</strong> ❌ MISSING</p>`;
+                }
+            }
+            
+            html += `<h4>getCurrentUserId() Test:</h4>`;
+            html += `<p><strong>Result:</strong> ${currentUserId ? `✅ ${currentUserId}` : '❌ NULL'}</p>`;
+            
+            verifyResult.innerHTML = html;
+        }
+        
+        async function testAPIs() {
+            const apiResult = document.getElementById('apiResult');
+            apiResult.innerHTML = '🔄 Testing APIs...';
+            
+            const token = localStorage.getItem('toeic_access_token');
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            
+            let results = [];
+            
+            try {
+                // Test 1: Lessons (public)
+                const lessonsResponse = await axios.get('http://localhost:8080/api/lessons/public/all');
+                results.push(`✅ Lessons: ${lessonsResponse.data.length} items`);
+            } catch (error) {
+                results.push(`❌ Lessons: ${error.response?.status} ${error.message}`);
+            }
+            
+            try {
+                // Test 2: Exercises (requires auth)
+                const exercisesResponse = await axios.get('http://localhost:8080/api/exercises', { headers });
+                results.push(`✅ Exercises: ${exercisesResponse.data.length} items`);
+            } catch (error) {
+                results.push(`❌ Exercises: ${error.response?.status} ${error.message}`);
+            }
+            
+            try {
+                // Test 3: Flashcards (public)
+                const flashcardsResponse = await axios.get('http://localhost:8080/api/flashcard-sets/public');
+                results.push(`✅ Flashcards: ${flashcardsResponse.data.length} items`);
+            } catch (error) {
+                results.push(`❌ Flashcards: ${error.response?.status} ${error.message}`);
+            }
+            
+            try {
+                // Test 4: Lesson 1 Exercises
+                const lessonExercisesResponse = await axios.get('http://localhost:8080/api/lessons/1/exercises', { headers });
+                results.push(`✅ Lesson 1 Exercises: ${lessonExercisesResponse.data.length} items`);
+            } catch (error) {
+                results.push(`❌ Lesson 1 Exercises: ${error.response?.status} ${error.message}`);
+            }
+            
+            apiResult.innerHTML = `
+                <h3>API Test Results:</h3>
+                ${results.map(result => `<p>${result}</p>`).join('')}
+            `;
+        }
+    </script>
+</body>
+</html>

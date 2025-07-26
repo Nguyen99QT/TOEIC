@@ -7,16 +7,18 @@ public class QuestionWithOptions {
     private String questionText;
     private String audioUrl;
     private String imageUrl;
+    private String content;  // Reading passage content for Parts 6 & 7
     private List<OptionDTO> options;
 
     // Constructors
     public QuestionWithOptions() {}
 
-    public QuestionWithOptions(Long questionId, String questionText, String audioUrl, String imageUrl, List<OptionDTO> options) {
+    public QuestionWithOptions(Long questionId, String questionText, String audioUrl, String imageUrl, String content, List<OptionDTO> options) {
         this.questionId = questionId;
         this.questionText = questionText;
         this.audioUrl = audioUrl;
         this.imageUrl = imageUrl;
+        this.content = content;
         this.options = options;
     }
 
@@ -32,6 +34,9 @@ public class QuestionWithOptions {
     
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
     
     public List<OptionDTO> getOptions() { return options; }
     public void setOptions(List<OptionDTO> options) { this.options = options; }

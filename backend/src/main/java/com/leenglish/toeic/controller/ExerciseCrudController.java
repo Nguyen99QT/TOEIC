@@ -76,7 +76,7 @@ public class ExerciseCrudController {
                     .map(this::convertToDto)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(ApiResponse.success("Exercises retrieved successfully", exerciseDtos));
+            return ResponseEntity.ok(ApiResponse.successWithData(exerciseDtos, "Exercises retrieved successfully"));
         } catch (Exception e) {
             log.error("❌ Error fetching exercises", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -95,7 +95,7 @@ public class ExerciseCrudController {
             Optional<Exercise> exercise = exerciseService.getExerciseById(id);
             if (exercise.isPresent()) {
                 ExerciseDto exerciseDto = convertToDto(exercise.get());
-                return ResponseEntity.ok(ApiResponse.success("Exercise retrieved successfully", exerciseDto));
+                return ResponseEntity.ok(ApiResponse.successWithData(exerciseDto, "Exercise retrieved successfully"));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error("Exercise not found with ID: " + id));
@@ -129,7 +129,7 @@ public class ExerciseCrudController {
             ExerciseDto responseDto = convertToDto(savedExercise);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Exercise created successfully", responseDto));
+                    .body(ApiResponse.successWithData(responseDto, "Exercise created successfully"));
         } catch (Exception e) {
             log.error("❌ Error creating exercise", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -175,7 +175,7 @@ public class ExerciseCrudController {
             ExerciseDto responseDto = convertToDto(savedExercise);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Exercise with files created successfully", responseDto));
+                    .body(ApiResponse.successWithData(responseDto, "Exercise with files created successfully"));
         } catch (Exception e) {
             log.error("❌ Error creating exercise with files", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -212,7 +212,7 @@ public class ExerciseCrudController {
                                                                                  // save
             ExerciseDto responseDto = convertToDto(updatedExercise);
 
-            return ResponseEntity.ok(ApiResponse.success("Exercise updated successfully", responseDto));
+            return ResponseEntity.ok(ApiResponse.successWithData(responseDto, "Exercise updated successfully"));
         } catch (Exception e) {
             log.error("❌ Error updating exercise {}", id, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -272,7 +272,7 @@ public class ExerciseCrudController {
             Exercise updatedExercise = exerciseService.createExercise(exercise);
             ExerciseDto responseDto = convertToDto(updatedExercise);
 
-            return ResponseEntity.ok(ApiResponse.success("Exercise with files updated successfully", responseDto));
+            return ResponseEntity.ok(ApiResponse.successWithData(responseDto, "Exercise with files updated successfully"));
         } catch (Exception e) {
             log.error("❌ Error updating exercise {} with files", id, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -314,7 +314,7 @@ public class ExerciseCrudController {
             exercise.setUpdatedAt(LocalDateTime.now());
             exerciseService.createExercise(exercise);
 
-            return ResponseEntity.ok(ApiResponse.success("Exercise deleted successfully", null));
+            return ResponseEntity.ok(ApiResponse.successWithData(null, "Exercise deleted successfully"));
         } catch (Exception e) {
             log.error("❌ Error deleting exercise {}", id, e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

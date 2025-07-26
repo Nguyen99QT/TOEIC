@@ -17,7 +17,7 @@ import FeedbackButton from '../../components/ui/FeedbackButton';
 const ExerciseDetailPage: React.FC = () => {
   const breadcrumbItems = useBreadcrumb();
   const navigate = useNavigate();
-  const { lessonId, exerciseId } = useParams<{ lessonId: string; exerciseId: string }>();
+  const { lessonId, exerciseId } = useParams<{ lessonId?: string; exerciseId: string }>();
 
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -28,15 +28,19 @@ const ExerciseDetailPage: React.FC = () => {
     const loadExerciseData = async () => {
       if (!exerciseId) return;
 
+      console.log('🔄 Loading exercise data for exerciseId:', exerciseId, 'lessonId:', lessonId);
+
       try {
         setLoading(true);
         const exerciseData = await exerciseService.getExerciseById(Number(exerciseId));
+        console.log('✅ Exercise loaded:', exerciseData);
         setExercise(exerciseData);
 
         const questionsData = await questionService.getQuestionsByExerciseId(Number(exerciseId));
+        console.log('✅ Questions loaded:', questionsData?.length || 0);
         setQuestions(questionsData);
       } catch (err) {
-        console.error('Error loading exercise data:', err);
+        console.error('❌ Error loading exercise data:', err);
         setError('Failed to load exercise data');
       } finally {
         setLoading(false);
@@ -44,7 +48,7 @@ const ExerciseDetailPage: React.FC = () => {
     };
 
     loadExerciseData();
-  }, [exerciseId]);
+  }, [exerciseId, lessonId]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty?.toLowerCase()) {
